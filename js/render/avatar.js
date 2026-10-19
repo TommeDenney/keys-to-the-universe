@@ -8,6 +8,16 @@
 
 import { HAIR } from './hair.js';
 
+/**
+ * Space-helmet size for a hairstyle: from how high the hair reaches (span) plus a
+ * per-style "volume" for wide, fluffy styles. Centred a little higher for tall hair.
+ */
+function helmetFor(hair) {
+  const top = hair.span ? hair.span[0] : 30;
+  const r = Math.max(29, Math.min(46, 30 + Math.max(0, 22 - top) * 0.55 + (hair.volume || 0)));
+  return { cx: 50, cy: 46 - (r - 30) * 0.42, r };
+}
+
 const mixc = (a, b, t) => {
   const p = (h) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16));
   const [x, y] = [p(a), p(b)];
@@ -50,7 +60,8 @@ export function avatarSVG(a, { size = 100, uid = 'av' } = {}) {
   </defs>`;
   const SK = skin.galaxy ? `url(#${g('gx')})` : `url(#${g('sk')})`;
   const ctx = { tone, shade, glow, blush, lip, hairC, hairHi, cloth, clothDark, SK, deep, g,
-    F: `url(#${g('hair')})`, hi: hairHi, dark: mixc(hairC, '#000000', 0.35), skinLine: shade, accent: cloth };
+    F: `url(#${g('hair')})`, hi: hairHi, dark: mixc(hairC, '#000000', 0.35), skinLine: shade, accent: cloth,
+    helmet: helmetFor(hair) };
   const out = [];
   out.push(`<circle cx="50" cy="50" r="50" fill="${a.bg || '#312E81'}"/>`);
   // Hair that falls behind you goes first: big curls and long styles sit behind the neck and clothes.
@@ -161,7 +172,8 @@ export const LOOKS = {
     'hat-durag': { draw: (c) => `<path d="M29 42 Q27 20 50 19 Q73 20 71 42 Q66 32 50 32 Q34 32 29 42 Z" fill="${c.cloth}"/><path d="M50 19 V32" stroke="${c.clothDark}" stroke-width="1.6"/><path d="M70 40 Q78 54 74 70" stroke="${c.cloth}" stroke-width="4" fill="none" stroke-linecap="round"/>` },
     'hat-headphones': { draw: () => `<path d="M28 44 Q28 16 50 16 Q72 16 72 44" stroke="#1F2937" stroke-width="4.5" fill="none"/><rect x="22" y="40" width="10" height="16" rx="4" fill="#8B5CF6"/><rect x="68" y="40" width="10" height="16" rx="4" fill="#8B5CF6"/>` },
     'hat-crown': { draw: () => `<path d="M34 26 L36 12 L43 20 L50 8 L57 20 L64 12 L66 26 Z" fill="#FBBF24" stroke="#92400E" stroke-width="1"/><circle cx="50" cy="20" r="2.2" fill="#F472B6"/>` },
-    'hat-helmet': { draw: () => `<circle cx="50" cy="46" r="31" fill="#BAE6FD" opacity=".22" stroke="#E0F2FE" stroke-width="2.4"/><path d="M30 28 Q40 18 52 18" stroke="#fff" stroke-width="2.4" opacity=".7" fill="none" stroke-linecap="round"/>` },
+    // The bubble grows to fit the hair: snug for short styles, big for afros (long hair may spill out below).
+    'hat-helmet': { draw: (c) => { const { cx, cy, r } = c.helmet; return `<circle cx="${cx}" cy="${cy}" r="${r}" fill="#E0F2FE" fill-opacity=".06" stroke="#E0F2FE" stroke-width="2.4" stroke-opacity=".9"/><path d="M${cx - r * 0.66} ${cy - r * 0.55} Q${cx - r * 0.3} ${cy - r * 0.9} ${cx + r * 0.08} ${cy - r * 0.9}" stroke="#fff" stroke-width="2.4" opacity=".7" fill="none" stroke-linecap="round"/><path d="M${cx - r * 0.75} ${cy + r * 0.62} Q${cx} ${cy + r * 0.86} ${cx + r * 0.75} ${cy + r * 0.62}" stroke="#94A3B8" stroke-width="3" fill="none" opacity=".8"/>`; } },
     'hat-flowers': { draw: () => [30, 38, 46, 54, 62, 70].map((x, i) => `<circle cx="${x}" cy="${26 - Math.sin((i / 5) * Math.PI) * 8}" r="4" fill="${['#F472B6', '#FDE68A', '#A78BFA', '#F9A8D4', '#86EFAC', '#FDBA74'][i]}"/><circle cx="${x}" cy="${26 - Math.sin((i / 5) * Math.PI) * 8}" r="1.4" fill="#FEF3C7"/>`).join('') },
     // Seasonal
   'hat-witch': { draw: () => `<path d="M20 30 Q50 22 80 30 Q50 36 20 30 Z" fill="#1F2937"/><path d="M34 29 L52 -2 Q56 10 66 28 Z" fill="#1F2937"/><path d="M36 26 Q50 22 64 26" stroke="#F97316" stroke-width="3" fill="none"/>` },
