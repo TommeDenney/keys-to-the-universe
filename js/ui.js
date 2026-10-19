@@ -71,10 +71,18 @@ export function icon(name, cls = '') {
   return s;
 }
 
-export function starsHTML(n, max = 3, animate = false) {
+/**
+ * Stars out of 5, dance-game style: three small stars tucked together, a bigger
+ * fourth, and a big fifth "mega star" that shines and spins its rays when earned.
+ */
+const STAR_PATH = 'M12 2.8l2.8 5.8 6.3.9-4.6 4.4 1.1 6.3L12 17.2l-5.6 3 1.1-6.3L2.9 9.5l6.3-.9z';
+export function starsHTML(n, max = 5, animate = false) {
   let out = '';
   for (let i = 0; i < max; i++) {
-    out += `<span class="star ${i < n ? 'on' : ''}" style="${animate ? `animation-delay:${0.25 + i * 0.22}s` : ''}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.8l2.8 5.8 6.3.9-4.6 4.4 1.1 6.3L12 17.2l-5.6 3 1.1-6.3L2.9 9.5l6.3-.9z" fill="currentColor"/></svg></span>`;
+    const tier = max === 5 ? (i < 3 ? 'sm' : i === 3 ? 'big' : 'mega') : '';
+    const delay = animate ? `animation-delay:${(0.25 + i * 0.24 + (i === 4 ? 0.3 : 0)).toFixed(2)}s` : '';
+    const mega = tier === 'mega';
+    out += `<span class="star ${tier} s${i + 1} ${i < n ? 'on' : ''}" style="${delay}">${mega ? '<i class="mega-rays"></i>' : ''}<svg viewBox="0 0 24 24" aria-hidden="true"><path d="${STAR_PATH}" fill="currentColor"/></svg>${mega ? '<i class="mega-shine"></i>' : ''}</span>`;
   }
   return out;
 }

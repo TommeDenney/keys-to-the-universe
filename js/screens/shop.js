@@ -1,6 +1,6 @@
 // Shop: spend Stardust ✦ on ships, ambience, effects, keyboard themes and key presses.
 
-import { h, icon, toast, modal } from '../ui.js';
+import { h, icon, toast, modal, starsHTML } from '../ui.js';
 import { SHOP, CATEGORIES } from '../data/shop.js';
 import { balance, owns, buy, equip, equipped, walletPill, SYMBOL, backpay, REWARD, petName, setPetName, spend, grantItem } from '../economy.js';
 import { shipSVG } from '../render/ships.js';
@@ -96,8 +96,8 @@ export function renderShop(root, { inventory = false } = {}) {
       h('div', { class: 'earn-card' }, [
         h('b', {}, `How to earn ${SYMBOL}`),
         h('div', { class: 'earn-grid' }, [
-          earnRow('Complete a world', `${REWARD.lessonBase}–${REWARD.lessonBase + 3 * REWARD.lessonPerStar}`),
-          earnRow('Defeat a Guardian', `${REWARD.bossBase}–${REWARD.bossBase + 3 * REWARD.bossPerStar}`),
+          earnRow('Complete a world', `${REWARD.lessonBase}–${REWARD.lessonBase + 5 * REWARD.lessonPerStar}`),
+          earnRow('Defeat a Guardian', `${REWARD.bossBase}–${REWARD.bossBase + 5 * REWARD.bossPerStar}`),
           earnRow('Song practice steps', `${REWARD.songStepPerStar} per star`),
           earnRow('Master a song (3★ with the beat)', `+${REWARD.songMastered}`),
           earnRow('Daily streak', `${REWARD.dailyPerStreakDay}–70`),
@@ -325,7 +325,7 @@ export function renderShop(root, { inventory = false } = {}) {
       } }, [icon('ear'), it.id === 'amb-none' ? 'Silence' : 'Preview']);
       el.append(h('div', { class: `amb-art ${it.id}` }), b);
     } else if (it.cat === 'starc') {
-      const d = h('div', { class: `star-demo starc-${it.id.slice(5)}`, html: '<span class="star on"><svg viewBox="0 0 24 24"><path d="M12 2.8l2.8 5.8 6.3.9-4.6 4.4 1.1 6.3L12 17.2l-5.6 3 1.1-6.3L2.9 9.5l6.3-.9z" fill="currentColor"/></svg></span>'.repeat(3) });
+      const d = h('div', { class: `star-demo starc-${it.id.slice(5)}`, html: starsHTML(5) });
       el.append(d);
     } else if (it.cat === 'trail') {
       const glyph = it.id === 'trail-notes' ? '\u266A \u266B \u2669 ' : it.id === 'trail-stars' ? '\u2726 ' : (rewardLook(it.id) || {}).glyph || '';

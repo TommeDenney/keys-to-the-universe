@@ -231,7 +231,6 @@ header.top { display: flex; align-items: flex-end; justify-content: space-betwee
 .star.on { color: var(--gold); }
 .stars-big { display: flex; justify-content: center; gap: 6px; margin: 4px 0 10px; }
 .stars-big .star svg { width: 64px; height: 64px; filter: drop-shadow(0 4px 0 rgba(0,0,0,.08)); }
-.stars-big .star:nth-child(2) svg { width: 80px; height: 80px; margin-top: -12px; }
 .stars-big .star { animation: star-pop .6s var(--spring) both; }
 .stars-big .star.on svg { filter: drop-shadow(0 4px 0 #E3A400) drop-shadow(0 8px 18px rgba(255,196,61,.5)); }
 @keyframes star-pop { 0% { opacity: 0; transform: scale(.2) rotate(-40deg); } 100% { opacity: 1; transform: none; } }
@@ -1884,3 +1883,38 @@ p.unlock-cond { font-size: 15px; color: var(--ink-2); margin: 4px 0; }
 /* Space Academy worlds on the map */
 .planet.quiz-world .orb { box-shadow: 0 0 0 3px rgba(255,255,255,.55), 0 0 26px rgba(196,181,253,.7); }
 .quiz-badge { position: absolute; inset: 0; display: grid; place-items: center; font-size: calc(var(--size, 80px) * .42); font-weight: 900; color: #fff; text-shadow: 0 2px 10px rgba(0,0,0,.6); z-index: 3; pointer-events: none; }
+
+/* ---- Stars out of 5 (dance-game style) ---- */
+.stars-big { --sz: 50px; align-items: center; gap: 0; }
+.mini-stars { --sz: 13px; align-items: center; gap: 0; }
+.star-demo { --sz: 26px; align-items: center; gap: 0; }
+.star.sm svg, .star.big svg, .star.mega svg { display: block; width: var(--sz); height: var(--sz); }
+.star.big svg { width: calc(var(--sz) * 1.28); height: calc(var(--sz) * 1.28); }
+.star.mega svg { width: calc(var(--sz) * 1.68); height: calc(var(--sz) * 1.68); }
+.star.sm + .star.sm { margin-left: calc(var(--sz) * -0.32); } /* the first three tuck together */
+.star.big { margin-left: calc(var(--sz) * 0.08); }
+.star.mega { margin-left: calc(var(--sz) * 0.06); position: relative; isolation: isolate; }
+.star.s1 { z-index: 1; } .star.s2 { z-index: 2; } .star.s3 { z-index: 3; }
+.star.sm:not(.on) svg, .star.big:not(.on) svg, .star.mega:not(.on) svg { filter: none; opacity: .9; }
+.mini-stars .star.sm:not(.on) svg path, .stars-big .star:not(.on) svg path { stroke: rgba(255,255,255,.65); stroke-width: 1.2; }
+/* The mega star: rays spin behind it, light sweeps across it, and it breathes. */
+.star.mega .mega-rays, .star.mega .mega-shine { position: absolute; pointer-events: none; }
+.star.mega .mega-rays { inset: -48%; z-index: -1; opacity: 0; border-radius: 50%;
+  background: repeating-conic-gradient(from 0deg, color-mix(in srgb, var(--star-on) 60%, transparent) 0deg 9deg, transparent 9deg 30deg);
+  -webkit-mask: radial-gradient(circle, #000 18%, transparent 68%); mask: radial-gradient(circle, #000 18%, transparent 68%); }
+.star.mega .mega-shine { inset: 0; z-index: 1;
+  background: linear-gradient(115deg, transparent 38%, rgba(255,255,255,.9) 50%, transparent 62%) 0 0 / 260% 100% no-repeat;
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 2.8l2.8 5.8 6.3.9-4.6 4.4 1.1 6.3L12 17.2l-5.6 3 1.1-6.3L2.9 9.5l6.3-.9z'/%3E%3C/svg%3E") center / contain no-repeat;
+          mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 2.8l2.8 5.8 6.3.9-4.6 4.4 1.1 6.3L12 17.2l-5.6 3 1.1-6.3L2.9 9.5l6.3-.9z'/%3E%3C/svg%3E") center / contain no-repeat;
+  opacity: 0; }
+.star.mega.on .mega-rays { opacity: 1; animation: mega-spin 7s linear infinite; }
+.star.mega.on .mega-shine { opacity: 1; animation: mega-sweep 2.6s ease-in-out infinite; }
+.star.mega.on svg { animation: mega-breathe 2.6s ease-in-out infinite; filter: drop-shadow(0 0 calc(var(--sz) * .12) color-mix(in srgb, var(--star-on) 80%, #fff)) drop-shadow(0 0 calc(var(--sz) * .3) color-mix(in srgb, var(--star-on) 55%, transparent)); }
+.mini-stars .star.mega.on .mega-rays { animation: none; opacity: .7; } /* calm on the map */
+.mini-stars .star.mega.on .mega-shine { animation-duration: 4s; }
+.stars-big .star.mega.on { animation: mega-pop .9s var(--spring) both; }
+@keyframes mega-spin { to { transform: rotate(360deg); } }
+@keyframes mega-sweep { 0%, 35% { background-position: 130% 0; } 75%, 100% { background-position: -30% 0; } }
+@keyframes mega-breathe { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.07); } }
+@keyframes mega-pop { 0% { opacity: 0; transform: scale(0) rotate(-120deg); } 60% { opacity: 1; transform: scale(1.35) rotate(12deg); } 100% { transform: none; } }
+@media (prefers-reduced-motion: reduce) { .star.mega.on .mega-rays, .star.mega.on .mega-shine, .star.mega.on svg { animation: none; } }

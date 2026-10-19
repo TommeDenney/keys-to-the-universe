@@ -1,6 +1,7 @@
 // Stardust ✦: the in-game currency. Earned only by playing (lessons, bosses,
 // songs, streaks, side quests); spent in the Shop. No real money anywhere.
 
+import { MAX_STARS } from './stars.js';
 import { h } from './ui.js';
 import { getState, saveState } from './store.js';
 
@@ -10,12 +11,12 @@ export const SYMBOL = '✦';
 // Rewards
 export const REWARD = {
   lessonBase: 10,
-  lessonPerStar: 5,
-  starImproved: 5,
+  lessonPerStar: 3, // out of 5 stars (about the same total as the old 5 × 3)
+  starImproved: 3,
   bossBase: 100,
-  bossPerStar: 25,
-  songStepPerStar: 3,
-  songMastered: 20, // full song, with the beat, 3 stars
+  bossPerStar: 15,
+  songStepPerStar: 2,
+  songMastered: 20, // full song, with the beat, 5 stars
   dailyPerStreakDay: 10, // capped at 7 days
 };
 
@@ -168,7 +169,7 @@ export function rewardLesson(prevStars, stars, isBoss) {
 }
 
 export function rewardSongStep(prevStars, stars, mastered) {
-  if (stars > prevStars) earn(REWARD.songStepPerStar * (stars - prevStars) + (mastered && prevStars < 3 && stars === 3 ? REWARD.songMastered : 0), mastered && stars === 3 ? 'Song mastered' : 'Song progress');
+  if (stars > prevStars) earn(REWARD.songStepPerStar * (stars - prevStars) + (mastered && prevStars < MAX_STARS && stars === MAX_STARS ? REWARD.songMastered : 0), mastered && stars === MAX_STARS ? 'Song mastered' : 'Song progress');
 }
 
 export function rewardDaily(streak) {

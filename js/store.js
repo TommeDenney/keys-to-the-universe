@@ -1,5 +1,7 @@
 // Persistence: settings + progress in localStorage, imported scores in IndexedDB.
 
+import { migrateStars } from './stars.js';
+
 const LS_KEY = 'ivory.v1';
 
 const DEFAULT_SETTINGS = {
@@ -37,6 +39,7 @@ function load() {
 }
 
 const state = Object.assign({ settings: {}, lessons: {}, songs: {}, streak: { day: null, count: 0 }, practiceDays: [] }, load());
+if (migrateStars(state)) { try { localStorage.setItem(LS_KEY, JSON.stringify(state)); } catch { /* storage blocked */ } }
 
 const saveSubs = new Set();
 /** Called after every save (used by Google Drive auto-save). */

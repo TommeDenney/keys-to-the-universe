@@ -215,8 +215,8 @@ export async function openLesson(id, onClose) {
     });
   }
 
-  // Knowledge Check: a few questions about this galaxy. 60% passes (1 star),
-  // 75% earns 2 stars and 90% earns 3.
+  // Knowledge Check: a few questions about this galaxy. 60% passes (1 star);
+  // 70%, 80% and 90% earn 2, 3 and 4 stars, and a perfect score earns all 5.
   function showQuiz(st) {
     const shuffle = (a) => { a = [...a]; for (let k = a.length - 1; k > 0; k--) { const j = Math.floor(Math.random() * (k + 1)); [a[k], a[j]] = [a[j], a[k]]; } return a; };
     const qs = shuffle(st.questions).map((q) => (q.c ? { ...q, opts: shuffle(q.c.map((t, k) => ({ t, right: k === 0 }))) } : q));
@@ -305,15 +305,15 @@ export async function openLesson(id, onClose) {
 
     const result = () => {
       const score = right / qs.length;
-      const stars = score >= 0.9 ? 3 : score >= 0.75 ? 2 : score >= 0.6 ? 1 : 0;
+      const stars = score >= 0.999 ? 5 : score >= 0.9 ? 4 : score >= 0.8 ? 3 : score >= 0.7 ? 2 : score >= 0.6 ? 1 : 0;
       const pct = Math.round(score * 100);
       if (stars) {
         results[i] = stars;
         body.append(h('div', { class: 'ls-center' }, h('div', { class: 'card result-card quiz-result pop' }, [
           h('div', { class: 'eyebrow' }, 'Knowledge Check passed'),
           h('div', { class: 'quiz-score' }, [h('b', {}, `${right}/${qs.length}`), h('span', {}, `${pct}%`)]),
-          h('div', { class: 'stars-big', html: starsHTML(stars, 3, true) }),
-          h('p', { class: 'muted' }, stars === 3 ? 'Brilliant! You really know this galaxy.' : stars === 2 ? 'Great job! Score 90% or more for 3 stars.' : 'You passed! Score 75% or more for 2 stars.'),
+          h('div', { class: 'stars-big', html: starsHTML(stars, 5, true) }),
+          h('p', { class: 'muted' }, stars === 5 ? 'Perfect score! You really know this galaxy.' : stars === 4 ? 'So close! Get every answer right for the fifth star.' : 'You passed! Try again for more stars: 90% earns four, a perfect score earns all five.'),
           h('div', { class: 'row' }, [
             h('button', { class: 'btn ghost', onclick: () => showQuiz(st) }, [icon('restart'), 'Try again']),
             h('button', { class: 'btn primary', onclick: next }, ['Continue', icon('chevron')]),
@@ -378,7 +378,7 @@ export async function openLesson(id, onClose) {
       h('div', { class: 'boss-emblem' }, [h('i'), h('i'), guardianArt(lesson.id) ? h('span', { class: 'g-mascot defeated', html: guardianArt(lesson.id) }) : h('span', {}, '\u{1F3C6}')]),
       h('div', { class: 'eyebrow' }, 'Galaxy conquered'),
       h('h2', {}, `${lesson.guardian || 'The Guardian'} is defeated!`),
-      h('div', { class: 'stars-big', html: starsHTML(r.stars, 3, true) }),
+      h('div', { class: 'stars-big', html: starsHTML(r.stars, 5, true) }),
       h('p', {}, nxt ? `A new galaxy awaits: ${nxt.unit.title}.` : 'You conquered the final galaxy. You can truly play the piano!'),
       backupOffer(),
       autoReturn(),
@@ -420,7 +420,7 @@ export async function openLesson(id, onClose) {
   function finish() {
     progress.setLessonStep(lesson.id, 0);
     const played = results.filter((x) => x != null);
-    const stars = played.length ? Math.max(1, Math.round(played.reduce((a, b) => a + b, 0) / played.length)) : 3;
+    const stars = played.length ? Math.max(1, Math.round(played.reduce((a, b) => a + b, 0) / played.length)) : 5;
     const paid = progress.paidStars(lesson.id);
     const prev = progress.completeLesson(lesson.id, stars);
     rewardLesson(Math.max(prev, paid), stars, false);
@@ -432,9 +432,9 @@ export async function openLesson(id, onClose) {
     const nxt = list[list.findIndex((l) => l.id === lesson.id) + 1];
     const card = h('div', { class: 'card result-card pop' }, [
       h('div', { class: 'eyebrow' }, 'Lesson complete'),
-      h('div', { class: 'stars-big', html: starsHTML(stars, 3, true) }),
+      h('div', { class: 'stars-big', html: starsHTML(stars, 5, true) }),
       h('h2', {}, lesson.title),
-      h('p', { class: 'muted' }, stars === 3 ? 'Perfect! You nailed it.' : 'Great work! Replay anytime to earn more stars.'),
+      h('p', { class: 'muted' }, stars === 5 ? 'Perfect! You nailed it.' : 'Great work! Replay anytime to earn more stars.'),
       backupOffer(),
       autoReturn(),
       h('div', { class: 'row' }, [

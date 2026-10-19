@@ -107,11 +107,11 @@ function songCard(s) {
   const recs = progress.songSteps(s.id);
   let pct = 0;
   if (s.piece) {
-    pct = Math.min(100, Math.round((Object.values(recs).reduce((a, b) => a + b, 0) / 30) * 100));
+    pct = Math.min(100, Math.round((Object.values(recs).reduce((a, b) => a + b, 0) / 50) * 100));
   } else {
     const plan = practicePlan(s);
     const best = plan.reduce((a, p) => a + (recs[p.key] || 0), 0);
-    pct = Math.round((best / (plan.length * 3)) * 100);
+    pct = Math.round((best / (plan.length * 5)) * 100);
   }
   const locked = !s.imported && !songUnlocked(s.id);
   const card = h('a', { class: `song-card ${locked ? 'locked' : ''}`, href: `#/song/${s.id}` }, [

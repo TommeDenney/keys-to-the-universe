@@ -1,6 +1,7 @@
 // Achievements: lifetime stats, requirements for special Shop rewards (still
 // bought with Stardust, but only once you've earned the right), and badges.
 
+import { MAX_STARS } from './stars.js';
 import { getState, saveState, progress } from './store.js';
 import { COURSE, allLessons } from './data/course.js';
 import { QUESTS } from './data/quests.js';
@@ -25,7 +26,7 @@ const guardians = () => allLessons().filter((l) => l.boss && progress.lesson(l.i
 const unitById = (id) => COURSE.find((u) => u.id === id);
 // A galaxy skipped by beating its Guardian counts as cleared (but not as 100%).
 const galaxyDone = (u) => progress.skipped(u.id) || (u.lessons.length > 0 && u.lessons.every((l) => progress.lesson(l.id)));
-const galaxyPerfect = (u) => u.lessons.length > 0 && u.lessons.every((l) => (progress.lesson(l.id) || {}).stars >= 3);
+const galaxyPerfect = (u) => u.lessons.length > 0 && u.lessons.every((l) => (progress.lesson(l.id) || {}).stars >= MAX_STARS);
 function bestStreak() {
   const l = lifetime();
   const cur = getState().streak ? getState().streak.count || 0 : 0;
@@ -35,7 +36,7 @@ function bestStreak() {
 
 const KINDS = {
   planets: () => worlds().length,
-  threeStar: () => worlds().filter((l) => (progress.lesson(l.id).stars || 0) >= 3).length,
+  threeStar: () => worlds().filter((l) => (progress.lesson(l.id).stars || 0) >= MAX_STARS).length, // named from the 3-star days: now 5★
   guardians: () => guardians().length,
   boss: (r) => (progress.lesson(r.id) ? 1 : 0),
   rogues: () => QUESTS.filter((q) => questDone(q.id)).length,
@@ -49,7 +50,7 @@ const KINDS = {
   perfectGalaxies: () => COURSE.filter(galaxyPerfect).length,
   galaxy: (r) => { const u = unitById(r.unit); return !u ? 0 : galaxyDone(u) ? u.lessons.length : u.lessons.filter((l) => progress.lesson(l.id)).length; },
   galaxyWorlds: (r) => { const u = unitById(r.unit); return u ? u.lessons.filter((l) => !l.boss && progress.lesson(l.id)).length : 0; },
-  galaxyPerfect: (r) => { const u = unitById(r.unit); return u ? u.lessons.filter((l) => (progress.lesson(l.id) || {}).stars >= 3).length : 0; },
+  galaxyPerfect: (r) => { const u = unitById(r.unit); return u ? u.lessons.filter((l) => (progress.lesson(l.id) || {}).stars >= MAX_STARS).length : 0; },
   stardust: () => earnedTotal(),
   owned: () => ownedItems().length,
   songs: () => ownedSongs().length,
@@ -93,7 +94,7 @@ export function reqText(req) {
   const g = req.goal || 1;
   switch (req.kind) {
     case 'planets': return g === 1 ? 'Complete a world' : `Complete ${g} worlds`;
-    case 'threeStar': return `Get 3★ on ${g} worlds`;
+    case 'threeStar': return `Get 5★ on ${g} worlds`;
     case 'guardians': return g === 1 ? 'Defeat a Guardian' : `Defeat ${g} Guardians`;
     case 'boss': return `Defeat ${bossName(req.id)}`;
     case 'rogues': return g >= QUESTS.length ? 'Conquer every rogue planet' : g === 1 ? 'Conquer a rogue planet' : `Conquer ${g} rogue planets`;

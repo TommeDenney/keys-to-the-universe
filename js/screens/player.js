@@ -2,6 +2,7 @@
 // Modes: 'wait' (own pace: the music waits for you), 'timed' (keep the beat),
 // and a temporary 'listen' demo.
 
+import { MAX_STARS } from '../stars.js';
 import { h, icon, starsHTML } from '../ui.js';
 import { audio } from '../audio/engine.js';
 import { input } from '../input/hub.js';
@@ -20,9 +21,10 @@ const PERFECT = 0.1;
 const GOOD = 0.2;
 const WINDOW = 0.32;
 
+/** Stars out of 5: 97% for the big fifth star, 90% for four, 80% three, 65% two. */
 export function starsFor(score, mode) {
-  if (mode === 'wait') return score >= 0.9 ? 3 : score >= 0.7 ? 2 : 1;
-  return score >= 0.9 ? 3 : score >= 0.75 ? 2 : score >= 0.5 ? 1 : 0;
+  const s = score >= 0.97 ? 5 : score >= 0.9 ? 4 : score >= 0.8 ? 3 : score >= 0.65 ? 2 : score >= 0.5 ? 1 : 0;
+  return mode === 'wait' ? Math.max(1, s) : s;
 }
 
 export class Player {
@@ -682,11 +684,11 @@ export class Player {
       track(`song:${sid}`);
       track(`key:${this.slice.keyFifths || 0}`);
       if (this.mode === 'timed' && stars >= 2) track(`timedsong:${sid}`);
-      if (this.mode === 'timed' && stars === 3) track(`mastersong:${sid}`);
+      if (this.mode === 'timed' && stars === MAX_STARS) track(`mastersong:${sid}`);
       if (gradeOf(sid) && stars >= 2) track(`grade:${gradeOf(sid)}`);
     }
     if (this.mode === 'timed' && stars >= 1 && total && this.grades.miss === 0) track('flawless');
-    if (stars === 3) track('threeStar');
+    if (stars === MAX_STARS) track('threeStar');
     if (this.cfg.onFinish) this.cfg.onFinish(result);
     if (this.cfg.arcade && this.cfg.arcade.noResult) return; // the arcade shows its own results
     this.showResult(result);
@@ -701,9 +703,9 @@ export class Player {
       : [stat(`${r.grades.perfect}`, 'perfect'), stat(`${r.grades.good + r.grades.ok}`, 'good'), stat(`${r.grades.miss}`, 'missed'), stat(`${pct}%`, 'score')];
     const actions = (this.cfg.actions && this.cfg.actions(r)) || [];
     this.showOverlay(h('div', { class: 'card result-card pop' }, [
-      h('div', { class: 'stars-big', html: starsHTML(r.stars, 3, true) }),
+      h('div', { class: 'stars-big', html: starsHTML(r.stars, 5, true) }),
       h('h2', {}, titles[r.stars]),
-      h('p', { class: 'muted' }, r.stars === 0 ? 'Try slowing the tempo down, or practise at your own pace first.' : r.mode === 'wait' && r.stars === 3 ? 'Ready to try it with the beat?' : ''),
+      h('p', { class: 'muted' }, r.stars === 0 ? 'Try slowing the tempo down, or practise at your own pace first.' : r.mode === 'wait' && r.stars >= 4 ? 'Ready to try it with the beat?' : ''),
       h('div', { class: 'stats' }, stats),
       h('div', { class: 'row' }, [
         h('button', { class: 'btn ghost', onclick: () => this.restart() }, [icon('restart'), 'Try again']),
@@ -719,7 +721,7 @@ export class Player {
     const actions = (this.cfg.actions && this.cfg.actions(r)) || [];
     this.showOverlay(h('div', { class: `card result-card exam-result ${r.passed ? 'won' : 'lost'} pop` }, [
       h('div', { class: 'exam-badge' }, r.passed ? '\u2694 Victory' : '\u2620 Defeated'),
-      r.passed ? h('div', { class: 'stars-big', html: starsHTML(r.stars, 3, true) }) : null,
+      r.passed ? h('div', { class: 'stars-big', html: starsHTML(r.stars, 5, true) }) : null,
       h('h2', {}, r.passed ? `${this.cfg.exam.name || 'The Guardian'} is defeated!` : r.knockedOut ? 'Your energy ran out' : 'Not quite enough'),
       h('p', { class: 'muted' }, r.passed
         ? 'The way to the next galaxy is open.'

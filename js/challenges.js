@@ -24,7 +24,7 @@ const STAT_TEXT = {
   stars: (g) => `Earn ${g} stars`,
   minutes: (g) => (g >= 120 ? `Practise for ${g / 60} hours` : `Practise for ${g} minutes`),
   timed: (g) => `Score 2★+ with the beat ${g === 1 ? 'once' : `${g} times`}`,
-  threeStar: (g) => `Get ${g === 1 ? 'a 3-star result' : `${g} three-star results`}`,
+  threeStar: (g) => `Get ${g === 1 ? 'a 5-star result' : `${g} five-star results`}`,
   notes: (g) => `Play ${n(g)} correct notes`,
   perfect: (g) => `Hit ${n(g)} perfect-timed notes`,
   both: (g) => `Finish ${g === 1 ? 'a piece' : `${g} pieces`} with both hands`,
@@ -36,9 +36,9 @@ const STAT_TEXT = {
   quests: (g) => `Conquer ${g === 1 ? 'a rogue planet' : `${g} rogue planets`}`,
 };
 const TIERS = {
-  daily: { worlds: [1, 2, 3], steps: [3, 5, 8], stars: [6, 9, 12], minutes: [10, 15, 20, 30], timed: [1, 2, 3], threeStar: [1, 2, 3], notes: [150, 250, 400, 600], perfect: [30, 60, 100], both: [1, 2, 3], listens: [2, 3, 5] },
-  weekly: { worlds: [5, 8, 12], bosses: [1, 2, 3], days: [4, 5, 6], mastered: [1, 2, 3], stars: [30, 45, 60], minutes: [60, 90, 120, 180], notes: [1200, 2000, 3000], perfect: [300, 500, 800], flawless: [1, 2, 3], quests: [1, 2], both: [5, 8], threeStar: [5, 8, 12] },
-  monthly: { worlds: [15, 20, 30], bosses: [3, 5, 8], days: [12, 15, 20], minutes: [300, 450, 600], mastered: [4, 6, 10], notes: [6000, 9000, 15000], perfect: [1500, 2500, 4000], flawless: [5, 8, 12], quests: [2, 3, 5], stars: [120, 180, 250], threeStar: [20, 30] },
+  daily: { worlds: [1, 2, 3], steps: [3, 5, 8], stars: [10, 15, 20], minutes: [10, 15, 20, 30], timed: [1, 2, 3], threeStar: [1, 2, 3], notes: [150, 250, 400, 600], perfect: [30, 60, 100], both: [1, 2, 3], listens: [2, 3, 5] },
+  weekly: { worlds: [5, 8, 12], bosses: [1, 2, 3], days: [4, 5, 6], mastered: [1, 2, 3], stars: [50, 75, 100], minutes: [60, 90, 120, 180], notes: [1200, 2000, 3000], perfect: [300, 500, 800], flawless: [1, 2, 3], quests: [1, 2], both: [5, 8], threeStar: [5, 8, 12] },
+  monthly: { worlds: [15, 20, 30], bosses: [3, 5, 8], days: [12, 15, 20], minutes: [300, 450, 600], mastered: [4, 6, 10], notes: [6000, 9000, 15000], perfect: [1500, 2500, 4000], flawless: [5, 8, 12], quests: [2, 3, 5], stars: [200, 300, 400], threeStar: [20, 30] },
 };
 const BASE = { daily: 18, weekly: 90, monthly: 380 };
 const KEYS = [[0, 'C major / A minor'], [1, 'G major'], [-1, 'F major'], [2, 'D major'], [-2, 'B♭ major']];

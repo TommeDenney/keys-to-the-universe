@@ -66,7 +66,7 @@ function build(page, song) {
         rewardSongStep(prev, r.stars, step.key === 'full-timed');
         track('steps');
         if (r.stars > prev) track('stars', r.stars - prev);
-        if (step.key === 'full-timed' && r.stars === 3) track('mastered');
+        if (step.key === 'full-timed' && r.stars === 5) track('mastered');
         rewardDaily(progress.streak);
       },
       actions: () => (plan[idx + 1] ? [{ label: 'Next step', primary: true, fn: () => { document.querySelectorAll('.player-host').forEach((e) => e._close()); launch(plan[idx + 1]); } }] : []),
