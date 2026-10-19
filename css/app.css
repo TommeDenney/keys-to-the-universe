@@ -1794,3 +1794,21 @@ header.top:has(> .avatar-badge) { align-items: center; }
 .shop-tabs .chip-btn { flex: none; white-space: nowrap; }
 body[data-tabpos="top"] .shop-tabs { top: calc(80px + var(--safe-t)); }
 .shop-tabs .chip-btn.on, .av-tabs .chip-btn.on { background: #7C3AED; color: #fff; box-shadow: 0 4px 12px rgba(124,58,237,.35); }
+.shop-tabs { position: relative; top: auto; --pin-top: calc(8px + var(--safe-t)); }
+.shop-tabs.pinned { position: fixed; top: calc(8px + var(--safe-t)); margin: 0; box-shadow: 0 6px 20px rgba(30,27,75,.18); }
+body[data-tabpos="top"] .shop-tabs.pinned { top: calc(80px + var(--safe-t)); }
+.page > .shop-tabs-holder { animation: none !important; transform: none !important; } /* a transform here would stop the bar pinning */
+/* Rank titles */
+.rank-line { text-transform: none; letter-spacing: .02em; }
+.rank-title { display: inline-block; padding: 1px 8px; border-radius: 99px; background: linear-gradient(135deg, #FBBF24, #F472B6); color: #1E1B4B; font-weight: 900; text-transform: uppercase; letter-spacing: .06em; font-size: 11px; }
+.rank-chip { display: inline-flex; gap: 8px; align-items: baseline; margin-top: 4px; padding: 4px 12px; border-radius: 99px; background: linear-gradient(135deg, rgba(251,191,36,.2), rgba(244,114,182,.2)); }
+.rank-chip b { font-size: 13px; } .rank-chip span { font-size: 12px; color: var(--ink-2); font-weight: 700; }
+/* Season Vault */
+.vault-shop { margin: 6px 0 20px; padding: 18px; border-radius: 24px; background: linear-gradient(135deg, #1E1B4B, #312E81); color: #F5F3FF; box-shadow: var(--shadow); }
+.vault-shop .muted { color: #C7D2FE; }
+.vault-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 12px; margin-top: 12px; }
+.vault-key { display: grid; gap: 6px; justify-items: center; text-align: center; padding: 14px; border-radius: 18px; background: rgba(255,255,255,.06); box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--ev) 60%, transparent), 0 0 18px color-mix(in srgb, var(--ev) 25%, transparent); }
+.vault-key small { color: #C7D2FE; font-weight: 700; }
+.vk-art { position: relative; width: 64px; height: 64px; display: grid; place-items: center; border-radius: 50%; background: radial-gradient(circle, color-mix(in srgb, var(--ev) 55%, #1E1B4B), #1E1B4B); }
+.vk-emoji { font-size: 32px; } .vk-keyhole { position: absolute; right: -6px; bottom: -4px; font-size: 22px; }
+.vault-key.done { opacity: .7; }

@@ -31,6 +31,8 @@ const HAIR_NAMES = [
   ['hair-spacebuns', 'Space buns', 90], ['hair-chignon', 'Low chignon', 90], ['hair-sidepony', 'Side ponytail', 80], ['hair-curtain', 'Curtain bangs', 90],
   ['hair-shag', 'Layered shag', 90], ['hair-beachwaves', 'Beach waves', 100], ['hair-mohawk', 'Mohawk', 70], ['hair-spiky', 'Spiky', 60],
   // Whimsical
+  // Composer looks
+  ['hair-powdered', 'Powdered wig (Mozart)', 120], ['hair-baroque', 'Full-bottomed wig (Bach)', 140], ['hair-maestro', 'Wild maestro hair (Beethoven)', 120], ['hair-romantic', 'Romantic waves (Chopin)', 100], ['hair-liszt', 'Virtuoso long hair (Liszt)', 100],
   ['hair-flame', 'Flame hair', 250], ['hair-nebula', 'Nebula hair', 300, { kind: 'days', goal: 15 }], ['hair-tentacles', 'Alien tendrils', 200], ['hair-crystal', 'Crystal spikes', 350, { kind: 'rogues', goal: 3 }],
 ];
 
@@ -54,7 +56,8 @@ export const AVATAR_ITEMS = [
   ...free('glasses', [['glasses-none', 'None'], ['glasses-round', 'Round glasses'], ['glasses-square', 'Square glasses']]),
   A('glasses-cateye', 'glasses', 'Cat-eye glasses', 120), A('glasses-shades', 'glasses', 'Sunglasses', 150), A('glasses-heart', 'glasses', 'Heart shades', 150),
   ...free('clothes', [['clothes-tee', 'T-shirt'], ['clothes-hoodie', 'Hoodie'], ['clothes-sweater', 'Cozy sweater'], ['clothes-collar', 'Collared shirt']]),
-  A('clothes-jacket', 'clothes', 'Denim jacket', 150), A('clothes-overalls', 'clothes', 'Overalls', 150), A('clothes-spacesuit', 'clothes', 'Space suit', 300, { kind: 'planets', goal: 10 }), A('clothes-tux', 'clothes', 'Concert tux', 350, { kind: 'life', stat: 'mastered', goal: 5 }), A('clothes-robe', 'clothes', 'Starry robe', 400, { kind: 'galaxies', goal: 3 }), A('clothes-armor', 'clothes', 'Guardian armour', 500, { kind: 'guardians', goal: 8 }),
+  A('clothes-jacket', 'clothes', 'Denim jacket', 150),
+  A('clothes-mozart', 'clothes', 'Mozart frock coat', 200), A('clothes-bach', 'clothes', 'Baroque cantor coat (Bach)', 200), A('clothes-beethoven', 'clothes', 'Romantic coat & cravat (Beethoven)', 200), A('clothes-chopin', 'clothes', 'Concert tailcoat (Chopin)', 180), A('clothes-liszt', 'clothes', 'Virtuoso velvet coat (Liszt)', 180), A('clothes-overalls', 'clothes', 'Overalls', 150), A('clothes-spacesuit', 'clothes', 'Space suit', 300, { kind: 'planets', goal: 10 }), A('clothes-tux', 'clothes', 'Concert tux', 350, { kind: 'life', stat: 'mastered', goal: 5 }), A('clothes-robe', 'clothes', 'Starry robe', 400, { kind: 'galaxies', goal: 3 }), A('clothes-armor', 'clothes', 'Guardian armour', 500, { kind: 'guardians', goal: 8 }),
   ...free('hat', [['hat-none', 'None'], ['hat-cap', 'Cap'], ['hat-beanie', 'Beanie'], ['hat-headband', 'Headband'], ['hat-headwrap', 'Head wrap'], ['hat-durag', 'Durag'], ['hat-hijab', 'Hijab'], ['hat-turban', 'Turban'], ['hat-kufi', 'Kufi'], ['hat-kippah', 'Kippah'], ['hat-keffiyeh', 'Keffiyeh']]),
   A('hat-headphones', 'hat', 'Headphones', 150), A('hat-flowers', 'hat', 'Flower crown', 150), A('hat-party', 'hat', 'Party hat', 120), A('hat-helmet', 'hat', 'Space helmet', 300, { kind: 'planets', goal: 25 }), A('hat-crown', 'hat', 'Royal crown', 600, { kind: 'boss', id: 'boss-g10' }),
 ];

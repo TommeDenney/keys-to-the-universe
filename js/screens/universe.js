@@ -28,6 +28,7 @@ import { diveInto, surfaceInto, takeReturn, flyShip } from '../transitions.js';
 import { guardianArt } from '../render/guardians.js';
 import { avatarBadge } from './avatar.js';
 import { avatar } from '../profile.js';
+import { rank } from '../rank.js';
 import { galaxyEmblem, GALAXY_KINDS } from '../render/galaxyart.js';
 import { giftReady, openDailyGift } from '../dailygift.js';
 
@@ -172,7 +173,7 @@ export function renderUniverse(root) {
 
   page.append(h('header', { class: 'top uni-top' }, [
     avatarBadge(),
-    h('div', { class: 'grow' }, [h('div', { class: 'eyebrow' }, 'Learn piano among the stars'), h('h1', { class: 'brand' }, ['Keys to the Universe', h('span', { class: 'dot' })])]),
+    h('div', { class: 'grow' }, [h('div', { class: 'eyebrow rank-line', title: rank().detail }, [h('span', { class: 'rank-title' }, rank().title), ` \u00b7 ${rank().detail}`]), h('h1', { class: 'brand' }, ['Keys to the Universe', h('span', { class: 'dot' })])]),
     h('div', { class: 'pills' }, [
       h('div', { class: 'pill flame', title: 'Day streak' }, [icon('flame'), h('b', {}, String(progress.streak))]),
       h('div', { class: 'pill stars-pill', title: 'Stars' }, [icon('star'), h('b', {}, String(progress.totalStars))]),

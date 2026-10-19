@@ -215,3 +215,12 @@ export const leavesText = (e) => new Date(e.leaves - 864e5).toLocaleDateString('
 /** Current Shop discount (Black Friday). */
 export const shopSale = (now = today()) => activeEvents(now).reduce((s, e) => Math.max(s, e.sale || 0), 0);
 export const eventOf = (it) => ev(it.event) || null;
+
+// ---- Season Vault: buy back a pack after it has left (released packs only) ------------
+/** Packs that were released and have since left the Shop. */
+export const vaultEvents = (now = today()) => EVENTS.filter((e) => e.released && now >= e.leaves);
+/** A permanent key unlocks the whole pack: 250,000, or 500,000 for big packs (9+ rares or a ship). */
+export function vaultKeyPrice(e) {
+  const items = EVENT_ITEMS.filter((i) => i.event === e.id);
+  return items.length >= 9 || items.some((i) => i.cat === 'ship') ? 500000 : 250000;
+}

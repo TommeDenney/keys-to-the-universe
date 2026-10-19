@@ -9,6 +9,7 @@ import { EVENT_ITEMS, eventItemAvailable, eventOf } from '../data/events.js';
 import { avatar, setAvatar, displayName } from '../profile.js';
 import { owns, buy, balance, walletPill, SYMBOL } from '../economy.js';
 import { reqProgress, reqText } from '../achievements.js';
+import { rank } from '../rank.js';
 
 let uidN = 0;
 const allItems = () => [...AVATAR_ITEMS, ...EVENT_ITEMS.filter((it) => it.cat === 'avatar')];
@@ -104,7 +105,7 @@ export function renderAvatar(root) {
 
   page.append(
     h('header', { class: 'top' }, [
-      h('div', {}, [h('a', { class: 'back-link', href: '#/learn' }, [icon('back'), 'Learn']), h('div', { class: 'eyebrow' }, 'Your explorer'), h('h1', {}, displayName() || 'Explorer')]),
+      h('div', {}, [h('a', { class: 'back-link', href: '#/learn' }, [icon('back'), 'Learn']), h('div', { class: 'eyebrow' }, 'Your explorer'), h('h1', {}, displayName() || 'Explorer'), h('div', { class: 'rank-chip' }, [h('b', {}, rank().title), h('span', {}, rank().detail)])]),
       walletPill('big'),
     ]),
     h('div', { class: 'av-layout' }, [

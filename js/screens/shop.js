@@ -2,7 +2,7 @@
 
 import { h, icon, toast, modal } from '../ui.js';
 import { SHOP, CATEGORIES } from '../data/shop.js';
-import { balance, owns, buy, equip, equipped, walletPill, SYMBOL, backpay, REWARD, petName, setPetName } from '../economy.js';
+import { balance, owns, buy, equip, equipped, walletPill, SYMBOL, backpay, REWARD, petName, setPetName, spend, grantItem } from '../economy.js';
 import { shipSVG } from '../render/ships.js';
 import { startAmbient, stopAmbient } from '../audio/ambient.js';
 import { stopTabAmbient } from '../audio/bgmusic.js';
@@ -16,7 +16,7 @@ import { avatarSVG } from '../render/avatar.js';
 import { avatar, setAvatar } from '../profile.js';
 import { specialBosses } from './specialboss.js';
 import { personalItemName } from '../personal.js';
-import { EVENTS, SEASON, eventItemAvailable, featuredEvent, shopSale, eventOf, today, leavesText } from '../data/events.js';
+import { EVENTS, SEASON, eventItemAvailable, featuredEvent, shopSale, eventOf, today, leavesText, vaultEvents, vaultKeyPrice } from '../data/events.js';
 
 // Exclusive items only show up when a special boss (from a personal pack) offers them.
 const offered = (id) => specialBosses().some((b) => b.reward === id);
@@ -82,6 +82,7 @@ export function renderShop(root, { inventory = false } = {}) {
       bp ? h('div', { class: 'shop-note pop' }, [h('b', {}, `+${bp} ${SYMBOL} credited!`), ` Stardust for the progress you made before the Shop opened.`]) : null,
       shopTabs(),
       seasonSection(),
+      vaultSection(),
       h('div', { class: 'all-items-head' }, [h('h2', {}, 'All items'), h('p', { class: 'muted' }, 'Everything in the Shop, all year round.')]),
       (() => {
         const all = badges();
@@ -140,9 +141,38 @@ export function renderShop(root, { inventory = false } = {}) {
     ]);
   }
 
+  /** The Season Vault: permanent keys for packs that have left the Shop. */
+  function vaultSection() {
+    const packs = vaultEvents();
+    if (!packs.length) return null;
+    return h('section', { class: 'vault-shop', id: 'shop-vault' }, [
+      h('div', { class: 'eyebrow' }, '\u{1F5DD}\uFE0F Season Vault'),
+      h('h2', {}, 'Missed a season?'),
+      h('p', { class: 'muted' }, 'A Season key unlocks every rare in a pack that has left the Shop, forever, any time of year. Keys cost far more than the pack did in season.'),
+      h('div', { class: 'vault-grid' }, packs.map((e) => {
+        const items = SHOP.filter((it) => it.event === e.id);
+        const missing = items.filter((it) => !owns(it.id));
+        const price = vaultKeyPrice(e);
+        const done = !missing.length;
+        return h('div', { class: `vault-key ${done ? 'done' : ''}`, style: { '--ev': e.tint } }, [
+          h('div', { class: 'vk-art' }, [h('span', { class: 'vk-emoji' }, e.emoji), h('span', { class: 'vk-keyhole' }, '\u{1F5DD}\uFE0F')]),
+          h('b', {}, `${e.name} key`),
+          h('small', {}, done ? 'Every rare collected \u2713' : `${missing.length} of ${items.length} rares still to unlock`),
+          done ? h('span', { class: 'badge ok' }, 'Collected') : h('button', { class: `btn ${balance() >= price ? 'primary' : 'ghost'} sm`, onclick: () => {
+            if (!confirm(`Unlock the whole ${e.name} pack (${missing.length} rares) for ${price.toLocaleString('en-US')} ${SYMBOL}?`)) return;
+            if (!spend(price)) { toast(`You need ${(price - balance()).toLocaleString('en-US')} more ${SYMBOL} for this key.`, 'bad'); return; }
+            missing.forEach((it) => grantItem(it.id));
+            toast(`\u{1F5DD}\uFE0F ${e.name} unlocked: ${missing.length} rares are yours forever!`, 'ok');
+            draw();
+          } }, [h('span', { class: 'sd' }, SYMBOL), price.toLocaleString('en-US')]),
+        ]);
+      })),
+    ]);
+  }
+
   /** Quick-jump tabs (sticky): tap to scroll to a section; the current one is highlighted. */
   function shopTabs() {
-    const tabs = [['featured', '\u2B50 Featured'], ...CATEGORIES.map((c) => [c.id, c.name])];
+    const tabs = [['featured', '\u2B50 Featured'], ...(vaultEvents().length ? [['vault', '\u{1F5DD}\uFE0F Vault']] : []), ...CATEGORIES.map((c) => [c.id, c.name])];
     const bar = h('nav', { class: 'shop-tabs av-tabs' }, tabs.map(([id, name]) => h('button', { class: 'chip-btn', 'data-tab': id, onclick: () => {
       const el = page.querySelector(`#shop-${id}`);
       if (!el) return;
@@ -150,8 +180,19 @@ export function renderShop(root, { inventory = false } = {}) {
       scroller.scrollTo({ top: el.getBoundingClientRect().top - scroller.getBoundingClientRect().top + scroller.scrollTop - 70, behavior: 'smooth' });
     } }, name)));
     // Highlight the section in view.
+    // A placeholder keeps the space; once it scrolls off the top, the bar is pinned to the screen.
+    const holder = h('div', { class: 'shop-tabs-holder' }, bar);
+    const pin = () => {
+      const r = holder.getBoundingClientRect();
+      const topGap = parseFloat(getComputedStyle(bar).getPropertyValue('--pin-top')) || 8;
+      const pinned = r.top < topGap;
+      bar.classList.toggle('pinned', pinned);
+      holder.style.height = pinned ? `${bar.offsetHeight}px` : '';
+      if (pinned) { bar.style.left = `${r.left}px`; bar.style.width = `${r.width}px`; } else { bar.style.left = ''; bar.style.width = ''; }
+    };
     const spy = () => {
-      if (!page.isConnected) { root.removeEventListener('scroll', spy); return; }
+      if (!page.isConnected) { root.removeEventListener('scroll', spy); window.removeEventListener('resize', spy); return; }
+      pin();
       let cur = tabs[0][0];
       for (const [id] of tabs) { const el = page.querySelector(`#shop-${id}`); if (el && el.getBoundingClientRect().top < 160) cur = id; }
       bar.querySelectorAll('.chip-btn').forEach((b) => b.classList.toggle('on', b.dataset.tab === cur));
@@ -159,8 +200,9 @@ export function renderShop(root, { inventory = false } = {}) {
     root.removeEventListener('scroll', root._shopSpy || (() => {}));
     root._shopSpy = spy;
     root.addEventListener('scroll', spy, { passive: true });
+    window.addEventListener('resize', spy);
     requestAnimationFrame(spy);
-    return bar;
+    return holder;
   }
 
   /** Explorer looks, split into Skin, Hair, Outfits and Face sections. */
