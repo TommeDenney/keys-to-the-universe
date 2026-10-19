@@ -1,6 +1,6 @@
-# Ivory: learn piano, free
+# Keys to the Universe: learn piano, free
 
-Ivory is a free, open-source piano course that runs in your browser. It listens to your piano through the microphone (or a MIDI / Bluetooth piano), scrolls the sheet music as you play, and turns practice into a journey through a universe of galaxies, planets and boss battles.
+Keys to the Universe is a free, open-source piano course that runs in your browser. It listens to your piano through the microphone (or a MIDI / Bluetooth piano), scrolls the sheet music as you play, and turns practice into a journey through a universe of galaxies, planets and boss battles.
 
 No account, no ads, no payments. Everything stays on your device. Made for all ages (parental discretion advised).
 
@@ -20,7 +20,7 @@ No account, no ads, no payments. Everything stays on your device. Made for all a
 - Installable as a Home Screen app and works offline. Back up and restore your progress from Settings.
 
 ## Privacy
-Ivory has no server. Microphone audio is analysed on your device and never recorded or sent anywhere. Progress, imports and private packs are stored in your browser (IndexedDB / localStorage) and in backup files you choose to save.
+Keys to the Universe has no server. Microphone audio is analysed on your device and never recorded or sent anywhere. Progress, imports and private packs are stored in your browser (IndexedDB / localStorage) and in backup files you choose to save.
 
 ## Private packs
 You can add personal content that never touches this repository: a `.ivorypack.json` file imported in **Settings › Progress › Private packs**.
@@ -45,4 +45,4 @@ The code is under the [MIT License](LICENSE). Bundled content keeps its own lice
 - Sheet music: the [Mutopia Project](https://www.mutopiaproject.org/) (Public Domain, CC BY and CC BY-SA, per piece).
 - Fonts: Nunito and Noto Music (SIL Open Font License).
 
-Ivory is an independent project and isn't affiliated with any other piano-learning app or company.
+Keys to the Universe is an independent project and isn't affiliated with any other piano-learning app or company.

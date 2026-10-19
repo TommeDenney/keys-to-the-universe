@@ -78,7 +78,7 @@ export function renderLearn(root) {
   const next = nextLesson();
 
   const header = h('header', { class: 'top' }, [
-    h('div', {}, [h('div', { class: 'eyebrow' }, greeting()), h('h1', { class: 'brand' }, ['Ivory', h('span', { class: 'dot' })])]),
+    h('div', {}, [h('div', { class: 'eyebrow' }, greeting()), h('h1', { class: 'brand' }, ['Keys to the Universe', h('span', { class: 'dot' })])]),
     h('div', { class: 'pills' }, [
       h('div', { class: 'pill flame', title: 'Day streak' }, [icon('flame'), h('b', {}, String(progress.streak))]),
       h('div', { class: 'pill stars-pill', title: 'Stars' }, [icon('star'), h('b', {}, String(progress.totalStars))]),

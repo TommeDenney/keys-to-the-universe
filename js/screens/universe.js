@@ -165,7 +165,7 @@ export function renderUniverse(root) {
   document.body.classList.add('in-universe');
 
   page.append(h('header', { class: 'top uni-top' }, [
-    h('div', {}, [h('div', { class: 'eyebrow' }, 'The Ivory Universe'), h('h1', { class: 'brand' }, ['Ivory', h('span', { class: 'dot' })])]),
+    h('div', {}, [h('div', { class: 'eyebrow' }, 'Learn piano among the stars'), h('h1', { class: 'brand' }, ['Keys to the Universe', h('span', { class: 'dot' })])]),
     h('div', { class: 'pills' }, [
       h('div', { class: 'pill flame', title: 'Day streak' }, [icon('flame'), h('b', {}, String(progress.streak))]),
       h('div', { class: 'pill stars-pill', title: 'Stars' }, [icon('star'), h('b', {}, String(progress.totalStars))]),

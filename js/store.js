@@ -202,7 +202,7 @@ export async function makeBackup() {
 }
 
 export async function restoreBackup(data) {
-  if (!data || data.app !== 'ivory' || !data.state) throw new Error('This isn\u2019t an Ivory backup file.');
+  if (!data || data.app !== 'ivory' || !data.state) throw new Error('This isn\u2019t a Keys to the Universe backup file.');
   for (const k of Object.keys(state)) delete state[k];
   Object.assign(state, { settings: {}, lessons: {}, songs: {}, streak: { day: null, count: 0 } }, data.state);
   for (const rec of data.scores || []) await library.put(rec);

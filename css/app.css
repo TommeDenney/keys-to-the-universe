@@ -1,4 +1,4 @@
-/* Ivory: design system + screens */
+/* Keys to the Universe: design system + screens */
 
 :root {
   --bg: #F5F4FB;
@@ -1547,3 +1547,10 @@ s.was { opacity: .6; margin-right: 4px; font-weight: 700; }
 .pr-title small, .pr-meta small { color: var(--ink-3, #777); font-weight: 600; }
 .pr-meta { display: grid; justify-items: end; gap: 2px; font-size: 13px; text-align: right; flex: none; max-width: 45%; }
 @media (max-width: 560px) { .piece-row { flex-direction: column; } .pr-meta { justify-items: start; text-align: left; max-width: none; } }
+/* The app name is longer than it used to be: scale it down on narrow screens. */
+.brand { font-size: clamp(26px, 4.2vw, 38px); line-height: 1.05; flex-wrap: wrap; }
+@media (max-width: 560px) {
+  header.top { flex-wrap: wrap; align-items: flex-start; }
+  .brand { font-size: 28px; }
+  header.top .pills { flex-wrap: wrap; }
+}

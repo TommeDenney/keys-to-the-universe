@@ -11,7 +11,7 @@ export async function backupNow() {
   const file = new File([blob], name, { type: 'application/json' });
   if (navigator.canShare && navigator.canShare({ files: [file] })) {
     try {
-      await navigator.share({ files: [file], title: 'Ivory backup' });
+      await navigator.share({ files: [file], title: 'Keys to the Universe backup' });
       toast('Backup ready ✓', 'ok');
       return true;
     } catch (e) {

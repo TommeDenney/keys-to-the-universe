@@ -21,24 +21,24 @@ export function renderAbout(root) {
 
   const sec = (title, ...kids) => h('section', { class: 'card about-card' }, [h('h2', {}, title), ...kids]);
   const page = h('div', { class: 'page about-page' }, [
-    h('header', { class: 'top' }, [h('div', {}, [h('a', { class: 'back-link', href: '#/settings' }, [icon('back'), 'Settings']), h('div', { class: 'eyebrow' }, 'Ivory'), h('h1', {}, 'About & credits')])]),
+    h('header', { class: 'top' }, [h('div', {}, [h('a', { class: 'back-link', href: '#/settings' }, [icon('back'), 'Settings']), h('div', { class: 'eyebrow' }, 'Keys to the Universe'), h('h1', {}, 'About & credits')])]),
 
-    sec('About Ivory',
-      h('p', {}, 'Ivory is a free, open-source piano course that runs in your browser. It listens to your piano, follows your playing on the sheet music, and turns practice into a journey through the galaxies.'),
+    sec('About Keys to the Universe',
+      h('p', {}, 'Keys to the Universe is a free, open-source piano course that runs in your browser. It listens to your piano, follows your playing on the sheet music, and turns practice into a journey through the galaxies.'),
       h('p', {}, ['The source code is public at ', link(REPO, 'github.com/TommeDenney/ivory-piano'), '. Issues and suggestions are welcome.']),
     ),
 
     sec('Disclosures',
       h('ul', { class: 'about-list' }, [
-        h('li', {}, [h('b', {}, 'For all ages. '), 'Kids often start piano young, so Ivory is made for learners of every age. It has no chat, no social features, no ads and no purchases, and it collects no personal data. Parental discretion is advised: parents and guardians should supervise younger children, especially when importing files or following links out of the app.']),
-        h('li', {}, [h('b', {}, 'Free, no ads. '), 'Ivory has no ads, no account and no in-app purchases. Stardust is earned only by playing.']),
+        h('li', {}, [h('b', {}, 'For all ages. '), 'Kids often start piano young, so Keys to the Universe is made for learners of every age. It has no chat, no social features, no ads and no purchases, and it collects no personal data. Parental discretion is advised: parents and guardians should supervise younger children, especially when importing files or following links out of the app.']),
+        h('li', {}, [h('b', {}, 'Free, no ads. '), 'Keys to the Universe has no ads, no account and no in-app purchases. Stardust is earned only by playing.']),
         h('li', {}, [h('b', {}, 'Stardust has no real-world value. '), 'It can’t be bought, sold, traded or cashed out, and seasonal items are cosmetic.']),
         h('li', {}, [h('b', {}, 'Your privacy. '), 'There is no server. Microphone audio is analysed on your device in real time and is never recorded, stored or sent anywhere. Progress, imports and private packs stay in this browser, and in backup files only if you save one.']),
         h('li', {}, [h('b', {}, 'Microphone and MIDI accuracy. '), 'Note detection works best with a MIDI or Bluetooth piano. Through the microphone it can mishear notes, especially with other sounds in the room. Calibrate it in Settings if notes are misheard.']),
-        h('li', {}, [h('b', {}, 'Not a replacement for a teacher. '), 'Ivory is a practice tool. A qualified piano teacher can help with technique, posture and avoiding strain. Take breaks, and stop if anything hurts.']),
+        h('li', {}, [h('b', {}, 'Not a replacement for a teacher. '), 'Keys to the Universe is a practice tool. A qualified piano teacher can help with technique, posture and avoiding strain. Take breaks, and stop if anything hurts.']),
         h('li', {}, [h('b', {}, 'Your imports. '), 'Only import sheet music you have the right to use (public domain, your own, or licensed to you). Imports stay on your device and are never uploaded.']),
-        h('li', {}, [h('b', {}, 'Independent project. '), 'Ivory isn’t affiliated with or endorsed by any other piano-learning app, company, TV show or musician. Holiday and awareness themes are decorative.']),
-        h('li', {}, [h('b', {}, 'Provided as is. '), 'Ivory is offered without warranty, as described in its licence.']),
+        h('li', {}, [h('b', {}, 'Independent project. '), 'Keys to the Universe isn’t affiliated with or endorsed by any other piano-learning app, company, TV show or musician. Holiday and awareness themes are decorative.']),
+        h('li', {}, [h('b', {}, 'Provided as is. '), 'Keys to the Universe is offered without warranty, as described in its licence.']),
       ]),
     ),
 
@@ -52,7 +52,7 @@ export function renderAbout(root) {
         h('li', {}, [h('b', {}, 'Piano sound: '), link('https://archive.org/details/SalamanderGrandPianoV3', 'Salamander Grand Piano'), ' by Alexander Holm, ', link(LICENSE_URLS['Creative Commons Attribution 3.0'], 'CC BY 3.0'), '.']),
         h('li', {}, [h('b', {}, 'Sheet music: '), `${pieces.length} pieces from `, link('https://www.mutopiaproject.org/', 'the Mutopia Project'), ', typeset by its volunteers (', Object.entries(counts).map(([k, v]) => `${v} ${k}`).join(', '), '). Every piece is listed below.']),
         h('li', {}, [h('b', {}, 'Fonts: '), link('https://fonts.google.com/specimen/Nunito', 'Nunito'), ' and ', link('https://fonts.google.com/noto/specimen/Noto+Music', 'Noto Music'), ', ', link('https://openfontlicense.org/', 'SIL Open Font License'), '.']),
-        h('li', {}, [h('b', {}, 'Built-in songs: '), 'traditional and public-domain melodies, with arrangements, exercises and Guardian test pieces written for Ivory.']),
+        h('li', {}, [h('b', {}, 'Built-in songs: '), 'traditional and public-domain melodies, with arrangements, exercises and Guardian test pieces written for Keys to the Universe.']),
         h('li', {}, [h('b', {}, 'Emoji: '), 'shown using your device’s own emoji font.']),
       ]),
       h('details', { class: 'about-pieces' }, [

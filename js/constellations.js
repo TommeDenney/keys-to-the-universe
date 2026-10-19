@@ -73,7 +73,7 @@ export async function traceStars(dataUrl) {
 /** Import a private pack file (.ivorypack.json). */
 export async function importPack(file) {
   const data = JSON.parse(await file.text());
-  if (!data || data.type !== 'ivory-constellations' || !Array.isArray(data.items)) throw new Error('That isn’t an Ivory constellation pack.');
+  if (!data || data.type !== 'ivory-constellations' || !Array.isArray(data.items)) throw new Error('That isn’t a constellation pack for this app.');
   const existing = new Map((await constellationsDB.all()).map((c) => [c.id, c]));
   for (const it of data.items) {
     const traced = await traceStars(it.image);

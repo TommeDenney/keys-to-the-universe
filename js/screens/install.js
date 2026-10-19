@@ -14,8 +14,8 @@ export function installCard() {
   const card = h('section', { class: 'install-card' }, [
     h('div', { class: 'install-ic' }, h('img', { src: 'icons/icon-180.png', alt: '' })),
     h('div', { class: 'grow' }, [
-      h('b', {}, 'Install Ivory on your Home Screen'),
-      h('span', {}, ['Tap the ', h('span', { class: 'share-glyph', 'aria-label': 'Share' }, icon('upload')), ' Share button in Safari, then ', h('b', {}, 'Add to Home Screen'), '. Ivory then opens full screen like a real app, and works offline.']),
+      h('b', {}, 'Install Keys to the Universe on your Home Screen'),
+      h('span', {}, ['Tap the ', h('span', { class: 'share-glyph', 'aria-label': 'Share' }, icon('upload')), ' Share button in Safari, then ', h('b', {}, 'Add to Home Screen'), '. It then opens full screen like a real app, and works offline.']),
     ]),
     h('button', { class: 'icon-btn sm', 'aria-label': 'Dismiss', onclick: () => { try { localStorage.setItem(DISMISS, '1'); } catch { /* ignore */ } card.remove(); } }, icon('close')),
   ]);

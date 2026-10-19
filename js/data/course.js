@@ -354,7 +354,7 @@ export const COURSE = [
       {
         id: 'l-g-amen', title: 'The Amen', icon: '\u271D', song: 'gospel-amen',
         steps: [
-          { t: 'learn', title: 'Switch to organ', text: 'Set your keyboard to <b>Organ</b> mode, and in Ivory\u2019s <b>Settings \u203a My keyboard\u2019s sound</b> choose <b>Organ</b> so the listener knows. Organ notes don\u2019t fade: they ring <b>exactly as long as you hold the key</b>, so hold every chord for its full length.' },
+          { t: 'learn', title: 'Switch to organ', text: 'Set your keyboard to <b>Organ</b> mode, and in the app\u2019s <b>Settings \u203a My keyboard\u2019s sound</b> choose <b>Organ</b> so the listener knows. Organ notes don\u2019t fade: they ring <b>exactly as long as you hold the key</b>, so hold every chord for its full length.' },
           { t: 'learn', title: 'IV \u2192 I: the Amen', text: 'Gospel and hymns end on the <b>\u201cAmen\u201d cadence</b>: F chord to C chord. Keep <b>C</b> on top in both chords and only two fingers move.', chords: [{ label: 'C', notes: [64, 67, 72] }, { label: 'F/C', notes: [65, 69, 72] }], keys: [64, 65, 67, 69, 72], range: [55, 79] },
           { t: 'play', title: 'The Amen, your own pace', song: 'gospel-amen', hands: 'both', mode: 'wait' },
           { t: 'play', title: 'The Amen with the beat', song: 'gospel-amen', hands: 'both', mode: 'timed', tempo: 0.85 },

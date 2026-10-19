@@ -47,7 +47,7 @@ export function midiHelp() {
       h('li', {}, ['Safari can’t talk to MIDI devices yet, so install the free ', h('a', { href: 'https://apps.apple.com/app/id953846217', target: '_blank', rel: 'noopener' }, 'Web MIDI Browser'), ' app.']),
       h('li', {}, 'Turn on Bluetooth on the piano (see its manual for the Bluetooth/function button).'),
       h('li', {}, ['In Web MIDI Browser, open this address: ', h('code', {}, url), ' ', h('button', { class: 'chip-btn', onclick: () => navigator.clipboard && navigator.clipboard.writeText(url).then(() => toast('Link copied')) }, 'Copy')]),
-      h('li', {}, 'Use the app’s Bluetooth/MIDI connect option to pair with the piano. Ivory switches to MIDI automatically when it sees it.'),
+      h('li', {}, 'Use the app’s Bluetooth/MIDI connect option to pair with the piano. The app switches to MIDI automatically when it sees it.'),
     ]),
     h('h4', {}, 'On a Mac or PC'),
     h('p', {}, 'Use Chrome or Edge. Connect with a USB cable, or pair Bluetooth MIDI (Mac: Audio MIDI Setup › Window › Show MIDI Studio › Bluetooth).'),
@@ -260,7 +260,7 @@ export function showOnboarding() {
     };
     const opt = (v, ic, title, sub) => h('button', { class: 'onb-opt', onclick: () => choose(v) }, [h('span', { class: 'onb-ic' }, icon(ic)), h('span', {}, [h('b', {}, title), h('small', {}, sub)])]);
     return [
-      h('div', { class: 'onb-hero' }, [h('h1', { class: 'brand' }, ['Ivory', h('span', { class: 'dot' })]), h('p', {}, 'Learn piano from your very first note. Play on a real piano and the app listens and follows along.')]),
+      h('div', { class: 'onb-hero' }, [h('h1', { class: 'brand' }, ['Keys to the Universe', h('span', { class: 'dot' })]), h('p', {}, 'Learn piano from your very first note. Play on a real piano and the app listens and follows along.')]),
       h('h3', {}, 'How will you play?'),
       h('div', { class: 'onb-opts' }, [
         opt('auto', 'mic', 'My piano + microphone', 'Any acoustic or digital piano. The app listens.'),

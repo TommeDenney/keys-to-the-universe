@@ -26,7 +26,7 @@ export function openCalibration(onDone) {
   let cancelled = false;
   const phase = h('div', { class: 'eyebrow' }, 'Step 1 of 2 · Pitch');
   const prompt = h('h2', {}, 'Calibrate the microphone');
-  const info = h('p', { class: 'muted' }, 'Play each highlighted key once, firmly, and let it ring. Ivory measures where your microphone hears it.');
+  const info = h('p', { class: 'muted' }, 'Play each highlighted key once, firmly, and let it ring. The app measures where your microphone hears it.');
   const status = h('p', { class: 'calib-status' }, 'Starting the microphone…');
   const dots = h('div', { class: 'calib-dots' });
   const kbEl = h('div', { class: 'calib-kb' });
@@ -78,7 +78,7 @@ export function openCalibration(onDone) {
 
     // ---- Phase 2: learn ghost notes ----
     phase.textContent = 'Step 2 of 2 · Ignore phantom notes';
-    info.textContent = 'Now play C, D, E, F, G one at a time, slowly, letting each ring for a second. Ivory learns which extra notes your piano and room create, so they’re never counted as mistakes.';
+    info.textContent = 'Now play C, D, E, F, G one at a time, slowly, letting each ring for a second. The app learns which extra notes your piano and room create, so they’re never counted as mistakes.';
     setDots(GHOST_TARGETS.length);
     const ghostCounts = new Map();
     for (let i = 0; i < GHOST_TARGETS.length && !cancelled; i++) {
