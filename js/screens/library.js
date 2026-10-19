@@ -9,6 +9,7 @@ import { spend, balance, buySong, SYMBOL, walletPill } from '../economy.js';
 import { library, progress } from '../store.js';
 import { importFile } from '../music/importer.js';
 import { practicePlan } from '../music/song.js';
+import { excerpt, snippetSVG, loadSnippets } from '../render/snippet.js';
 
 const LEVELS = ['All', 'Beginner', 'Easy', 'Intermediate', 'Advanced', 'Professional'];
 const levelName = (l, grade) => {
@@ -27,9 +28,17 @@ export const SOURCES = [
 ];
 
 let filter = { q: '', level: 'All', src: 'all' };
+let SNIPS = {};
+const liveSnips = new Map(); // imports and personal songs, worked out on this device
+function snippetFor(s) {
+  if (SNIPS[s.id] !== undefined) return SNIPS[s.id];
+  if (!liveSnips.has(s.id)) { let ex = null; try { ex = Array.isArray(s.notes) ? excerpt(s) : null; } catch { /* odd file */ } liveSnips.set(s.id, ex); }
+  return liveSnips.get(s.id);
+}
 
 export async function renderLibrary(root) {
-  const imports = await library.all();
+  const [imports, snips] = await Promise.all([library.all(), loadSnippets()]);
+  SNIPS = snips;
   const builtins = builtinSongs();
   const page = h('div', { class: 'page library' });
   root.append(page);
@@ -106,10 +115,10 @@ function songCard(s) {
   }
   const locked = !s.imported && !songUnlocked(s.id);
   const card = h('a', { class: `song-card ${locked ? 'locked' : ''}`, href: `#/song/${s.id}` }, [
-    locked ? h('span', { class: 'price-tag' }, [icon('lock'), ` ${songPrice(s)} ${SYMBOL}`]) : null,
-    h('div', { class: 'cover', style: { background: coverGradient(s.id + s.title) } }, [
-      h('span', { class: 'cover-note' }, icon('note')),
-      s.imported ? h('span', { class: 'tag light' }, 'Imported') : h('span', { class: 'tag light' }, s.grade ? `Grade ${s.grade} \u00b7 ${levelName(0, s.grade)}` : levelName(s.level)),
+    h('div', { class: 'cover has-snip', style: { '--accent': coverGradient(s.id + s.title) } }, [
+      h('div', { class: 'cover-snip', html: snippetSVG(snippetFor(s), s.id) }),
+      locked ? h('span', { class: 'price-tag' }, [icon('lock'), ` ${songPrice(s).toLocaleString('en-US')} ${SYMBOL}`]) : null,
+      s.imported ? h('span', { class: 'tag light' }, 'Imported') : h('span', { class: 'tag light' }, s.grade ? (locked ? `Grade ${s.grade}` : `Grade ${s.grade} \u00b7 ${levelName(0, s.grade)}`) : levelName(s.level)),
     ]),
     h('div', { class: 'meta' }, [
       h('b', {}, s.title),

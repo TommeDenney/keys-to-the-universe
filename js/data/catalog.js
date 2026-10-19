@@ -7,6 +7,7 @@ import { COURSE } from './course.js';
 import { parseMidiFile } from '../music/midifile.js';
 import { finalizeSong } from '../music/song.js';
 import { library } from '../store.js';
+import { registerPieces } from './shop.js';
 
 let pieces = [];
 const loaded = new Map(); // id → Song
@@ -114,6 +115,7 @@ export function loadCatalog() {
       pieces = [];
     }
     if (!pieces.length) return;
+    registerPieces(pieces);
     GRADE_UNITS.forEach((g, i) => {
       const list = pieces.filter((p) => g.grades.includes(p.grade));
       if (list.length < 2) return;

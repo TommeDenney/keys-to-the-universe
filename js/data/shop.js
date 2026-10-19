@@ -103,8 +103,24 @@ export const CATEGORIES = [
 export const IMPORT_COST = 80;
 
 /** Song prices in the Songs tab (Learn-path songs unlock for free as you reach them). */
+// Graded pieces get dearer with each grade: Grade 1 costs 500 – 1,500 and Grade 10
+// costs 10,000 – 30,000. Within a grade, longer pieces cost more.
+const gradeRank = new Map(); // piece id → 0 (shortest in its grade) … 1 (longest)
+export function registerPieces(list) {
+  const byGrade = {};
+  for (const p of list) (byGrade[p.grade] ||= []).push(p);
+  for (const ps of Object.values(byGrade)) {
+    ps.sort((a, b) => (a.notes || 0) - (b.notes || 0));
+    ps.forEach((p, i) => gradeRank.set(p.id, ps.length > 1 ? i / (ps.length - 1) : 0.5));
+  }
+}
+export function gradePrice(grade, t = 0.5) {
+  const low = 500 * 20 ** ((Math.min(10, Math.max(1, grade)) - 1) / 9);
+  return nice(low * 3 ** Math.min(1, Math.max(0, t)));
+}
+
 export function songPrice(song) {
-  if (song.grade) return 300 + song.grade * 200; // graded pieces: 500 – 2,300
+  if (song.grade) return gradePrice(song.grade, gradeRank.has(song.id) ? gradeRank.get(song.id) : 0.5);
   return [80, 150, 250, 400, 600][Math.min(4, Math.max(0, (song.level || 1) - 1))]; // built-in songs by level
 }
 

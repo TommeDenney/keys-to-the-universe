@@ -16,7 +16,7 @@ export const COLORS = {
 };
 
 // Sheet music paper themes (bought in the Shop).
-const SHEET_THEMES = {
+export const SHEET_THEMES = {
   classic: { paper: '#FFFFFF', ink: '#262340', line: '#B9B6CC', faint: '#CFCDDC' },
   parchment: { paper: '#F6ECD6', ink: '#3B2F25', line: '#C9B79A', faint: '#DCCFB6' },
   night: { paper: '#17152E', ink: '#ECEAF8', line: '#4C4874', faint: '#3B3760' },

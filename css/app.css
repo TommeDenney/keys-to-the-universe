@@ -1837,3 +1837,18 @@ body[data-tabpos="top"] .shop-tabs.pinned { top: calc(80px + var(--safe-t)); }
 p.unlock-cond { font-size: 15px; color: var(--ink-2); margin: 4px 0; }
 .song-card .buy-now { margin-top: 8px; align-self: flex-start; }
 .song-card .buy-now.armed { background: var(--good, #059669); }
+
+/* Song cards: a few bars of the song on a Shop sheet-music paper */
+.cover.has-snip { overflow: hidden; }
+.cover-snip { position: absolute; inset: 0; }
+.cover-snip .snip { width: 100%; height: 100%; display: block; }
+.cover.has-snip::after { content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 5px; background: var(--accent); }
+.cover.has-snip .tag { position: relative; z-index: 1; background: rgba(30,27,58,.78); color: #fff; }
+.song-card.locked .cover.has-snip { filter: none; }
+.cover.has-snip .price-tag { top: auto; bottom: 12px; right: 12px; }
+/* Level tag and price share the bottom of the cover */
+.cover.has-snip { gap: 8px; }
+.cover.has-snip .tag { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cover.has-snip .price-tag { position: relative; top: auto; bottom: auto; right: auto; flex: none; margin-left: auto; z-index: 1; }
+.cover.has-snip .price-tag { order: 2; }
+.cover.has-snip .tag { flex: none; }
