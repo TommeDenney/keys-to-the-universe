@@ -193,15 +193,14 @@ export function renderShop(root, { inventory = false } = {}) {
       scroller.scrollTo({ top: el.getBoundingClientRect().top - scroller.getBoundingClientRect().top + scroller.scrollTop - 70, behavior: 'smooth' });
     } }, name)));
     // Highlight the section in view.
-    // A placeholder keeps the space; once it scrolls off the top, the bar is pinned to the screen.
+    // The holder is CSS-sticky (it spans the page, so it can stick the whole way down).
+    // Sticky needs no scroll events, so it can't get stuck after a fast iPad swipe.
+    // The shadow appears only while it's stuck.
     const holder = h('div', { class: 'shop-tabs-holder' }, bar);
     const pin = () => {
       const r = holder.getBoundingClientRect();
-      const topGap = parseFloat(getComputedStyle(bar).getPropertyValue('--pin-top')) || 8;
-      const pinned = r.top < topGap;
-      bar.classList.toggle('pinned', pinned);
-      holder.style.height = pinned ? `${bar.offsetHeight}px` : '';
-      if (pinned) { bar.style.left = `${r.left}px`; bar.style.width = `${r.width}px`; } else { bar.style.left = ''; bar.style.width = ''; }
+      const top = parseFloat(getComputedStyle(holder).top) || 8;
+      bar.classList.toggle('pinned', r.top <= top + 0.5 && root.scrollTop > 0);
     };
     const spy = () => {
       if (!page.isConnected) { root.removeEventListener('scroll', spy); window.removeEventListener('resize', spy); return; }

@@ -1795,9 +1795,6 @@ header.top:has(> .avatar-badge) { align-items: center; }
 .shop-tabs .chip-btn { flex: none; white-space: nowrap; }
 body[data-tabpos="top"] .shop-tabs { top: calc(80px + var(--safe-t)); }
 .shop-tabs .chip-btn.on, .av-tabs .chip-btn.on { background: #7C3AED; color: #fff; box-shadow: 0 4px 12px rgba(124,58,237,.35); }
-.shop-tabs { position: relative; top: auto; --pin-top: calc(8px + var(--safe-t)); }
-.shop-tabs.pinned { position: fixed; top: calc(8px + var(--safe-t)); margin: 0; box-shadow: 0 6px 20px rgba(30,27,75,.18); }
-body[data-tabpos="top"] .shop-tabs.pinned { top: calc(80px + var(--safe-t)); }
 .page > .shop-tabs-holder { animation: none !important; transform: none !important; } /* a transform here would stop the bar pinning */
 /* Rank titles */
 .rank-line { text-transform: none; letter-spacing: .02em; }
@@ -1991,3 +1988,9 @@ body[data-dock="stack"]:not([data-tabpos="top"]) .nav-legend:not(.low) { bottom:
 .pet-water .bowl .aqua { position: relative; z-index: 1; width: 82%; height: 82%; margin-top: 8%; animation: aqua-swim 3.2s ease-in-out infinite; }
 @keyframes aqua-swim { 0%, 100% { transform: translate(-2px, 0) rotate(-3deg); } 50% { transform: translate(2px, -2px) rotate(3deg); } }
 @media (prefers-reduced-motion: reduce) { .pet-water .bowl .aqua { animation: none; } }
+
+/* Shop category bar: sticky (the holder spans the page, so it sticks all the way down) */
+.shop-tabs { position: relative; top: auto; transition: box-shadow .2s; }
+.page > .shop-tabs-holder { position: sticky; top: calc(8px + var(--safe-t)); z-index: 12; }
+body[data-tabpos="top"] .page > .shop-tabs-holder { top: calc(80px + var(--safe-t)); }
+.shop-tabs.pinned { box-shadow: 0 6px 20px rgba(30,27,75,.18); }
