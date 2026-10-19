@@ -1,5 +1,7 @@
 import { h, icon } from './ui.js';
 import { renderLearn } from './screens/learn.js';
+import { renderUniverse } from './screens/universe.js';
+import { renderHandbook } from './screens/handbook.js';
 import { renderLibrary } from './screens/library.js';
 import { renderSongPage } from './screens/songpage.js';
 import { renderChords } from './screens/chords.js';
@@ -49,6 +51,13 @@ async function route() {
     return;
   }
   document.querySelectorAll('.fullscreen').forEach((el) => el._close && el._close());
+  if (name === 'handbook') {
+    setActiveTab('learn');
+    main.replaceChildren();
+    main.scrollTop = 0;
+    cleanup = renderHandbook(main);
+    return;
+  }
   if (name === 'song') {
     setActiveTab('library');
     main.replaceChildren();
@@ -63,7 +72,8 @@ async function renderTab(name) {
   setActiveTab(name);
   main.replaceChildren();
   main.scrollTop = 0;
-  const r = { learn: renderLearn, library: renderLibrary, chords: renderChords, settings: renderSettings }[name];
+  const learn = settings.get('learnLayout') === 'classic' ? renderLearn : renderUniverse;
+  const r = { learn, library: renderLibrary, chords: renderChords, settings: renderSettings }[name];
   cleanup = (await r(main)) || null;
 }
 

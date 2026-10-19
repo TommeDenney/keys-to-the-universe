@@ -131,6 +131,7 @@ export function renderSettings(root) {
     ]),
     h('section', { class: 'card' }, [
       h('h3', {}, [icon('note'), 'Display']),
+      rowItem('Learn layout', 'Universe: galaxies, solar systems, planets and moons. Classic: a simple lesson path.', seg('learnLayout', [['universe', 'Universe'], ['classic', 'Classic path']])),
       rowItem('Background colour', 'Change the page background. Cards and sheet music stay the same.', h('div', { class: 'swatches' }, THEMES.map((t) => h('button', {
         class: `swatch ${settings.get('theme') === t.id ? 'on' : ''}`,
         'aria-label': `${t.name} background`,

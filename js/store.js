@@ -8,7 +8,8 @@ const DEFAULT_SETTINGS = {
   micLatency: 40,
   micPitchOffset: 0, // semitones, measured by calibration
   micGhosts: [], // phantom-note intervals learned by calibration
-  theme: 'lavender', // page background colour (see theme.js) // ms subtracted from mic onset times (timed mode judging)
+  theme: 'lavender', // page background colour (see theme.js)
+  learnLayout: 'universe', // universe | classic // ms subtracted from mic onset times (timed mode judging)
   midiLatency: 0,
   volume: 0.8, // effects + metronome
   musicVolume: 0.35, // piano sound: Listen, accompaniment, on-screen keys

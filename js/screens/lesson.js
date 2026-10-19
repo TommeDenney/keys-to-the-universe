@@ -39,6 +39,55 @@ export function expandSteps(lesson) {
   return out;
 }
 
+/**
+ * Build the visual for a "learn" card into `visual` (keyboard with hints,
+ * staff example, chord buttons, hand illustration). Shared by lessons and the
+ * Handbook. Returns { kb, ro, destroy }.
+ */
+export function learnVisual(st, visual) {
+  const out = { kb: null, ro: null };
+  if (st.img === 'hand') visual.append(handArt());
+  if (st.staff) {
+    const def = { id: 'staff', title: '', key: st.key || 0, time: st.time };
+    if (st.clef === 'bass') def.lh = st.staff; else def.rh = st.staff;
+    const song = songFromDef(def);
+    const cv = h('canvas', { class: 'mini-staff' });
+    visual.append(cv);
+    requestAnimationFrame(() => {
+      const sh = new Sheet(cv, { static: true, clef: st.clef === 'bass' ? 'bass' : 'treble' });
+      sh.setSong(song, { showNames: true });
+      sh.scroll = 0;
+      sh.draw(0);
+      out.ro = new ResizeObserver(() => { sh.resize(); sh.scroll = 0; sh.draw(0); });
+      out.ro.observe(cv);
+    });
+  }
+  const allChordNotes = (st.chords || []).flatMap((c) => c.notes);
+  if (st.keys || st.chords) {
+    const keys = st.keys || allChordNotes;
+    const [lo, hi] = st.range || rangeFor(Math.min(...keys, ...allChordNotes), Math.max(...keys, ...allChordNotes), 15);
+    const kbEl = h('div', { class: 'learn-kb' });
+    visual.append(kbEl);
+    out.kb = new Keyboard(kbEl, { lo, hi, labels: st.labels ? 'all' : 'c', onKey: (m, down) => input.touch(m, down) });
+    out.kb.setHints(new Map((st.keys || []).map((m) => [m, { hand: st.hand || 'R', finger: st.fingers ? st.fingers[m] : undefined }])));
+  }
+  if (st.chords) {
+    visual.append(h('div', { class: 'chord-btns' }, st.chords.map((c) => h('button', {
+      class: 'chip-btn',
+      onclick: () => {
+        audio.ensure();
+        c.notes.forEach((m, k) => audio.play(m, { when: audio.now + k * 0.012, dur: 1.4, velocity: 0.7 }));
+        if (out.kb) out.kb.setHints(new Map(c.notes.map((m) => [m, { hand: st.hand || 'R' }])));
+      },
+    }, [icon('ear'), c.label]))));
+  }
+  out.destroy = () => {
+    if (out.kb) out.kb.destroy();
+    if (out.ro) out.ro.disconnect();
+  };
+  return out;
+}
+
 export function openLesson(id, onClose) {
   const lesson = allLessons().find((l) => l.id === id);
   if (!lesson || !lessonUnlocked(id)) { onClose(); return; }
@@ -114,42 +163,9 @@ export function openLesson(id, onClose) {
     ]);
     body.append(h('div', { class: 'ls-center' }, card));
 
-    if (st.img === 'hand') visual.append(handArt());
-    if (st.staff) {
-      const def = { id: 'staff', title: '', key: st.key || 0, time: st.time };
-      if (st.clef === 'bass') def.lh = st.staff; else def.rh = st.staff;
-      const song = songFromDef(def);
-      const cv = h('canvas', { class: 'mini-staff' });
-      visual.append(cv);
-      requestAnimationFrame(() => {
-        const sh = new Sheet(cv, { static: true, clef: st.clef === 'bass' ? 'bass' : 'treble' });
-        sh.setSong(song, { showNames: true });
-        sh.scroll = 0;
-        sh.draw(0);
-        ro = new ResizeObserver(() => { sh.resize(); sh.scroll = 0; sh.draw(0); });
-        ro.observe(cv);
-      });
-    }
-    const allChordNotes = (st.chords || []).flatMap((c) => c.notes);
-    if (st.keys || st.chords) {
-      const keys = st.keys || allChordNotes;
-      const [lo, hi] = st.range || rangeFor(Math.min(...keys, ...allChordNotes), Math.max(...keys, ...allChordNotes), 15);
-      const kbEl = h('div', { class: 'learn-kb' });
-      visual.append(kbEl);
-      kb = new Keyboard(kbEl, { lo, hi, labels: st.labels ? 'all' : 'c', onKey: (m, down) => input.touch(m, down) });
-      const hints = new Map((st.keys || []).map((m) => [m, { hand: st.hand || 'R', finger: st.fingers ? st.fingers[m] : undefined }]));
-      kb.setHints(hints);
-    }
-    if (st.chords) {
-      visual.append(h('div', { class: 'chord-btns' }, st.chords.map((c) => h('button', {
-        class: 'chip-btn',
-        onclick: () => {
-          audio.ensure();
-          c.notes.forEach((m, k) => audio.play(m, { when: audio.now + k * 0.012, dur: 1.4, velocity: 0.7 }));
-          if (kb) kb.setHints(new Map(c.notes.map((m) => [m, { hand: st.hand || 'R' }])));
-        },
-      }, [icon('ear'), c.label]))));
-    }
+    const v = learnVisual(st, visual);
+    kb = v.kb;
+    ro = { disconnect: () => v.ro && v.ro.disconnect() }; // created a frame later
   }
 
   function showPlay(st) {

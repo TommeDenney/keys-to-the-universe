@@ -37,7 +37,7 @@ function scope() {
 
 function candidates(root) {
   return [...root.querySelectorAll(FOCUSABLE)].filter((el) => {
-    if (el.closest('.kb') || el.closest('.hidden')) return false;
+    if (el.closest('.kb') || el.closest('.hidden') || el.dataset.navSkip) return false;
     const r = el.getBoundingClientRect();
     return r.width > 0 && r.height > 0 && getComputedStyle(el).visibility !== 'hidden';
   });
@@ -46,6 +46,7 @@ function candidates(root) {
 function defaultFocus(root, list) {
   return root.querySelector('.btn.primary:not([disabled])')
     || root.querySelector('.node.current')
+    || root.querySelector('.planet.current .orb, .moon-chip.current')
     || root.querySelector('.btn.white')
     || list.find((el) => !el.closest('.tabbar'))
     || list[0];
