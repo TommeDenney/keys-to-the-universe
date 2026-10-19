@@ -109,7 +109,7 @@ export function renderShop(root, { inventory = false } = {}) {
         h('p', { class: 'muted' }, c.blurb),
         h('div', { class: 'shop-grid' }, SHOP.filter((it) => it.cat === c.id && !it.req && !it.event && (!it.exclusive || owns(it.id) || offered(it.id))).map(card)),
         SHOP.some((it) => it.cat === c.id && it.req) ? h('h3', { class: 'achv-head' }, [h('span', {}, '\u{1F3C6}'), ' Achievement rewards ', h('small', { class: 'muted' }, 'Earn the right, then buy with Stardust')]) : null,
-        h('div', { class: 'shop-grid' }, SHOP.filter((it) => it.cat === c.id && it.req).map(card)),
+        h('div', { class: 'shop-grid' }, achvOrder(SHOP.filter((it) => it.cat === c.id && it.req)).map(card)),
       ]))),
     ].filter(Boolean));
   };
@@ -170,6 +170,21 @@ export function renderShop(root, { inventory = false } = {}) {
     ]);
   }
 
+  /**
+   * Achievement rewards in a helpful order: ones you own, then ones unlocked but not
+   * bought yet, then still-locked ones (closest to unlocking first). Items without a
+   * requirement keep their place among the unlocked group.
+   */
+  function achvOrder(list) {
+    const rankOf = (it) => {
+      if (owns(it.id)) return [0, 0];
+      if (!it.req) return [1, 0];
+      const p = reqProgress(it.req);
+      return p.met ? [1, 0] : [2, -(p.value / p.goal)];
+    };
+    return list.map((it, i) => ({ it, i, r: rankOf(it) })).sort((a, b) => a.r[0] - b.r[0] || a.r[1] - b.r[1] || a.i - b.i).map((x) => x.it);
+  }
+
   /** Quick-jump tabs (sticky): tap to scroll to a section; the current one is highlighted. */
   function shopTabs() {
     const tabs = [['featured', '\u2B50 Featured'], ...(vaultEvents().length ? [['vault', '\u{1F5DD}\uFE0F Vault']] : []), ...CATEGORIES.map((c) => [c.id, c.name])];
@@ -212,7 +227,7 @@ export function renderShop(root, { inventory = false } = {}) {
     return h('section', { class: 'shop-cat', id: 'shop-avatar' }, [
       h('h2', {}, c.name), h('p', { class: 'muted' }, c.blurb),
       ...groups.map(([name, parts]) => {
-        const list = items.filter((it) => parts.includes(it.part));
+        const list = achvOrder(items.filter((it) => parts.includes(it.part)));
         if (!list.length) return null;
         return h('div', { class: 'av-shop-group' }, [h('h3', { class: 'achv-head' }, [name, h('small', { class: 'muted' }, `  ${list.length} looks`)]), h('div', { class: 'shop-grid' }, list.map(card))]);
       }),
