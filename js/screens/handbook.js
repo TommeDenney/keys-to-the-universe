@@ -7,14 +7,17 @@ import { progress, settings } from '../store.js';
 import { lessonUnlocked } from './learn.js';
 import { learnVisual } from './lesson.js';
 import { galaxyName, planetName } from './universe.js';
+import { howYouPlay } from './settings.js';
 
 let query = '';
+let playOpen = false; // the How to play dropdown stays open between visits
 
 export function renderHandbook(root) {
   const page = h('div', { class: 'page handbook' });
   root.append(page);
   const universe = settings.get('learnLayout') !== 'classic';
   const open = new Map(); // card element → visual (for cleanup)
+  let play = null; // the How to play panel while it's open
   const list = h('div', { class: 'hb-list' });
 
   const strip = (html) => html.replace(/<[^>]+>/g, '');
@@ -91,8 +94,31 @@ export function renderHandbook(root) {
       h('span', { class: 'grow' }, [h('b', {}, 'Chords'), h('small', {}, 'Build, hear and see every chord on the keyboard: majors, minors, sevenths and inversions.')]),
       icon('chevron'),
     ]),
+    howToPlay(),
     list,
   );
   draw();
-  return () => { for (const v of open.values()) v.destroy(); };
+  return () => { for (const v of open.values()) v.destroy(); if (play && play._cleanup) play._cleanup(); };
+
+  // How to play: input, mic test + calibration, MIDI / Bluetooth help. Built only
+  // while open, so the mic meter isn't running in the background.
+  function howToPlay() {
+    const body = h('div', { class: 'hb-body' });
+    const el = h('div', { class: 'hb-card hb-play' });
+    const build = () => { if (play && play._cleanup) play._cleanup(); play = howYouPlay(build); body.replaceChildren(play); };
+    const set = (isOpen) => {
+      playOpen = isOpen;
+      el.classList.toggle('open', isOpen);
+      head.setAttribute('aria-expanded', String(isOpen));
+      if (isOpen) build(); else { if (play && play._cleanup) play._cleanup(); play = null; body.replaceChildren(); }
+    };
+    const head = h('button', { class: 'hb-card-head', 'aria-expanded': 'false', onclick: () => set(!el.classList.contains('open')) }, [
+      h('span', { class: 'hb-chords-icon' }, icon('piano')),
+      h('div', { class: 'grow' }, [h('b', {}, 'How to play'), h('small', {}, 'Microphone or MIDI piano, testing and calibrating the mic, and connecting over Bluetooth.')]),
+      icon('chevron', 'hb-chev'),
+    ]);
+    el.append(head, body);
+    if (playOpen || /^#\/handbook\/play/.test(location.hash)) set(true);
+    return el;
+  }
 }

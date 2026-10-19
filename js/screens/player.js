@@ -218,7 +218,7 @@ export class Player {
   inputNotice() {
     const mode = input.mode();
     if (mode === 'midi') return h('p', { class: 'notice ok' }, [icon('piano'), 'MIDI piano connected']);
-    if (settings.get('input') === 'touch') return h('p', { class: 'notice' }, [icon('hand'), 'Using the on-screen keys (change in Settings)']);
+    if (settings.get('input') === 'touch') return h('p', { class: 'notice' }, [icon('hand'), 'Using the on-screen keys (change in Handbook › How to play)']);
     if (mic.state === 'denied') return h('p', { class: 'notice warn' }, [icon('mic'), 'Microphone blocked. Allow it in Settings › Safari › Microphone.']);
     return h('p', { class: 'notice' }, [icon('mic'), 'The app will listen to your piano through the microphone.']);
   }

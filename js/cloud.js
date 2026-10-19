@@ -53,7 +53,9 @@ export function signIn({ silent = false, remember = auth ? auth.remember : true 
   sessionStorage.setItem('ivory.oauth', JSON.stringify({ nonce, route: location.hash || '#/learn', remember, silent }));
   const q = new URLSearchParams({
     client_id: CONFIG.googleClientId, redirect_uri: redirectUri(), response_type: 'token', scope: SCOPES,
-    include_granted_scopes: 'true', state: nonce, prompt: silent ? 'none' : 'select_account',
+    include_granted_scopes: 'true', state: nonce,
+    // Ask for permission again when Drive access was left unticked last time.
+    prompt: silent ? 'none' : auth && auth.noDrive ? 'consent select_account' : 'select_account',
   });
   if (auth && auth.email) q.set('login_hint', auth.email);
   location.assign(`https://accounts.google.com/o/oauth2/v2/auth?${q}`);
@@ -114,6 +116,7 @@ function finishRedirect() {
   auth = {
     ...(auth || {}), token: p.get('access_token'), expires: Date.now() + (+p.get('expires_in') || 3600) * 1000,
     remember, rememberUntil: remember ? (auth && auth.rememberUntil > Date.now() ? auth.rememberUntil : Date.now() + REMEMBER_DAYS * 864e5) : 0, error: null,
+    noDrive: !!p.get('scope') && !p.get('scope').includes('drive.file'),
   };
   sessionStorage.setItem('ivory.session', '1');
   persist();
@@ -134,8 +137,18 @@ async function gfetch(url, opts = {}) {
   if (!tokenValid()) throw Object.assign(new Error('Reconnect to Google Drive to keep saving.'), { code: 'auth' });
   const res = await fetch(url, { ...opts, headers: { ...(opts.headers || {}), Authorization: `Bearer ${auth.token}` } });
   if (res.status === 401) { auth.expires = 0; persist(); throw Object.assign(new Error('Your Google session ended. Tap to reconnect.'), { code: 'auth' }); }
+  if (res.status === 403) throw await driveDenied(res);
   if (!res.ok) throw new Error(`Google Drive error ${res.status}`);
   return res;
+}
+/** Turn Google's 403 into something you can act on. */
+async function driveDenied(res) {
+  let reason = '';
+  try { const e = (await res.json()).error || {}; reason = [e.status, ...(e.errors || []).map((x) => x.reason), ...(e.details || []).map((d) => d.reason)].filter(Boolean).join(' '); } catch { /* not JSON */ }
+  if (/accessNotConfigured|SERVICE_DISABLED/i.test(reason)) return new Error('Google Drive isn\u2019t switched on for this app yet (the developer needs to enable the Google Drive API). Your progress is safe on this device.');
+  if (/insufficient|SCOPE/i.test(reason)) { auth.noDrive = true; auth.expires = 0; persist(); return Object.assign(new Error('The app needs permission to save to your Drive. Tap Reconnect and tick the Google Drive box.'), { code: 'auth' }); }
+  if (/rateLimit|userRateLimit|RATE_LIMIT/i.test(reason)) return new Error('Google Drive is busy. It will try again shortly.');
+  return new Error(`Google Drive error 403${reason ? ` (${reason})` : ''}`);
 }
 const q = (s) => encodeURIComponent(s);
 async function list(query) {

@@ -1816,3 +1816,18 @@ body[data-tabpos="top"] .shop-tabs.pinned { top: calc(80px + var(--safe-t)); }
 /* Privacy / terms links (Settings, sign-in) */
 .legal-links { display: flex; flex-wrap: wrap; gap: 10px; margin: -4px 0 16px; }
 .legal-note a { color: var(--brand, #6D28D9); font-weight: 700; }
+
+/* Handbook › How to play */
+.hb-play { margin: 0 0 16px; }
+.hb-play .hb-chords-icon { flex: none; width: 42px; height: 42px; border-radius: 12px; background: var(--tint, #EEF); color: var(--brand, #6D28D9); }
+.hb-play .hb-body { padding: 0 18px 18px; }
+.hb-play .how-play { display: grid; gap: 12px; }
+
+/* Settings sections fold into their headings */
+.card.fold > h3 { cursor: pointer; user-select: none; margin: 0; display: flex; align-items: center; gap: 8px; }
+.card.fold > h3 .fold-chev { margin-left: auto; color: var(--ink-3); transition: transform .3s var(--spring); }
+.card.fold.open > h3 { margin-bottom: 12px; }
+.card.fold.open > h3 .fold-chev { transform: rotate(90deg); }
+.card.fold:not(.open) > :not(h3) { display: none; }
+.card.fold.open > :not(h3) { animation: rise .35s var(--ease) both; }
+.card.fold > h3:focus-visible { outline: 3px solid var(--brand, #6D28D9); outline-offset: 4px; border-radius: 8px; }

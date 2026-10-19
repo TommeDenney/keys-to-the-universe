@@ -1,4 +1,5 @@
-// Settings: input setup (mic test, MIDI / Bluetooth piano), sound, display, progress.
+// Settings: sound, display, account, progress. (How you play, with the mic test and
+// MIDI help, lives in the Handbook: see howYouPlay.)
 
 import { h, icon, modal, toast } from '../ui.js';
 import { hasPersonalPack, personalName, validPersonalPack, installPersonalPack, removePersonalPack } from '../personal.js';
@@ -57,11 +58,12 @@ export function midiHelp() {
   ]);
 }
 
-export function renderSettings(root) {
-  const page = h('div', { class: 'page settings' });
-  root.append(page);
-
-  // --- input
+/**
+ * How you play: input, keyboard sound, mic test + calibration and MIDI help.
+ * Lives in the Handbook; `rerender` redraws it after calibrating. Returns the
+ * element with `_cleanup` (stops the meter and listeners).
+ */
+export function howYouPlay(rerender) {
   const midiStatus = h('div', { class: 'status' });
   const refreshMidi = () => {
     const names = input.midiInputs.map((i) => i.name);
@@ -95,11 +97,7 @@ export function renderSettings(root) {
   };
   loop();
 
-  const acctCard = accountCard();
-  page.append(
-    h('header', { class: 'top' }, [avatarBadge(), h('div', { class: 'grow' }, [h('div', { class: 'eyebrow rank-line' }, [h('span', { class: 'rank-title' }, rank().title), ` \u00b7 ${rank().detail}`]), h('h1', {}, 'Settings')])]),
-    h('section', { class: 'card' }, [
-      h('h3', {}, [icon('piano'), 'How you play']),
+  const el = h('div', { class: 'how-play' }, [
       rowItem('Input', 'Auto uses a MIDI piano when connected, otherwise the microphone.', seg('input', [['auto', 'Auto'], ['mic', 'Microphone'], ['touch', 'On-screen only']])),
       rowItem('My keyboard\u2019s sound', 'Set this to the mode your keyboard is in. The listener adjusts (e.g. organ notes don\u2019t fade, pads swell slowly).', seg('keyboardSound', SOUNDS.map((x) => [x.id, x.name.replace(' (bass + piano)', '')]), () => applySound())),
       h('div', { class: 'sub-card' }, [
@@ -110,8 +108,8 @@ export function renderSettings(root) {
             h('b', {}, 'Calibrate pitch'),
             h('span', {}, settings.get('micPitchOffset') ? `Correction: ${settings.get('micPitchOffset') > 0 ? '+' : ''}${settings.get('micPitchOffset')} semitones` : 'Wrong notes being detected? Play 5 keys to calibrate.'),
           ]),
-          settings.get('micPitchOffset') ? h('button', { class: 'btn ghost sm', onclick: () => { settings.set('micPitchOffset', 0); mic.setPitchOffset(0); root.replaceChildren(); renderSettings(root); } }, 'Reset') : null,
-          h('button', { class: 'btn primary sm', onclick: () => openCalibration(() => { root.replaceChildren(); renderSettings(root); }) }, 'Calibrate'),
+          settings.get('micPitchOffset') ? h('button', { class: 'btn ghost sm', onclick: () => { settings.set('micPitchOffset', 0); mic.setPitchOffset(0); rerender(); } }, 'Reset') : null,
+          h('button', { class: 'btn primary sm', onclick: () => openCalibration(() => { rerender(); }) }, 'Calibrate'),
         ]),
         h('label', { class: 'field' }, [h('span', {}, 'Sensitivity'), ...slider('micSensitivity', 0, 1, 0.05, (v) => (v < 0.35 ? 'Strict' : v > 0.65 ? 'Sensitive' : 'Normal'), (v) => mic.setSensitivity(v))]),
         h('label', { class: 'field' }, [h('span', {}, 'Timing compensation'), ...slider('micLatency', 0, 150, 5, (v) => `${v} ms`)]),
@@ -121,7 +119,54 @@ export function renderSettings(root) {
         h('div', { class: 'sub-head' }, [h('b', {}, 'MIDI / Bluetooth piano'), midiStatus]),
         midiHelp(),
       ]),
-    ]),
+      h('p', { class: 'muted small' }, 'No piano? On a computer keyboard, A W S E D F T G Y H U J K play C to C (Z / X change octave).'),
+    ]);
+  el._cleanup = () => { cancelAnimationFrame(raf); unsub(); offMic(); };
+  return el;
+}
+
+// Each Settings section folds into its heading. Open ones stay open while the app
+// is running. Works on cards that redraw themselves (Account) too.
+const openSections = new Set();
+function foldSections(page) {
+  const cards = [...page.querySelectorAll(':scope > section.card')];
+  const name = (card) => { const t = card.querySelector(':scope > h3'); return t ? t.textContent.trim() : ''; };
+  const tag = (card) => {
+    const t = card.querySelector(':scope > h3');
+    if (!t || t.dataset.fold) return;
+    t.dataset.fold = '1';
+    Object.assign(t, { tabIndex: 0 });
+    t.setAttribute('role', 'button');
+    t.setAttribute('aria-expanded', String(card.classList.contains('open')));
+    t.append(icon('chevron', 'fold-chev'));
+  };
+  const set = (card, on) => {
+    card.classList.toggle('open', on);
+    if (on) openSections.add(name(card)); else openSections.delete(name(card));
+    const t = card.querySelector(':scope > h3');
+    if (t) t.setAttribute('aria-expanded', String(on));
+  };
+  const observers = cards.map((card) => {
+    card.classList.add('fold');
+    if (openSections.has(name(card))) card.classList.add('open');
+    tag(card);
+    const hit = (e) => e.target.closest('h3') && e.target.closest('h3').parentNode === card;
+    card.addEventListener('click', (e) => { if (hit(e)) set(card, !card.classList.contains('open')); });
+    card.addEventListener('keydown', (e) => { if (hit(e) && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); set(card, !card.classList.contains('open')); } });
+    const mo = new MutationObserver(() => tag(card));
+    mo.observe(card, { childList: true });
+    return mo;
+  });
+  return () => observers.forEach((mo) => mo.disconnect());
+}
+
+export function renderSettings(root) {
+  const page = h('div', { class: 'page settings' });
+  root.append(page);
+
+  const acctCard = accountCard();
+  page.append(
+    h('header', { class: 'top' }, [avatarBadge(), h('div', { class: 'grow' }, [h('div', { class: 'eyebrow rank-line' }, [h('span', { class: 'rank-title' }, rank().title), ` \u00b7 ${rank().detail}`]), h('h1', {}, 'Settings')])]),
     h('section', { class: 'card' }, [
       h('h3', {}, [icon('hand'), 'Piano-key navigation']),
       rowItem('Navigate with your piano', 'Keep your hands on the keys: menus respond to the white keys around Middle C. (Arrow keys, Enter and Esc work too.)', toggle('pianoNav')),
@@ -163,6 +208,11 @@ export function renderSettings(root) {
         h('div', { class: 'row' }, [h('button', { class: 'btn ghost', onclick: close }, 'Cancel'), h('button', { class: 'btn primary danger', onclick: () => { progress.reset(); close(); toast('Progress reset'); } }, 'Reset')]),
       ]) }, 'Reset')),
     ]),
+    h('a', { class: 'about-link', href: '#/handbook/play' }, [
+      h('span', { class: 'about-link-icon' }, icon('piano')),
+      h('span', { class: 'grow' }, [h('b', {}, 'Microphone & MIDI piano'), h('small', {}, 'Input, mic test and calibration, and connecting over Bluetooth are in Handbook › How to play.')]),
+      icon('chevron'),
+    ]),
     h('a', { class: 'about-link', href: '#/about' }, [
       h('span', { class: 'about-link-icon' }, icon('info')),
       h('span', { class: 'grow' }, [h('b', {}, 'About, credits & licences'), h('small', {}, 'Privacy, disclosures, the MIT licence, and credits for every piece of music and sound.')]),
@@ -172,12 +222,10 @@ export function renderSettings(root) {
       h('a', { class: 'btn ghost sm', href: 'privacy.html', target: '_blank', rel: 'noopener' }, 'Privacy Policy'),
       h('a', { class: 'btn ghost sm', href: 'terms.html', target: '_blank', rel: 'noopener' }, 'Terms of Service'),
     ]),
-    h('section', { class: 'about' }, [
-      h('p', {}, 'Computer keyboard: A W S E D F T G Y H U J K play C to C (Z / X change octave).'),
-    ]),
   );
   if (acctCard) page.insertBefore(acctCard, page.children[1] || null); // right under the header
-  return () => { cancelAnimationFrame(raf); unsub(); offMic(); if (acctCard && acctCard._cleanup) acctCard._cleanup(); };
+  const offFold = foldSections(page);
+  return () => { offFold(); if (acctCard && acctCard._cleanup) acctCard._cleanup(); };
 }
 
 function constellationRow() {

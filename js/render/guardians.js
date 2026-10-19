@@ -32,9 +32,9 @@ const P = {
 
 // Each Guardian: an explorer look + props. A wide mix of people (and a few non-humans).
 const G = {
-  'boss-u1': [A({ skin: 'skin-chestnut', hair: 'hair-locs', clothes: 'clothes-robe', clothesColor: '#1D4ED8', eyes: 'eyes-glow', expr: 'expr-calm', bg: '#1E3A8A' }), P.key],
+  'boss-u1': [A({ skin: 'skin-honey', hair: 'hair-bigafro', hairColor: '#3B2416', facial: 'facial-fullbeard', clothes: 'clothes-sweater', clothesColor: '#0284C7', expr: 'expr-grin', bg: '#0C4A6E' }), P.key],
   'boss-u2': [A({ skin: 'skin-cocoa', hair: 'hair-highpuff', hairColor: '#2B1A12', clothes: 'clothes-robe', clothesColor: '#7C3AED', eyes: 'eyes-lashes', expr: 'expr-smirk', bg: '#4C1D95' }), P.starCrown],
-  'boss-u3': [A({ skin: 'skin-honey', hair: 'hair-bigafro', hairColor: '#3B2416', facial: 'facial-fullbeard', clothes: 'clothes-sweater', clothesColor: '#0284C7', expr: 'expr-grin', bg: '#0C4A6E' })],
+  'boss-u3': [A({ skin: 'skin-chestnut', hair: 'hair-locs', clothes: 'clothes-robe', clothesColor: '#1D4ED8', eyes: 'eyes-glow', expr: 'expr-calm', bg: '#1E3A8A' })],
   'boss-u4': [A({ skin: 'skin-ebony', hair: 'hair-hightop', facial: 'facial-goatee', glasses: 'glasses-shades', clothes: 'clothes-tux', expr: 'expr-smirk', bg: '#3B0764' }), P.bassHorns],
   'boss-u5': [A({ skin: 'skin-amber', hair: 'hair-cornrows', clothes: 'clothes-armor', expr: 'expr-determined', bg: '#064E3B' }), P.twinShields],
   'boss-u6': [A({ skin: 'skin-sienna', hair: 'hair-mohawk', hairColor: '#7C3AED', facial: 'facial-beard', eyes: 'eyes-visor', clothes: 'clothes-armor', expr: 'expr-determined', bg: '#111827' }), P.chromaShield],
