@@ -3,7 +3,7 @@
 import { h, icon } from '../ui.js';
 import { catalogPieces } from '../data/catalog.js';
 
-const REPO = 'https://github.com/TommeDenney/ivory-piano';
+const REPO = 'https://github.com/TommeDenney/keys-to-the-universe';
 const LICENSE_URLS = {
   'Public Domain': 'https://creativecommons.org/publicdomain/mark/1.0/',
   'Creative Commons Attribution 3.0': 'https://creativecommons.org/licenses/by/3.0/',
@@ -25,7 +25,7 @@ export function renderAbout(root) {
 
     sec('About Keys to the Universe',
       h('p', {}, 'Keys to the Universe is a free, open-source piano course that runs in your browser. It listens to your piano, follows your playing on the sheet music, and turns practice into a journey through the galaxies.'),
-      h('p', {}, ['The source code is public at ', link(REPO, 'github.com/TommeDenney/ivory-piano'), '. Issues and suggestions are welcome.']),
+      h('p', {}, ['The source code is public at ', link(REPO, 'github.com/TommeDenney/keys-to-the-universe'), '. Issues and suggestions are welcome.']),
     ),
 
     sec('Disclosures',

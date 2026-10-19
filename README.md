@@ -4,7 +4,7 @@ Keys to the Universe is a free, open-source piano course that runs in your brows
 
 No ads, no payments, and no account needed. Signing in with Google is optional and saves your progress to your own Google Drive. Made for all ages (parental discretion advised).
 
-**Open it:** https://tommedenney.github.io/ivory-piano/
+**Open it:** https://tommedenney.github.io/keys-to-the-universe/
 
 ## Features
 - **A guided course from your first note:** C-D-E → F-G → A-B → left hand → hands together → sharps & flats → chords → gospel organ → classics. Each lesson mixes short explanations with "own pace" and "with the beat" practice.

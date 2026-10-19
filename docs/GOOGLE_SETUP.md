@@ -15,8 +15,8 @@ Keys to the Universe signs in with Google and saves progress to the player's own
 2. User type: **External**.
 3. App name: **Keys to the Universe**. User support email: your email. App logo: optional.
 4. App domain:
-   - Home page: `https://tommedenney.github.io/ivory-piano/`
-   - Privacy policy: `https://tommedenney.github.io/ivory-piano/#/about`
+   - Home page: `https://tommedenney.github.io/keys-to-the-universe/`
+   - Privacy policy: `https://tommedenney.github.io/keys-to-the-universe/#/about`
 5. Developer contact: your email.
 6. **Scopes / Data access:** add `openid`, `.../auth/userinfo.email`, `.../auth/userinfo.profile` and `.../auth/drive.file`. All four are non-sensitive, so no security review is needed.
 7. **Audience:** while it says *Testing*, only the test users you add can sign in (up to 100). Add yourself and anyone testing. When you're ready for everyone, click **Publish app**.
@@ -28,7 +28,7 @@ Keys to the Universe signs in with Google and saves progress to the player's own
    - `https://tommedenney.github.io`
    - `http://localhost:8765` (for testing on your Mac)
 4. **Authorized redirect URIs**, exactly:
-   - `https://tommedenney.github.io/ivory-piano/`
+   - `https://tommedenney.github.io/keys-to-the-universe/`
    - `http://localhost:8765/`
 5. Create, then copy the **Client ID** (it ends in `.apps.googleusercontent.com`).
 
