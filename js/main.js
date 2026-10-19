@@ -10,6 +10,9 @@ import { audio } from './audio/engine.js';
 import { input } from './input/hub.js';
 import { mic } from './input/mic.js';
 import { initPianoNav } from './nav.js';
+import { applyTheme } from './theme.js';
+
+applyTheme();
 
 const TABS = [
   { id: 'learn', label: 'Learn', icon: 'learn' },

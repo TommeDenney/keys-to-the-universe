@@ -6,7 +6,8 @@ const DEFAULT_SETTINGS = {
   input: 'auto', // auto | mic | touch
   micSensitivity: 0.5,
   micLatency: 40,
-  micPitchOffset: 0, // semitones, measured by calibration // ms subtracted from mic onset times (timed mode judging)
+  micPitchOffset: 0, // semitones, measured by calibration
+  theme: 'lavender', // page background colour (see theme.js) // ms subtracted from mic onset times (timed mode judging)
   midiLatency: 0,
   volume: 0.8,
   metronome: true,

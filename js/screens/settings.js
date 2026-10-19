@@ -8,6 +8,7 @@ import { audio } from '../audio/engine.js';
 import { noteName } from '../music/theory.js';
 import { NAV_KEYS } from '../nav.js';
 import { openCalibration } from './calibrate.js';
+import { THEMES, applyTheme } from '../theme.js';
 
 function seg(key, opts, after) {
   return h('div', { class: 'seg' }, opts.map(([v, l]) => h('button', {
@@ -126,6 +127,15 @@ export function renderSettings(root) {
     ]),
     h('section', { class: 'card' }, [
       h('h3', {}, [icon('note'), 'Display']),
+      rowItem('Background colour', 'Change the page background. Cards and sheet music stay the same.', h('div', { class: 'swatches' }, THEMES.map((t) => h('button', {
+        class: `swatch ${settings.get('theme') === t.id ? 'on' : ''}`,
+        'aria-label': `${t.name} background`,
+        onclick: (e) => {
+          settings.set('theme', t.id);
+          applyTheme(t.id);
+          e.currentTarget.parentNode.querySelectorAll('.swatch').forEach((b) => b.classList.toggle('on', b === e.currentTarget));
+        },
+      }, [h('i', { style: { background: t.bg } }), t.name])))),
       rowItem('Note names on notes', 'Auto: shown early in the course, hidden when you’re learning to read.', seg('noteNames', [['auto', 'Auto'], ['always', 'Always'], ['never', 'Never']])),
       rowItem('Keyboard hints', 'Highlight the next keys to play.', toggle('keyHints')),
       rowItem('Key labels', null, seg('keyLabels', [['c', 'C only'], ['all', 'All'], ['none', 'None']])),
