@@ -34,11 +34,14 @@ import { touch as touchChallenges } from './challenges.js';
 import { loadConstellations } from './constellations.js';
 import { mountMusicBar } from './screens/musicbar.js';
 import { registerPackPets } from './packpets.js';
+import { mountDock } from './screens/dock.js';
+import { watchFocus } from './focus.js';
 import { state as bgState, stopTabAmbient } from './audio/bgmusic.js';
 
 applyTheme();
 document.body.dataset.tabpos = settings.get('tabBar') || 'bottom';
 registerPackPets();
+watchFocus();
 applyCosmetics();
 touchChallenges();
 
@@ -171,6 +174,7 @@ Promise.all([loadCatalog(), loadConstellations(), accountReady]).then(async ([, 
   if (acct && acct.status === 'renewing') return; // off to Google for a moment; we'll be right back
   route();
   mountMusicBar();
+  mountDock();
   initAchievements({ toast, items: () => SHOP });
   onWallet(() => checkAchievements());
   checkAchievements();

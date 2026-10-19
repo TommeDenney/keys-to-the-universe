@@ -84,13 +84,23 @@ function today() {
   return `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`;
 }
 
-function touchStreak() {
+const yesterdayKey = () => { const y = new Date(Date.now() - 86400000); return `${y.getFullYear()}-${y.getMonth() + 1}-${y.getDate()}`; };
+// Saves from before: the streak counted any day you practised.
+if (state.streak && state.streak.day && !state.streak.lastActive) Object.assign(state.streak, { lastActive: state.streak.day, lastGain: state.streak.day });
+
+/**
+ * The daily streak grows only on days you finish every daily challenge. Finishing
+ * some (not all) keeps it alive without growing it; a day with none resets it.
+ * Called by the challenges whenever a daily challenge is completed.
+ */
+export function streakDay(allDone) {
   const t = today();
-  if (state.streak.day === t) return;
-  const y = new Date(Date.now() - 86400000);
-  const yesterday = `${y.getFullYear()}-${y.getMonth() + 1}-${y.getDate()}`;
-  state.streak.count = state.streak.day === yesterday ? state.streak.count + 1 : 1;
-  state.streak.day = t;
+  const s = state.streak;
+  if (s.lastActive !== t && s.lastActive !== yesterdayKey()) s.count = 0; // missed a day
+  s.lastActive = t;
+  if (allDone && s.lastGain !== t) { s.count++; s.lastGain = t; }
+  save();
+  return s.count;
 }
 
 export const progress = {
@@ -111,7 +121,6 @@ export const progress = {
     const prev = state.lessons[id];
     state.lessons[id] = { stars: Math.max(stars, prev ? prev.stars : 0), done: true, at: Date.now() };
     state.justCompleted = { id, at: Date.now() };
-    touchStreak();
     changed();
     return prev ? prev.stars : 0;
   },
@@ -159,15 +168,16 @@ export const progress = {
     const s = (state.songs[songId] ||= {});
     const prev = s[key] || 0;
     s[key] = Math.max(prev, stars);
-    touchStreak();
     changed();
     return prev;
   },
   get streak() {
-    const t = today();
-    const y = new Date(Date.now() - 86400000);
-    const yesterday = `${y.getFullYear()}-${y.getMonth() + 1}-${y.getDate()}`;
-    return state.streak.day === t || state.streak.day === yesterday ? state.streak.count : 0;
+    const s = state.streak;
+    return s.lastActive === today() || s.lastActive === yesterdayKey() ? s.count || 0 : 0;
+  },
+  /** Did today's challenges already grow the streak? */
+  get streakGrewToday() {
+    return state.streak.lastGain === today();
   },
   get totalStars() {
     return Object.values(state.lessons).reduce((a, l) => a + (l.stars || 0), 0);
@@ -175,7 +185,7 @@ export const progress = {
   reset() {
     state.lessons = {};
     state.songs = {};
-    state.streak = { day: null, count: 0 };
+    state.streak = { count: 0, lastActive: null, lastGain: null };
     changed();
   },
 };

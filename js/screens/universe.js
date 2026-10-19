@@ -172,12 +172,9 @@ export function renderUniverse(root) {
   document.body.classList.add('in-universe');
 
   page.append(h('header', { class: 'top uni-top' }, [
-    avatarBadge(),
     h('div', { class: 'grow' }, [h('div', { class: 'eyebrow rank-line', title: rank().detail }, [h('span', { class: 'rank-title' }, rank().title), ` \u00b7 ${rank().detail}`]), h('h1', { class: 'brand' }, ['Keys to the Universe', h('span', { class: 'dot' })])]),
     h('div', { class: 'pills' }, [
-      h('div', { class: 'pill flame', title: 'Day streak' }, [icon('flame'), h('b', {}, String(progress.streak))]),
-      h('div', { class: 'pill stars-pill', title: 'Stars' }, [icon('star'), h('b', {}, String(progress.totalStars))]),
-      walletPill(),
+      h('div', { class: 'pill flame', title: 'Day streak: finish every daily challenge to grow it' }, [icon('flame'), h('b', {}, String(progress.streak))]),
       giftReady() ? h('button', { class: 'pill gift-pill', title: 'Your daily gift is ready', onclick: (e) => openDailyGift(() => e.target.closest('.gift-pill')?.remove()) }, [h('span', {}, '\u{1F381}'), h('b', {}, 'Gift')]) : null,
       h('a', { class: 'pill hb-pill', href: '#/handbook', title: 'Handbook: every lesson explanation' }, [icon('book'), h('b', {}, 'Handbook')]),
       h('a', { class: 'pill inv-pill', href: '#/arcade', title: 'Arcade: Endless, Boss Rush, Battle and mini games' }, [h('span', { class: 'inv-ico' }, '\u{1F579}\uFE0F'), h('b', {}, 'Arcade')]),
@@ -323,20 +320,9 @@ export function renderUniverse(root) {
   ro.observe(page);
 
   const cosmos = new Cosmos(canvas, root, sections);
-  // Stars and Stardust follow you down the map once the header scrolls away.
-  const hud = h('div', { class: 'uni-hud' }, [
-    avatarBadge(40),
-    h('div', { class: 'pill stars-pill', title: 'Stars' }, [icon('star'), h('b', {}, String(progress.totalStars))]),
-    walletPill(),
-  ]);
-  wrap.append(hud);
-  const onScroll = () => hud.classList.toggle('show', root.scrollTop > 120);
-  root.addEventListener('scroll', onScroll, { passive: true });
-  onScroll();
   return () => {
     cosmos.destroy();
     ro.disconnect();
-    root.removeEventListener('scroll', onScroll);
     document.body.classList.remove('in-universe');
   };
 }

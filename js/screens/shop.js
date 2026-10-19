@@ -57,7 +57,6 @@ export function renderShop(root, { inventory = false } = {}) {
   const inventoryPage = () => [
     h('header', { class: 'top' }, [
       h('div', {}, [h('a', { class: 'back-link', href: '#/shop' }, [icon('back'), 'Shop']), h('div', { class: 'eyebrow' }, `${ownedCount()} items`), h('h1', {}, 'Inventory')]),
-      walletPill('big'),
     ]),
     ...CATEGORIES.map((c) => {
       const mine = SHOP.filter((it) => it.cat === c.id && owns(it.id));
@@ -76,7 +75,6 @@ export function renderShop(root, { inventory = false } = {}) {
         h('div', {}, [h('div', { class: 'eyebrow' }, 'Spend your Stardust'), h('h1', {}, 'Shop')]),
         h('div', { class: 'shop-top-actions' }, [
           h('a', { class: 'btn ghost inv-btn', href: '#/inventory' }, ['\u{1F392} Inventory ', h('span', { class: 'badge' }, String(ownedCount()))]),
-          walletPill('big'),
         ]),
       ]),
       bp ? h('div', { class: 'shop-note pop' }, [h('b', {}, `+${bp} ${SYMBOL} credited!`), ` Stardust for the progress you made before the Shop opened.`]) : null,

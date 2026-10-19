@@ -16,14 +16,16 @@ const emit = () => listeners.forEach((f) => f(state()));
 
 let cur = null; // { id, title, song, t0, idx, timer, scheduled }
 let paused = true;
-let held = false; // paused by a lesson/player
+const holds = new Set(); // what's pausing the music for now: 'player', 'listen', 'sound'…
+const isHeld = () => holds.size > 0;
+export const holdReasons = () => [...holds]; // for checks
 let queue = [];
 
 export const playlist = () => settings.get('bgPlaylist') || [];
 export const setPlaylist = (ids) => { settings.set('bgPlaylist', [...new Set(ids)]); queue = []; emit(); };
 export const shuffleOn = () => settings.get('bgShuffle') !== false;
 export const setShuffle = (v) => { settings.set('bgShuffle', v); queue = []; emit(); };
-export const state = () => ({ playing: !paused && !held && !!cur, amb: !!(cur && cur.amb), title: cur ? cur.title : null, hasList: playlist().length > 0, shuffle: shuffleOn() });
+export const state = () => ({ playing: !paused && !isHeld() && !!cur, held: !paused && isHeld() && !!cur, amb: !!(cur && cur.amb), title: cur ? cur.title : null, hasList: playlist().length > 0, shuffle: shuffleOn() });
 /** Stop the Learn-tab ambience, unless an ambience is playing as background music. */
 export function stopTabAmbient() {
   if (!(state().playing && state().amb)) stopAmbient();
@@ -118,7 +120,7 @@ function resume() {
 
 export function play() {
   paused = false;
-  if (held) return emit();
+  if (isHeld()) return emit();
   if (cur && cur.pausedAt != null) resume();
   else if (!cur || audio.now > cur.end) { const id = nextId(); if (id) startSong(id); }
   emit();
@@ -137,16 +139,27 @@ export function skip() {
 
 export const toggle = () => (state().playing ? pause() : play());
 
-/** Lessons/players call these so practice is never drowned out. */
-export function hold() {
-  if (held) return;
-  held = true;
-  suspend();
-  emit();
+/**
+ * Pause the music while something else needs the sound: practising (the player),
+ * listening for your notes (mic test, Knowledge Check, mini games) or another app
+ * sound (Listen, chord demos, previews). It carries on when the last one is done.
+ */
+export function hold(reason = 'player') {
+  const was = isHeld();
+  holds.add(reason);
+  if (!was) { suspend(); emit(); }
 }
-export function release() {
-  if (!held) return;
-  held = false;
+export function release(reason = 'player') {
+  if (!holds.delete(reason) || isHeld()) return;
   if (!paused) play();
   else emit();
 }
+// Other app sounds (anything played straight through the engine) pause the music
+// for a moment; it resumes a few seconds after they stop.
+let soundT = 0;
+audio.onPlay(() => {
+  if (paused || !cur) return;
+  hold('sound');
+  clearTimeout(soundT);
+  soundT = setTimeout(() => release('sound'), 3500);
+});

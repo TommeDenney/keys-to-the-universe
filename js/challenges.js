@@ -2,7 +2,7 @@
 // pool (deterministically, so they're stable within the period), tracks
 // progress from what you play, and pays Stardust automatically when a goal is met.
 
-import { getState, saveState } from './store.js';
+import { getState, saveState, progress, streakDay } from './store.js';
 import { earn, SYMBOL } from './economy.js';
 import { toast } from './ui.js';
 import { bumpLifetime, checkAchievements } from './achievements.js';
@@ -174,6 +174,12 @@ function checkComplete() {
       saveState();
       earn(ch.reward, `${PERIODS.find((x) => x.id === p).name} challenge`);
       toast(`${PERIODS.find((x) => x.id === p).name} challenge complete: ${ch.text} (+${ch.reward} ${SYMBOL})`, 'ok');
+      if (p === 'daily') {
+        const allDone = current('daily').every((x) => x.done);
+        const grew = allDone && !progress.streakGrewToday;
+        const n = streakDay(allDone);
+        if (grew) toast(`\u{1F525} Every daily challenge done! Your streak is now ${n} day${n === 1 ? '' : 's'}.`, 'ok');
+      }
     }
   }
 }

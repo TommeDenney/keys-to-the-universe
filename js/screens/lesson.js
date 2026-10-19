@@ -1,5 +1,6 @@
 // Lesson runner: a sequence of "learn" cards and practice steps.
 
+import { hold as holdBg, release as releaseBg } from '../audio/bgmusic.js';
 import { h, icon, starsHTML, toast } from '../ui.js';
 import { markReturn } from '../transitions.js';
 import { guardianArt } from '../render/guardians.js';
@@ -140,7 +141,7 @@ export async function openLesson(id, onClose) {
     if (player) { player.destroy(); player = null; }
     if (kb) { kb.destroy(); kb = null; }
     if (ro) { ro.disconnect(); ro = null; }
-    if (quizOff) { quizOff(); quizOff = null; }
+    if (quizOff) { quizOff(); quizOff = null; releaseBg('listen'); }
   }
 
   let finished = false; // completed this world in this visit (the map flies you onward)
@@ -266,6 +267,7 @@ export async function openLesson(id, onClose) {
         requestAnimationFrame(() => { kb = new Keyboard(kbEl, { lo, hi, labels: 'c', onKey: (m, down) => input.touch(m, down) }); });
         const held = new Map();
         let misses = 0;
+        holdBg('listen');
         quizOff = input.on((type, e) => {
           if (type !== 'noteon' || answered) return;
           const k = q.any ? e.midi % 12 : e.midi;

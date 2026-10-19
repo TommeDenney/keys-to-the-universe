@@ -80,7 +80,7 @@ export async function renderLibrary(root) {
   };
 
   page.append(
-    h('header', { class: 'top' }, [h('div', {}, [h('div', { class: 'eyebrow' }, 'Library'), h('h1', {}, 'Songs')]), walletPill('big')]),
+    h('header', { class: 'top' }, [h('div', {}, [h('div', { class: 'eyebrow' }, 'Library'), h('h1', {}, 'Songs')])]),
     h('section', { class: 'import-card' }, [
       h('div', { class: 'import-icon' }, icon('upload')),
       h('div', { class: 'grow' }, [

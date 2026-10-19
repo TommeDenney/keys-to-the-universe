@@ -99,7 +99,11 @@ class AudioEngine {
     return this.voice || 'piano';
   }
 
+  /** Called whenever the app plays a sound directly (not scheduled music). */
+  onPlay(fn) { (this.playSubs ||= new Set()).add(fn); return () => this.playSubs.delete(fn); }
+
   play(midi, { when = 0, dur, velocity = 0.8, key, voice, hand } = {}) {
+    if (!this.inSchedule && this.playSubs) this.playSubs.forEach((f) => f());
     const ctx = this.ensure();
     const t = Math.max(when || 0, ctx.currentTime);
     const v = voice || this.voiceFor(hand || (midi < 60 ? 'L' : 'R'));
@@ -248,7 +252,9 @@ class AudioEngine {
 
   /** Schedule a note that can be cancelled by stopAll(). */
   schedule(midi, when, dur, velocity = 0.7, hand) {
-    const v = this.play(midi, { when, dur, velocity, hand });
+    this.inSchedule = true;
+    let v;
+    try { v = this.play(midi, { when, dur, velocity, hand }); } finally { this.inSchedule = false; }
     (this.scheduled ||= []).push(v);
     if (this.scheduled.length > 200) this.scheduled.splice(0, 100);
     return v;

@@ -48,21 +48,20 @@ export async function openPlaylist() {
   });
 }
 
+/** The bar: the song's name (tap it for the music settings), play/pause and skip. */
 export function mountMusicBar() {
   const title = h('span', { class: 'mb-title' }, 'Background music');
+  const name = h('button', { class: 'mb-name', 'aria-label': 'Music settings', title: 'Music settings', onclick: openPlaylist }, [h('span', { class: 'mb-eq' }, [h('i'), h('i'), h('i')]), title]);
   const playBtn = h('button', { class: 'mb-btn', 'aria-label': 'Play or pause', onclick: () => { if (!playlist().length) openPlaylist(); else toggle(); } }, icon('play'));
   const nextBtn = h('button', { class: 'mb-btn', 'aria-label': 'Next song', onclick: () => skip() }, icon('chevron'));
-  const shufBtn = h('button', { class: 'mb-btn shuf', 'aria-label': 'Shuffle', onclick: () => setShuffle(!shuffleOn()) }, h('span', {}, '⇄'));
-  const listBtn = h('button', { class: 'mb-btn', 'aria-label': 'Playlist', onclick: openPlaylist }, icon('library'));
-  const bar = h('div', { class: 'musicbar' }, [h('span', { class: 'mb-eq' }, [h('i'), h('i'), h('i')]), title, playBtn, nextBtn, shufBtn, listBtn]);
+  const bar = h('div', { class: 'musicbar' }, [name, playBtn, nextBtn]);
   document.body.appendChild(bar);
   const render = (s) => {
     bar.classList.toggle('playing', s.playing);
-    title.textContent = s.title && s.playing ? s.title : s.hasList ? (s.title || 'Background music') : 'Add background music';
-    playBtn.replaceChildren(icon(s.playing ? 'pause' : 'play'));
-    shufBtn.classList.toggle('on', s.shuffle);
+    bar.classList.toggle('waiting', s.held);
+    title.textContent = s.hasList ? (s.title || 'Background music') : 'Add background music';
+    playBtn.replaceChildren(icon(s.playing || s.held ? 'pause' : 'play'));
     nextBtn.style.display = s.hasList ? '' : 'none';
-    shufBtn.style.display = s.hasList ? '' : 'none';
   };
   onBg(render);
   render(state());

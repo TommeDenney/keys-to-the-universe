@@ -5,7 +5,7 @@ import { h, icon, modal, toast } from '../ui.js';
 import { current, PERIODS, nextReset, track } from '../challenges.js';
 import { QUESTS } from '../data/quests.js';
 import { SYMBOL, owns, spend, questDone, completeQuest, walletPill, balance } from '../economy.js';
-import { getState, saveState } from '../store.js';
+import { getState, saveState, progress } from '../store.js';
 import { getSong } from '../data/catalog.js';
 import { playSong } from './songpage.js';
 import { specialBossEl, specialBosses } from './specialboss.js';
@@ -97,14 +97,26 @@ export function openQuest(q) {
   ]);
 }
 
+/** How the daily streak works, and where you are today. */
+function streakNote() {
+  const list = current('daily');
+  const done = list.filter((c) => c.done).length;
+  const n = progress.streak;
+  const msg = progress.streakGrewToday ? `Streak grown today! You’re on ${n} day${n === 1 ? '' : 's'}.`
+    : done ? `${done} of ${list.length} done: your ${n}-day streak is safe today. Finish them all to grow it.`
+      : `Finish all ${list.length} to grow your streak. Finish at least one to keep it.`;
+  return h('p', { class: 'streak-note' }, [h('span', { class: 'sn-fire' }, icon('flame')), h('b', {}, `${n}-day streak \u00b7 `), msg]);
+}
+
 export function renderChallenges(root) {
   const page = h('div', { class: 'page challenges' });
   root.append(page);
   page.append(
     h('a', { class: 'back-link', href: '#/learn' }, [icon('back'), 'Learn']),
-    h('header', { class: 'top' }, [h('div', {}, [h('div', { class: 'eyebrow' }, 'Earn extra Stardust'), h('h1', {}, 'Challenges')]), walletPill('big')]),
+    h('header', { class: 'top' }, [h('div', {}, [h('div', { class: 'eyebrow' }, 'Earn extra Stardust'), h('h1', {}, 'Challenges')])]),
     ...PERIODS.map((p) => h('section', { class: `card ch-period ch-${p.id}` }, [
       h('div', { class: 'ch-head' }, [h('h2', {}, `${p.name} challenges`), h('span', { class: 'badge' }, countdown(p.id))]),
+      p.id === 'daily' ? streakNote() : null,
       ...current(p.id).map(row),
     ])),
     h('section', { class: 'card ch-period' }, [

@@ -106,7 +106,6 @@ export function renderAvatar(root) {
   page.append(
     h('header', { class: 'top' }, [
       h('div', {}, [h('a', { class: 'back-link', href: '#/learn' }, [icon('back'), 'Learn']), h('div', { class: 'eyebrow' }, 'Your explorer'), h('h1', {}, displayName() || 'Explorer'), h('div', { class: 'rank-chip' }, [h('b', {}, rank().title), h('span', {}, rank().detail)])]),
-      walletPill('big'),
     ]),
     h('div', { class: 'av-layout' }, [
       h('div', { class: 'av-side' }, [preview, h('button', { class: 'btn ghost', onclick: randomize }, '\u{1F3B2} Surprise me'), h('p', { class: 'muted small' }, 'Every look is for everyone. Changes save automatically.')]),

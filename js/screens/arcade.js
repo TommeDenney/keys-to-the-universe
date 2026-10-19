@@ -2,6 +2,7 @@
 // Player (with arcade hooks): energy carries from section to section, a short
 // break separates sections whose timing changes, and losing all energy ends the run.
 
+import { hold as holdBg, release as releaseBg } from '../audio/bgmusic.js';
 import { h, icon, toast } from '../ui.js';
 import { Player } from './player.js';
 import { Keyboard } from '../render/keyboard.js';
@@ -349,6 +350,7 @@ async function startMini(root, m) {
   S.host.append(h('div', { class: 'arc-mini' }, [timer, prompt]), kbEl);
   const kb = new Keyboard(kbEl, { lo: 48, hi: 84, labels: 'c', onKey: (midi, down) => input.touch(midi, down) });
   await input.activate();
+  holdBg('listen');
   let score = 0;
   let over = false;
   let target = null;
@@ -357,13 +359,14 @@ async function startMini(root, m) {
     if (over) return;
     over = true;
     off();
+    releaseBg('listen');
     kb.destroy();
     const b = best(`mini-${m.id}`, score);
     const pay = reward(Math.min(60, score * 2), m.name);
     track('notes', score);
     runSummary(S.host, { title: `${score} point${score === 1 ? '' : 's'}`, lines: [b.isNew ? 'New best!' : `Best: ${b.best}`], rewardTxt: pay ? `+${pay} ${SYMBOL}` : null, again: () => startMini(root, m) });
   };
-  S.onQuit(() => { over = true; off(); location.hash = '#/arcade'; });
+  S.onQuit(() => { over = true; off(); releaseBg('listen'); location.hash = '#/arcade'; });
   const good = () => { score++; S.setScore(score); audio.chime('good'); prompt.classList.remove('ok'); void prompt.offsetWidth; prompt.classList.add('ok'); next(); };
   const bad = () => { prompt.classList.remove('no'); void prompt.offsetWidth; prompt.classList.add('no'); };
 

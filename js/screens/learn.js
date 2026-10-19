@@ -82,12 +82,9 @@ export function renderLearn(root) {
   const next = nextLesson();
 
   const header = h('header', { class: 'top' }, [
-    avatarBadge(),
     h('div', { class: 'grow' }, [h('div', { class: 'eyebrow' }, greeting()), h('h1', { class: 'brand' }, ['Keys to the Universe', h('span', { class: 'dot' })])]),
     h('div', { class: 'pills' }, [
-      h('div', { class: 'pill flame', title: 'Day streak' }, [icon('flame'), h('b', {}, String(progress.streak))]),
-      h('div', { class: 'pill stars-pill', title: 'Stars' }, [icon('star'), h('b', {}, String(progress.totalStars))]),
-      walletPill(),
+      h('div', { class: 'pill flame', title: 'Day streak: finish every daily challenge to grow it' }, [icon('flame'), h('b', {}, String(progress.streak))]),
       h('a', { class: 'pill hb-pill', href: '#/handbook', title: 'Handbook: every lesson explanation' }, [icon('book'), h('b', {}, 'Handbook')]),
       h('a', { class: 'pill inv-pill', href: '#/arcade', title: 'Arcade' }, [h('span', { class: 'inv-ico' }, '\u{1F579}\uFE0F'), h('b', {}, 'Arcade')]),
       h('a', { class: 'pill inv-pill', href: '#/inventory', title: 'Inventory: everything you own' }, [h('span', { class: 'inv-ico' }, '\u{1F392}'), h('b', {}, 'Inventory')]),

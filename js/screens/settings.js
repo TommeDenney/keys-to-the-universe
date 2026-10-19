@@ -1,6 +1,7 @@
 // Settings: sound, display, account, progress. (How you play, with the mic test and
 // MIDI help, lives in the Handbook: see howYouPlay.)
 
+import { hold as holdBg, release as releaseBg } from '../audio/bgmusic.js';
 import { h, icon, modal, toast } from '../ui.js';
 import { hasPersonalPack, personalName, validPersonalPack, installPersonalPack, removePersonalPack } from '../personal.js';
 import { accountCard } from './account.js';
@@ -79,7 +80,8 @@ export function howYouPlay(rerender) {
   const meter = h('div', { class: 'meter' }, h('i'));
   const heard = h('div', { class: 'heard' }, '—');
   const micBtn = h('button', { class: 'btn primary', onclick: async () => {
-    if (mic.state === 'on') { mic.stop(); update(); return; }
+    if (mic.state === 'on') { mic.stop(); releaseBg('listen'); update(); return; }
+    holdBg('listen');
     const st = await mic.start();
     if (st === 'denied') toast('Microphone access was blocked. Enable it for this site in Settings.', 'bad');
     update();
@@ -121,7 +123,7 @@ export function howYouPlay(rerender) {
       ]),
       h('p', { class: 'muted small' }, 'No piano? On a computer keyboard, A W S E D F T G Y H U J K play C to C (Z / X change octave).'),
     ]);
-  el._cleanup = () => { cancelAnimationFrame(raf); unsub(); offMic(); };
+  el._cleanup = () => { cancelAnimationFrame(raf); unsub(); offMic(); releaseBg('listen'); };
   return el;
 }
 
@@ -166,7 +168,7 @@ export function renderSettings(root) {
 
   const acctCard = accountCard();
   page.append(
-    h('header', { class: 'top' }, [avatarBadge(), h('div', { class: 'grow' }, [h('div', { class: 'eyebrow rank-line' }, [h('span', { class: 'rank-title' }, rank().title), ` \u00b7 ${rank().detail}`]), h('h1', {}, 'Settings')])]),
+    h('header', { class: 'top' }, [h('div', { class: 'grow' }, [h('div', { class: 'eyebrow rank-line' }, [h('span', { class: 'rank-title' }, rank().title), ` \u00b7 ${rank().detail}`]), h('h1', {}, 'Settings')])]),
     h('section', { class: 'card' }, [
       h('h3', {}, [icon('hand'), 'Piano-key navigation']),
       rowItem('Navigate with your piano', 'Keep your hands on the keys: menus respond to the white keys around Middle C. (Arrow keys, Enter and Esc work too.)', toggle('pianoNav')),
