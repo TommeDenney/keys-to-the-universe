@@ -7,7 +7,7 @@ import { renderSongPage } from './screens/songpage.js';
 import { renderChords } from './screens/chords.js';
 import { renderSettings, showOnboarding } from './screens/settings.js';
 import { openLesson } from './screens/lesson.js';
-import { settings, onChange } from './store.js';
+import { settings, onChange, protectStorage } from './store.js';
 import { audio } from './audio/engine.js';
 import { input } from './input/hub.js';
 import { mic } from './input/mic.js';
@@ -92,6 +92,9 @@ if (navigator.requestMIDIAccess && settings.get('input') !== 'touch') input.init
 // Piano-key navigation. With a microphone setup we start listening on the
 // first tap (browsers require a user gesture before audio input).
 initPianoNav();
+// Ask the browser to keep our data (progress, imports) safe from automatic cleanup.
+protectStorage();
+window.addEventListener('pointerdown', () => protectStorage(), { once: true });
 window.addEventListener('pointerdown', () => {
   if (settings.get('onboarded') && settings.get('pianoNav') && settings.get('input') !== 'touch' && !input.midiInputs.length) mic.start();
 }, { once: true, capture: true });

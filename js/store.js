@@ -116,6 +116,46 @@ export const progress = {
   },
 };
 
+// ---- Backup / restore / persistent storage --------------------------------
+
+/** Ask the browser not to evict our data (Safari/Chrome may clear unused site data). */
+export async function protectStorage() {
+  try {
+    if (!navigator.storage || !navigator.storage.persist) return 'unsupported';
+    if (await navigator.storage.persisted()) return 'protected';
+    return (await navigator.storage.persist()) ? 'protected' : 'not-protected';
+  } catch {
+    return 'unsupported';
+  }
+}
+
+export async function storageStatus() {
+  try {
+    if (!navigator.storage || !navigator.storage.persisted) return 'unsupported';
+    return (await navigator.storage.persisted()) ? 'protected' : 'not-protected';
+  } catch {
+    return 'unsupported';
+  }
+}
+
+/** Everything worth keeping, as one JSON object (progress, settings, imported music). */
+export async function makeBackup() {
+  const scores = await library.all();
+  state.lastBackup = Date.now();
+  save();
+  return { app: 'ivory', version: 1, createdAt: new Date().toISOString(), state: JSON.parse(JSON.stringify(state)), scores };
+}
+
+export async function restoreBackup(data) {
+  if (!data || data.app !== 'ivory' || !data.state) throw new Error('This isn\u2019t an Ivory backup file.');
+  for (const k of Object.keys(state)) delete state[k];
+  Object.assign(state, { settings: {}, lessons: {}, songs: {}, streak: { day: null, count: 0 } }, data.state);
+  for (const rec of data.scores || []) await library.put(rec);
+  changed();
+}
+
+export const lastBackup = () => state.lastBackup || null;
+
 // ---- IndexedDB for imported scores -------------------------------------
 
 let dbp = null;

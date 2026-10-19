@@ -1,7 +1,7 @@
 // Settings: input setup (mic test, MIDI / Bluetooth piano), sound, display, progress.
 
 import { h, icon, modal, toast } from '../ui.js';
-import { settings, progress } from '../store.js';
+import { settings, progress, makeBackup, restoreBackup, lastBackup, storageStatus, protectStorage } from '../store.js';
 import { mic } from '../input/mic.js';
 import { input } from '../input/hub.js';
 import { audio } from '../audio/engine.js';
@@ -149,6 +149,7 @@ export function renderSettings(root) {
     h('section', { class: 'card' }, [
       h('h3', {}, [icon('star'), 'Progress']),
       rowItem('Unlock all lessons', 'Skip ahead if you already know the basics.', toggle('unlockAll')),
+      backupRow(),
       rowItem('Reset progress', 'Clears stars, streak and lesson progress on this device.', h('button', { class: 'btn ghost danger', onclick: () => modal((close) => [
         h('h2', {}, 'Reset all progress?'), h('p', {}, 'This can’t be undone.'),
         h('div', { class: 'row' }, [h('button', { class: 'btn ghost', onclick: close }, 'Cancel'), h('button', { class: 'btn primary danger', onclick: () => { progress.reset(); close(); toast('Progress reset'); } }, 'Reset')]),
@@ -160,6 +161,53 @@ export function renderSettings(root) {
     ]),
   );
   return () => { cancelAnimationFrame(raf); unsub(); offMic(); };
+}
+
+function backupRow() {
+  const status = h('span', { class: 'badge' }, 'Checking\u2026');
+  storageStatus().then((s) => {
+    status.className = `badge ${s === 'protected' ? 'ok' : 'warn'}`;
+    status.textContent = s === 'protected' ? 'Storage protected \u2713' : s === 'unsupported' ? 'Back up to be safe' : 'Storage not protected';
+  });
+  const lb = lastBackup();
+  const days = lb ? Math.floor((Date.now() - lb) / 86400000) : null;
+  const fileIn = h('input', { type: 'file', class: 'hidden', onchange: async (e) => {
+    const f = e.target.files[0];
+    if (!f) return;
+    try {
+      const data = JSON.parse(await f.text());
+      await restoreBackup(data);
+      toast('Progress restored \u2713', 'ok');
+      setTimeout(() => location.reload(), 600);
+    } catch (err) {
+      toast(err.message || 'Couldn\u2019t read that backup.', 'bad');
+    }
+  } });
+  const backup = async () => {
+    const data = await makeBackup();
+    const name = `ivory-backup-${new Date().toISOString().slice(0, 10)}.json`;
+    const blob = new Blob([JSON.stringify(data)], { type: 'application/json' });
+    const file = new File([blob], name, { type: 'application/json' });
+    // iPad: the share sheet lets you "Save to Files" (iCloud Drive). Elsewhere: download.
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      try { await navigator.share({ files: [file], title: 'Ivory backup' }); toast('Backup ready \u2713', 'ok'); return; } catch (e) { if (e && e.name === 'AbortError') return; }
+    }
+    const a = h('a', { href: URL.createObjectURL(blob), download: name });
+    document.body.append(a);
+    a.click();
+    a.remove();
+    toast('Backup saved \u2713', 'ok');
+  };
+  return h('div', { class: 'sub-card backup' }, [
+    h('div', { class: 'sub-head' }, [h('b', {}, 'Keep your progress safe'), status]),
+    h('p', { class: 'muted small' }, 'Progress lives in this browser on this device. Clearing Safari\u2019s website data, or switching devices, would lose it. Save a backup to iCloud Drive (Files) now and then. You can restore it on any device.'),
+    h('p', { class: 'small' }, lb ? `Last backup: ${days === 0 ? 'today' : days === 1 ? 'yesterday' : `${days} days ago`}` : 'No backup yet.'),
+    h('div', { class: 'row', style: { justifyContent: 'flex-start' } }, [
+      h('button', { class: 'btn primary sm', onclick: backup }, [icon('upload'), 'Back up progress']),
+      h('button', { class: 'btn ghost sm', onclick: () => fileIn.click() }, 'Restore from backup'),
+      fileIn,
+    ]),
+  ]);
 }
 
 export function showOnboarding() {

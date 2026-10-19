@@ -342,6 +342,11 @@ class Cosmos {
       sp: 0.6 + Math.random() * 1.8, r: Math.random(), twin: i % 2,
     }));
     this.shooters = [];
+    // Smoothed scroll + velocity: stars glide with a little inertia instead of
+    // stepping with raw scroll events, and fast scrolling triggers warp trails.
+    this.sScroll = scroller.scrollTop || 0;
+    this.vel = 0;
+    this.warp = 0;
     this.resize();
     this.onResize = () => this.resize();
     window.addEventListener('resize', this.onResize);
@@ -392,6 +397,14 @@ class Cosmos {
     const t = (now - this.t0) / 1000;
     const dt = Math.min(0.05, (now - (this.last || now)) / 1000);
     this.last = now;
+    const scrollTarget = this.scroller.scrollTop || 0;
+    const prevS = this.sScroll;
+    this.sScroll += (scrollTarget - this.sScroll) * (1 - Math.exp(-dt * 16));
+    if (Math.abs(scrollTarget - this.sScroll) < 0.05) this.sScroll = scrollTarget;
+    const v = dt > 0 ? (this.sScroll - prevS) / dt : 0;
+    this.vel += (v - this.vel) * (1 - Math.exp(-dt * 10));
+    const want = this.reduced ? 0 : Math.max(0, Math.min(1, (Math.abs(this.vel) - 900) / 3000));
+    this.warp += (want - this.warp) * (1 - Math.exp(-dt * (want > this.warp ? 8 : 3)));
     const { gal, sys, prog } = this.locate();
     if (gal && gal !== this.gal) { this.prevGal = this.gal; this.gal = gal; this.fade = 0; }
     this.fade = Math.min(1, this.fade + dt * 1.2);
@@ -411,7 +424,7 @@ class Cosmos {
   draw(t, dt) {
     const { ctx, w, h } = this;
     const c = this.cur;
-    const scroll = this.scroller.scrollTop || 0;
+    const scroll = this.sScroll;
     const g = ctx.createLinearGradient(0, 0, 0, h);
     g.addColorStop(0, rgb(c.top));
     g.addColorStop(1, rgb(c.bottom));
@@ -442,13 +455,20 @@ class Cosmos {
     ctx.globalCompositeOperation = 'source-over';
 
     // Star layers: crossfade between the previous and current galaxy's style.
-    if (this.fade < 1) this.drawStars(this.prevGal.style, 1 - this.fade, t, scroll, dt);
-    this.drawStars(this.gal.style, this.fade, t, scroll, dt);
+    if (this.warp > 0.02) this.drawWarp(scroll);
+    else {
+      if (this.fade < 1) this.drawStars(this.prevGal.style, 1 - this.fade, t, scroll, dt);
+      this.drawStars(this.gal.style, this.fade, t, scroll, dt);
+    }
+    if (this.warp > 0.02 && this.warp < 0.6) { // blend back into normal stars as we slow down
+      this.drawStars(this.gal.style, 1 - this.warp / 0.6, t, scroll, dt);
+    }
     this.drawShooters(t, dt);
   }
 
   starPos(s, scroll, t) {
-    const y = (((s.y * this.h - scroll * s.z * 0.15) % this.h) + this.h) % this.h;
+    // Parallax: nearer stars (bigger z) drift further as you scroll.
+    const y = (((s.y * this.h - scroll * s.z * 0.35) % this.h) + this.h) % this.h;
     return [s.x * this.w + Math.sin(t * 0.05 + s.ph) * 4 * s.z, y];
   }
 
@@ -506,6 +526,40 @@ class Cosmos {
         }
         if (best) { ctx.beginPath(); ctx.moveTo(x0, y0); ctx.lineTo(best[0], best[1]); ctx.stroke(); }
       }
+    }
+    ctx.restore();
+  }
+
+  /** Warp speed: stars stretch into light trails along the scroll direction. */
+  drawWarp(scroll) {
+    const { ctx, w, h } = this;
+    const dir = Math.sign(this.vel) || 1;
+    const wp = this.warp;
+    const col = this.cur.star;
+    ctx.save();
+    // A soft glow down the middle of the "tunnel".
+    const g = ctx.createRadialGradient(w / 2, h / 2, 0, w / 2, h / 2, Math.max(w, h) * 0.7);
+    g.addColorStop(0, `rgba(200,220,255,${0.12 * wp})`);
+    g.addColorStop(1, 'rgba(200,220,255,0)');
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, w, h);
+    ctx.globalCompositeOperation = 'lighter';
+    ctx.lineCap = 'round';
+    for (const s of this.stars) {
+      const y = (((s.y * h - scroll * s.z * 0.35) % h) + h) % h;
+      const x = s.x * w + (s.x - 0.5) * w * 0.08 * wp * s.z; // spread slightly outward
+      const len = wp * (20 + 170 * s.z * s.z);
+      const tail = y + dir * len; // trail points back where the star came from
+      const grad = ctx.createLinearGradient(x, y, x, tail);
+      const c = mix(col, [190, 215, 255], 0.4 * wp);
+      grad.addColorStop(0, rgb(c, Math.min(1, 0.3 + 0.5 * s.z) * (0.6 + 0.4 * wp)));
+      grad.addColorStop(1, rgb(c, 0));
+      ctx.strokeStyle = grad;
+      ctx.lineWidth = 0.5 + s.z * 1.3;
+      ctx.beginPath();
+      ctx.moveTo(x, y);
+      ctx.lineTo(x, tail);
+      ctx.stroke();
     }
     ctx.restore();
   }
