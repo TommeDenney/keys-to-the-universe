@@ -5,7 +5,7 @@
 import { getState, saveState } from './store.js';
 import { earn, SYMBOL } from './economy.js';
 import { toast } from './ui.js';
-import { bumpLifetime } from './achievements.js';
+import { bumpLifetime, checkAchievements } from './achievements.js';
 
 // ---- Challenge pools (100+ per period), generated from templates ------------
 // General goals at several tiers + targeted goals (specific songs, galaxies,
@@ -161,6 +161,7 @@ export function track(stat, amount = 1) {
   if (!stat.includes(':')) bumpLifetime(stat, amount);
   saveState();
   checkComplete();
+  checkAchievements();
 }
 
 function checkComplete() {

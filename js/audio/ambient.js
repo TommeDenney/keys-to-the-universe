@@ -5,6 +5,7 @@
 import { audio } from './engine.js';
 import { settings } from '../store.js';
 import { midiToFreq } from '../music/theory.js';
+import { rewardLook } from '../data/rewards.js';
 
 let current = null;
 
@@ -19,13 +20,39 @@ const PROGRESSIONS = {
 
 export function startAmbient(id) {
   stopAmbient();
-  if (!id || id === 'amb-none' || !PROGRESSIONS[id] || settings.get('ambientOn') === false) return;
+  const cfg = rewardLook(id); // achievement ambiences are described by parameters
+  if (!id || id === 'amb-none' || (!PROGRESSIONS[id] && !cfg) || settings.get('ambientOn') === false) return;
   const ctx = audio.ensure();
   const out = ctx.createGain();
   out.gain.value = 0;
   out.gain.linearRampToValueAtTime(settings.get('ambientVolume') ?? 0.35, ctx.currentTime + 3);
   out.connect(audio.musicBus);
-  const prog = PROGRESSIONS[id];
+  const prog = cfg && cfg.chords ? cfg.chords : PROGRESSIONS[id];
+  if (cfg && cfg.noise) { // wind / rain: filtered noise, no pitch, so the mic ignores it
+    const N = cfg.noise;
+    const len = ctx.sampleRate * 4;
+    const buf = ctx.createBuffer(1, len, ctx.sampleRate);
+    const d = buf.getChannelData(0);
+    for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * (N.drops && Math.random() < 0.0006 ? 6 : 1);
+    const src = ctx.createBufferSource();
+    src.buffer = buf;
+    src.loop = true;
+    const lp = ctx.createBiquadFilter();
+    lp.type = 'lowpass';
+    lp.frequency.value = N.lp;
+    const g = ctx.createGain();
+    g.gain.value = N.gain;
+    const lfo = ctx.createOscillator();
+    lfo.frequency.value = N.lfo;
+    const depth = ctx.createGain();
+    depth.gain.value = N.depth;
+    lfo.connect(depth).connect(g.gain);
+    src.connect(lp).connect(g).connect(out);
+    src.start();
+    lfo.start();
+    current = { id, out, timer: 0, voices: [src, lfo] };
+    return;
+  }
   if (id === 'amb-ocean') { // filtered noise waves: no pitch at all, so it never confuses the mic
     const len = ctx.sampleRate * 4;
     const buf = ctx.createBuffer(1, len, ctx.sampleRate);
@@ -50,7 +77,7 @@ export function startAmbient(id) {
     current = { id, out, timer: 0, voices: [src, lfo] };
     return;
   }
-  const chordLen = id === 'amb-lofi' ? 4.8 : 9;
+  const chordLen = cfg ? cfg.len : id === 'amb-lofi' ? 4.8 : 9;
   let k = 0;
   let nextAt = ctx.currentTime + 0.1;
   const voices = [];
@@ -61,14 +88,14 @@ export function startAmbient(id) {
       const f = midiToFreq(m);
       const g = ctx.createGain();
       g.gain.setValueAtTime(0, t);
-      const peak = id === 'amb-shimmer' || id === 'amb-dream' ? 0.035 : id === 'amb-lofi' ? 0.05 : 0.045;
-      g.gain.linearRampToValueAtTime(peak, t + (id === 'amb-lofi' ? 1.2 : 2.6));
+      const peak = cfg ? cfg.peak : id === 'amb-shimmer' || id === 'amb-dream' ? 0.035 : id === 'amb-lofi' ? 0.05 : 0.045;
+      g.gain.linearRampToValueAtTime(peak, t + (cfg ? Math.max(1.2, cfg.attack) : id === 'amb-lofi' ? 1.2 : 2.6));
       g.gain.setTargetAtTime(0, t + chordLen - 1.2, 1.1);
       const lp = ctx.createBiquadFilter();
       lp.type = 'lowpass';
-      lp.frequency.value = id === 'amb-shimmer' ? 6000 : id === 'amb-choir' ? 1600 : 1100;
+      lp.frequency.value = cfg ? cfg.lp : id === 'amb-shimmer' ? 6000 : id === 'amb-choir' ? 1600 : 1100;
       g.connect(lp).connect(out);
-      const types = id === 'amb-lofi' || id === 'amb-dream' ? ['sine', 'triangle'] : id === 'amb-choir' ? ['sawtooth', 'sawtooth'] : ['sawtooth', 'triangle'];
+      const types = cfg ? cfg.types : id === 'amb-lofi' || id === 'amb-dream' ? ['sine', 'triangle'] : id === 'amb-choir' ? ['sawtooth', 'sawtooth'] : ['sawtooth', 'triangle'];
       types.forEach((type, i) => {
         const o = ctx.createOscillator();
         o.type = type;

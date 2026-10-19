@@ -46,7 +46,10 @@ function changed() {
 }
 
 export const balance = () => wallet().balance;
-const DEFAULTS = { ship: 'ship-classic', fx: 'fx-check', kb: 'kb-classic', press: 'press-glow', amb: 'amb-none', trail: 'trail-dots', sheet: 'sheet-classic', starc: 'star-gold' };
+const DEFAULTS = { ship: 'ship-classic', fx: 'fx-check', kb: 'kb-classic', press: 'press-glow', amb: 'amb-none', trail: 'trail-dots', sheet: 'sheet-classic', starc: 'star-gold', pet: 'pet-none' };
+export const earnedTotal = () => wallet().earned || 0;
+export const ownedItems = () => wallet().owned.filter((id) => !Object.values(DEFAULTS).includes(id));
+export const ownedSongs = () => wallet().songs || [];
 export const equipped = (cat) => wallet().equipped[cat] || DEFAULTS[cat];
 export const owns = (id) => wallet().owned.includes(id) || Object.values(DEFAULTS).includes(id);
 export const backpay = () => {

@@ -5,7 +5,7 @@
 // An animated cosmos canvas sits behind; its stars and colours follow the
 // galaxy and solar system you're looking at.
 
-import { h, icon, starsHTML } from '../ui.js';
+import { h, icon, starsHTML, modal, toast } from '../ui.js';
 import { COURSE, allLessons } from '../data/course.js';
 import { progress } from '../store.js';
 import { lessonUnlocked, nextLesson, galaxyStars, starGate } from './learn.js';
@@ -20,6 +20,8 @@ import { questDone } from '../economy.js';
 import { divinaeEl, FORMS as DIVINAE_FORMS } from './divinae.js';
 import { constellationsFor, constellationEl } from '../constellations.js';
 import { navFocus } from '../nav.js';
+import { petHTML } from '../render/pets.js';
+import { rewardLook } from '../data/rewards.js';
 
 // Moons currently on screen, animated by the cosmos loop (3D-ish orbits that pass behind their planet).
 let ORBITS = [];
@@ -173,7 +175,7 @@ export function renderUniverse(root) {
   if (next) {
     const gal = galaxyOf(next.unit);
     page.append(h('section', { class: 'uni-next' }, [
-      h('div', { class: 'uni-next-ship', html: shipSVG() }),
+      h('div', { class: 'uni-next-ship', html: shipSVG() + petHTML(equipped('pet')) }),
       h('div', { class: 'grow' }, [
         h('div', { class: 'eyebrow' }, done === 0 ? 'Your journey begins' : `Next destination · ${gal.name} Galaxy`),
         h('h2', {}, `${bodyName(next.id, false)}: ${next.title}`),
@@ -184,7 +186,7 @@ export function renderUniverse(root) {
   } else if (starGate()) {
     const gate = starGate();
     page.append(h('section', { class: 'uni-next gate-card' }, [
-      h('div', { class: 'uni-next-ship', html: shipSVG() }),
+      h('div', { class: 'uni-next-ship', html: shipSVG() + petHTML(equipped('pet')) }),
       h('div', { class: 'grow' }, [
         h('div', { class: 'eyebrow' }, 'Star gate'),
         h('h2', {}, `Collect ${gate.missing} more \u2605 in the ${galaxyOf(gate.from).name} Galaxy`),
@@ -209,7 +211,9 @@ export function renderUniverse(root) {
       h('div', { class: 'galaxy-emblem' }, [h('i'), h('i')]),
       h('div', { class: 'grow' }, [
         h('div', { class: 'eyebrow' }, `Galaxy ${gi + 1}`),
-        h('h2', {}, `${gal.name} Galaxy`),
+        uDone === unit.lessons.length
+          ? h('button', { class: 'galaxy-title beaten', title: 'Galaxy complete: tap to reset', onclick: () => confirmReset(unit, gal, () => { root.replaceChildren(); renderUniverse(root); }) }, [h('h2', {}, `${gal.name} Galaxy`), h('span', { class: 'gt-hint' }, ['\u2713 Complete \u00b7 tap to reset'])])
+          : h('h2', {}, `${gal.name} Galaxy`),
         h('p', {}, unit.subtitle),
       ]),
       (() => {
@@ -228,6 +232,8 @@ export function renderUniverse(root) {
       ...QUESTS.filter((x) => x.after === gi + 1).map((q) => [q.id, () => roguePlanet(q, gal)]),
       ...DIVINAE_FORMS.filter((f) => unit.id === f.rogueAfter).map((f) => [f.id, () => h('div', { class: 'rogue rogue-boss' }, [divinaeEl(f)])]),
     ].map(([id, make]) => ({ id, make, after: hash(`${id}:spot`) % systems.length }));
+    // Galactic features (asteroid belts, black holes...) between some solar systems.
+    const feats = galacticFeatures(unit.id, systems.length);
     systems.forEach((sys, si) => {
       const sysEl = h('div', { class: 'system' });
       sysEl._sys = si;
@@ -242,6 +248,7 @@ export function renderUniverse(root) {
       sys.planets.forEach((p, pi) => track.append(planetEl(p, gal, pi, next)));
       sysEl.append(track);
       sec.append(sysEl);
+      for (const f of feats) if (f.after === si) sec.append(featureEl(f.kind, `${unit.id}:${f.kind}`, gal));
       for (const r of rogues) if (r.after === si) sec.append(wander(r.make(), r.id));
     });
     const boss = unit.lessons.find((l) => l.boss);
@@ -290,7 +297,7 @@ function planetEl(p, gal, index, next) {
   if (!rec && fx === 'fx-restore') orb.append(h('i', { class: 'corruption' }));
   if (celebrate) setTimeout(() => progress.clearJustCompleted(), 4000);
   const body = h('div', { class: 'planet-body' }, [
-    rec && fx !== 'fx-check' ? h('i', { class: 'fx-layer' }, fx === 'fx-bloom' ? Array.from({ length: 6 }, (_, i) => h('i', { class: 'bloom', style: { '--a': `${i * 60}deg` } })) : fx === 'fx-galaxy' ? [h('i', { class: 'spiral' }), h('i', { class: 'spiral s2' })] : fx === 'fx-notes' ? [h('i', { class: 'note-ring', html: '<span>\u266A</span><span>\u266B</span><span>\u2669</span><span>\u266C</span>' })] : fx === 'fx-heavenly' ? [h('i', { class: 'halo' }), h('i', { class: 'rays' }), h('i', { class: 'cloud c1' }), h('i', { class: 'cloud c2' })] : fx === 'fx-supernova' ? [h('i', { class: 'nova-ring' }), h('i', { class: 'nova-ring r2' })] : [h('i', { class: 'healed' })]) : null,
+    rec && fx !== 'fx-check' ? h('i', { class: 'fx-layer' }, rewardLook(fx) ? fxRing(rewardLook(fx)) : fx === 'fx-bloom' ? Array.from({ length: 6 }, (_, i) => h('i', { class: 'bloom', style: { '--a': `${i * 60}deg` } })) : fx === 'fx-galaxy' ? [h('i', { class: 'spiral' }), h('i', { class: 'spiral s2' })] : fx === 'fx-notes' ? [h('i', { class: 'note-ring', html: '<span>\u266A</span><span>\u266B</span><span>\u2669</span><span>\u266C</span>' })] : fx === 'fx-heavenly' ? [h('i', { class: 'halo' }), h('i', { class: 'rays' }), h('i', { class: 'cloud c1' }), h('i', { class: 'cloud c2' })] : fx === 'fx-supernova' ? [h('i', { class: 'nova-ring' }), h('i', { class: 'nova-ring r2' })] : [h('i', { class: 'healed' })]) : null,
     celebrate ? h('i', { class: 'celebration' }, Array.from({ length: 18 }, (_, i) => h('i', { style: { '--a': `${i * 20}deg`, '--d': `${60 + (i % 3) * 25}px` } }))) : null,
     look.ring ? h('i', { class: 'p-ring ring-back', style: { '--rt': `${look.tilt - 12}deg` } }) : null,
     orb,
@@ -319,7 +326,7 @@ function planetEl(p, gal, index, next) {
     body.append(moon);
     ORBITS.push({ el: moon, ...orbit });
   });
-  if (isNext) body.append(h('div', { class: 'ship', html: shipSVG() }));
+  if (isNext) body.append(h('div', { class: 'ship', html: shipSVG() }), petEl());
   el.append(body);
   el.append(h('div', { class: 'body-label' }, [
     h('small', {}, `Planet ${bodyName(l.id)}`),
@@ -427,10 +434,11 @@ function guardianEl(l, gal, next) {
     h('span', { class: 'g-icon' }, rec ? '\u{1F3C6}' : open ? '\u2694' : ''),
     open ? null : h('span', { class: 'lock' }, icon('lock')),
   ]));
-  if (isNext) el.append(h('div', { class: 'ship guardian-ship', html: shipSVG() }));
+  if (isNext) el.append(h('div', { class: 'ship guardian-ship', html: shipSVG() }), petEl('guardian-pet'));
   el.append(h('div', { class: 'body-label' }, [
-    h('small', {}, rec ? 'Guardian defeated' : 'Boss battle'),
+    h('small', {}, rec ? (progress.skipped(l.unit ? l.unit.id : l.id.replace(/^boss-/, '')) ? 'Guardian defeated \u00b7 galaxy skipped' : 'Guardian defeated') : 'Boss battle'),
     h('b', {}, l.guardian || 'The Guardian'),
+    !rec && open && !isNext ? h('span', { class: 'g-skip' }, '\u23E9 Beat me to skip ahead to the next galaxy') : null,
     h('span', { class: 'g-sub' }, `Test: ${(songNow(l.song) || pieceMeta(l.song) || l).title.replace(/^Boss Battle: /, '')}`),
     rec ? h('span', { class: 'mini-stars', html: starsHTML(rec.stars) }) : null,
   ]));
@@ -484,9 +492,89 @@ function drawRoute(track) {
   }
   const trail = equipped('trail') || 'trail-dots';
   const pathId = `rt${Math.random().toString(36).slice(2, 8)}`;
-  const glyph = trail === 'trail-notes' ? '\u266A \u266B \u2669 ' : trail === 'trail-stars' ? '\u2726 ' : '';
+  const glyph = trail === 'trail-notes' ? '\u266A \u266B \u2669 ' : trail === 'trail-stars' ? '\u2726 ' : (rewardLook(trail) || {}).glyph || '';
   svg.setAttribute('class', `route ${trail}`);
   svg.innerHTML = `<path d="${d}" class="route-glow"/><path id="${pathId}" d="${d}" class="route-dash"/>${glyph ? `<text class="route-text"><textPath href="#${pathId}">${glyph.repeat(220)}</textPath></text>` : ''}`;
+}
+
+/** Ask before wiping one galaxy's progress so it can be played again from scratch. */
+function confirmReset(unit, gal, done) {
+  modal((close) => [h('div', { class: 'reset-modal' }, [
+    h('div', { class: 'reset-emblem', style: { '--g1': gal.neb[0], '--g2': gal.neb[1] } }, '\u21BB'),
+    h('h2', {}, `Reset the ${gal.name} Galaxy?`),
+    h('p', {}, `This clears the stars and completion for all ${unit.lessons.length} worlds in this galaxy (including its Guardian) so you can play through it fresh. Other galaxies, your Stardust, Shop items, badges and unlocked songs are not affected, and later galaxies stay open.`),
+    h('p', { class: 'muted small' }, 'Replaying worlds you were already paid for won\u2019t pay their Stardust again, except for beating your old star count.'),
+    h('div', { class: 'row' }, [
+      h('button', { class: 'btn ghost', onclick: close }, 'Keep my progress'),
+      h('button', { class: 'btn danger', onclick: () => { progress.resetLessons(unit.lessons.map((l) => l.id)); close(); toast(`${gal.name} Galaxy reset. Have fun replaying it!`, 'ok'); done(); } }, ['\u21BB Reset galaxy']),
+    ]),
+  ])]);
+}
+
+// ---- Galactic features --------------------------------------------------------------
+const FEATURES = ['belt', 'belt', 'blackhole', 'wormhole', 'station', 'comet', 'nebula', 'debris', 'crystals', 'belt'];
+const FEATURE_NAMES = { belt: 'Asteroid belt', blackhole: 'Black hole', wormhole: 'Wormhole', station: 'Space station', comet: 'Comet', nebula: 'Nebula', debris: 'Satellite graveyard', crystals: 'Crystal field' };
+
+/** Which features a galaxy has (some have none) and where they sit. */
+function galacticFeatures(unitId, nSystems) {
+  const x = hash(`${unitId}:features`);
+  const count = [1, 2, 1, 0, 2, 1][x % 6];
+  const out = [];
+  for (let i = 0; i < count; i++) {
+    let kind = FEATURES[(x >>> (4 + i * 5)) % FEATURES.length];
+    if (out.some((f) => f.kind === kind)) kind = FEATURES[(FEATURES.indexOf(kind) + 3) % FEATURES.length];
+    out.push({ kind, after: (hash(`${unitId}:${kind}:at`) % Math.max(1, nSystems)) });
+  }
+  return out;
+}
+
+function featureEl(kind, seed, gal) {
+  const x = hash(seed);
+  const r = (k) => (hash(`${seed}:${k}`) % 1000) / 1000;
+  const name = bodyName(seed);
+  const label = h('div', { class: 'feat-label' }, [h('small', {}, FEATURE_NAMES[kind]), h('b', {}, kind === 'belt' ? `The ${name} Belt` : kind === 'station' ? `${name} Station` : kind === 'comet' ? `Comet ${name}` : kind === 'nebula' ? `The ${name} Nebula` : name)]);
+  const el = h('div', { class: `feature feat-${kind}`, 'aria-hidden': 'true', style: { '--f1': gal.neb[0], '--f2': gal.neb[1], '--f3': gal.neb[2], '--fside': `${r('side') < 0.5 ? -1 : 1}` } });
+  if (kind === 'belt') {
+    const rocks = Array.from({ length: 34 }, (_, i) => {
+      const s = 6 + r(`s${i}`) * 22;
+      const br = [0, 1, 2, 3].map((k) => `${35 + r(`b${i}${k}`) * 30}%`).join(' ');
+      return h('i', { class: `rock ${i % 4 === 0 ? 'spin' : ''}`, style: { left: `${(i / 34) * 100 + r(`x${i}`) * 2}%`, top: `${15 + r(`y${i}`) * 70}%`, width: `${s}px`, height: `${s * (0.7 + r(`h${i}`) * 0.5)}px`, borderRadius: br, '--rd': `${6 + r(`d${i}`) * 10}s`, '--tone': `${r(`t${i}`) < 0.3 ? '#8B6F52' : r(`t${i}`) < 0.6 ? '#6B7280' : '#9CA3AF'}` } });
+    });
+    el.append(h('div', { class: 'belt-track', style: { '--bd': `${70 + r('speed') * 50}s`, '--dir': r('dir') < 0.5 ? 'normal' : 'reverse' } }, [h('div', { class: 'belt-half' }, rocks), h('div', { class: 'belt-half' }, rocks.map((n) => n.cloneNode(true)))]), h('i', { class: 'belt-dust' }));
+  } else if (kind === 'blackhole') {
+    el.append(h('div', { class: 'bh' }, [h('i', { class: 'bh-glow' }), h('i', { class: 'bh-disk' }), h('i', { class: 'bh-core' }), h('i', { class: 'bh-ring' })]));
+  } else if (kind === 'wormhole') {
+    el.append(h('div', { class: 'wh' }, Array.from({ length: 5 }, (_, i) => h('i', { style: { '--i': i } }))));
+  } else if (kind === 'station') {
+    el.append(h('div', { class: 'station', html: `<svg viewBox="0 0 120 120"><g class="st-spin"><circle cx="60" cy="60" r="44" fill="none" stroke="#CBD5E1" stroke-width="7"/><circle cx="60" cy="60" r="44" fill="none" stroke="#64748B" stroke-width="7" stroke-dasharray="6 10"/>${[0, 60, 120, 180, 240, 300].map((a) => `<line x1="60" y1="60" x2="${60 + 44 * Math.cos(a * Math.PI / 180)}" y2="${60 + 44 * Math.sin(a * Math.PI / 180)}" stroke="#94A3B8" stroke-width="2.5"/>`).join('')}<circle class="blink" cx="104" cy="60" r="3" fill="#F87171"/><circle class="blink b2" cx="16" cy="60" r="3" fill="#4ADE80"/></g><circle cx="60" cy="60" r="12" fill="#E2E8F0" stroke="#475569" stroke-width="2"/><rect x="-6" y="54" width="22" height="12" fill="#1D4ED8" stroke="#93C5FD"/><rect x="104" y="54" width="22" height="12" fill="#1D4ED8" stroke="#93C5FD"/></svg>` }));
+  } else if (kind === 'comet') {
+    el.append(h('div', { class: 'comet', style: { '--cd': `${16 + r('cd') * 10}s` } }, [h('i', { class: 'c-tail' }), h('i', { class: 'c-head' })]));
+  } else if (kind === 'nebula') {
+    el.append(h('i', { class: 'neb-cloud n1' }), h('i', { class: 'neb-cloud n2' }), h('i', { class: 'neb-cloud n3' }));
+  } else if (kind === 'debris') {
+    el.append(...Array.from({ length: 4 }, (_, i) => h('div', { class: 'sat', style: { left: `${10 + i * 22 + r(`sx${i}`) * 8}%`, top: `${10 + r(`sy${i}`) * 50}%`, '--sd': `${18 + r(`sd${i}`) * 20}s`, '--sr': `${r(`sr${i}`) < 0.5 ? -1 : 1}` }, html: '<svg viewBox="0 0 60 30"><rect x="22" y="9" width="16" height="12" rx="2" fill="#CBD5E1" stroke="#64748B"/><rect x="0" y="11" width="20" height="8" fill="#1E40AF" stroke="#93C5FD"/><rect x="40" y="11" width="20" height="8" fill="#1E40AF" stroke="#93C5FD"/><line x1="30" y1="9" x2="30" y2="2" stroke="#94A3B8"/><circle cx="30" cy="2" r="1.8" fill="#FCA5A5" class="blink"/></svg>' })));
+  } else if (kind === 'crystals') {
+    el.append(...Array.from({ length: 7 }, (_, i) => h('i', { class: 'crystal', style: { left: `${8 + i * 13 + r(`cx${i}`) * 6}%`, top: `${15 + r(`cy${i}`) * 55}%`, width: `${14 + r(`cw${i}`) * 20}px`, '--cc': [gal.neb[0], gal.neb[1], gal.neb[2], '#E0F2FE'][i % 4], '--cdel': `${-r(`cdl${i}`) * 6}s`, '--rot': `${(r(`cr${i}`) - 0.5) * 50}deg` } })));
+  }
+  el.append(label);
+  return el;
+}
+
+/** Your pet, flying alongside the ship. */
+function petEl(extra = '') {
+  const html = petHTML(equipped('pet'));
+  return html ? h('div', { class: `pet-buddy ${extra}`, html }) : document.createTextNode('');
+}
+
+/** Reward completion effects: a ring of glyphs (and optional Saturn rings) around the world. */
+export function fxRing(L) {
+  const out = [];
+  if (L.rings) out.push(h('i', { class: 'fx-saturn' }), h('i', { class: 'fx-saturn s2' }));
+  if (L.glyphs) {
+    const gl = [...L.glyphs];
+    out.push(h('i', { class: 'glyph-ring', style: { '--c': L.color, '--spin': `${L.spin || 12}s` } }, gl.map((g, i) => h('span', { style: { '--a': `${(360 / gl.length) * i}deg` } }, g))));
+  }
+  return out;
 }
 
 function shipSVG() {

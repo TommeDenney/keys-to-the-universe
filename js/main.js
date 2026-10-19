@@ -1,4 +1,4 @@
-import { h, icon } from './ui.js';
+import { h, icon, toast } from './ui.js';
 import { renderLearn } from './screens/learn.js';
 import { renderUniverse } from './screens/universe.js';
 import { renderHandbook } from './screens/handbook.js';
@@ -18,7 +18,10 @@ import { loadCatalog } from './data/catalog.js';
 import { applyCosmetics } from './cosmetics.js';
 import { renderShop } from './screens/shop.js';
 import { startAmbient, stopAmbient } from './audio/ambient.js';
-import { equipped } from './economy.js';
+import { equipped, onWallet } from './economy.js';
+import { initAchievements, checkAchievements } from './achievements.js';
+import { SHOP } from './data/shop.js';
+import { renderBadges } from './screens/badges.js';
 import { renderChallenges } from './screens/challenges.js';
 import { touch as touchChallenges } from './challenges.js';
 import { loadConstellations } from './constellations.js';
@@ -72,6 +75,13 @@ async function route() {
     cleanup = renderChallenges(main);
     return;
   }
+  if (name === 'badges') {
+    setActiveTab('shop');
+    main.replaceChildren();
+    main.scrollTop = 0;
+    cleanup = renderBadges(main);
+    return;
+  }
   if (name === 'handbook') {
     setActiveTab('learn');
     main.replaceChildren();
@@ -107,7 +117,13 @@ function setActiveTab(name) {
 
 window.addEventListener('hashchange', route);
 // The graded repertoire galaxies come from a manifest; load it before the first render.
-Promise.all([loadCatalog(), loadConstellations()]).finally(() => { route(); mountMusicBar(); });
+Promise.all([loadCatalog(), loadConstellations()]).finally(() => {
+  route();
+  mountMusicBar();
+  initAchievements({ toast, items: () => SHOP });
+  onWallet(() => checkAchievements());
+  checkAchievements();
+});
 
 if (!settings.get('onboarded')) setTimeout(() => showOnboarding(), 350);
 

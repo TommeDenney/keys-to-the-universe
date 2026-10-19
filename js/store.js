@@ -103,6 +103,32 @@ export const progress = {
     changed();
     return prev ? prev.stars : 0;
   },
+  /** Forget a galaxy's progress so it can be replayed from scratch (Stardust already paid is remembered). */
+  resetLessons(ids) {
+    state.paid ||= {};
+    for (const id of ids) {
+      const rec = state.lessons[id];
+      if (rec) state.paid[id] = Math.max(state.paid[id] || 0, rec.stars || 0);
+      delete state.lessons[id];
+      if (state.skipped) for (const u of Object.keys(state.skipped)) if (id === `boss-${u}`) delete state.skipped[u];
+      if (state.steps) delete state.steps[id];
+    }
+    changed();
+  },
+  /** Beat a galaxy's Guardian before finishing its worlds: the next galaxy opens (no stars for the skipped worlds). */
+  skipGalaxy(unitId) {
+    state.skipped ||= {};
+    state.skipped[unitId] = Date.now();
+    changed();
+  },
+  skipped(unitId) {
+    return !!(state.skipped && state.skipped[unitId]);
+  },
+  /** Stars you were already paid Stardust for (survives a galaxy reset). */
+  paidStars(id) {
+    const rec = state.lessons[id];
+    return Math.max(rec ? rec.stars || 0 : 0, (state.paid && state.paid[id]) || 0);
+  },
   justCompleted() {
     return state.justCompleted || null;
   },

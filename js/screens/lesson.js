@@ -1,6 +1,6 @@
 // Lesson runner: a sequence of "learn" cards and practice steps.
 
-import { h, icon, starsHTML } from '../ui.js';
+import { h, icon, starsHTML, toast } from '../ui.js';
 import { allLessons } from '../data/course.js';
 import { buildSong } from '../data/songs.js';
 import { songNow, getSongs } from '../data/catalog.js';
@@ -218,7 +218,10 @@ export async function openLesson(id, onClose) {
       onFinish: (r) => {
         if (r.passed) {
           const stars = Math.max(1, r.stars);
+          // Beating the Guardian before finishing the worlds skips the galaxy: the next one opens.
+          const skipping = lesson.unit.lessons.some((x) => !x.boss && !progress.lesson(x.id));
           progress.completeLesson(lesson.id, stars);
+          if (skipping) { progress.skipGalaxy(lesson.unit.id); toast('Galaxy skipped! The next galaxy is open. Its worlds stay here whenever you want them.', 'ok'); }
           // Guardians pay out once per week (rematches are a way to earn).
           if (bossRewardAvailable(lesson.id)) {
             earn(REWARD.bossBase + REWARD.bossPerStar * stars, 'Guardian defeated');
@@ -272,8 +275,9 @@ export async function openLesson(id, onClose) {
     progress.setLessonStep(lesson.id, 0);
     const played = results.filter((x) => x != null);
     const stars = played.length ? Math.max(1, Math.round(played.reduce((a, b) => a + b, 0) / played.length)) : 3;
+    const paid = progress.paidStars(lesson.id);
     const prev = progress.completeLesson(lesson.id, stars);
-    rewardLesson(prev, stars, false);
+    rewardLesson(Math.max(prev, paid), stars, false);
     track('worlds');
     track(`galaxy:${lesson.unit.id}`);
     track('stars', stars);

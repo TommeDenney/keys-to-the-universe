@@ -7,6 +7,10 @@ import { shipSVG } from '../render/ships.js';
 import { startAmbient, stopAmbient } from '../audio/ambient.js';
 import { Keyboard } from '../render/keyboard.js';
 import { applyCosmetics } from '../cosmetics.js';
+import { reqProgress, reqText, badges } from '../achievements.js';
+import { rewardLook } from '../data/rewards.js';
+import { petHTML } from '../render/pets.js';
+import { fxRing } from './universe.js';
 
 export function renderShop(root) {
   const page = h('div', { class: 'page shop' });
@@ -23,6 +27,15 @@ export function renderShop(root) {
         walletPill('big'),
       ]),
       bp ? h('div', { class: 'shop-note pop' }, [h('b', {}, `+${bp} ${SYMBOL} credited!`), ` Stardust for the progress you made before the Shop opened.`]) : null,
+      (() => {
+        const all = badges();
+        const got = all.filter((b) => b.met).length;
+        const ready = SHOP.filter((it) => it.req && !owns(it.id) && reqProgress(it.req).met);
+        return h('div', { class: 'achv-top' }, [
+          h('a', { class: 'achv-badges', href: '#/badges' }, [h('span', { class: 'ab-icon' }, '\u{1F396}\uFE0F'), h('span', {}, [h('b', {}, 'Badges'), h('small', {}, `${got} of ${all.length} earned`)]), icon('chevron')]),
+          ready.length ? h('div', { class: 'achv-ready' }, [h('b', {}, `\u{1F381} ${ready.length} achievement reward${ready.length === 1 ? '' : 's'} ready to buy`), h('div', { class: 'achv-chips' }, ready.slice(0, 8).map((it) => h('button', { class: 'chip-btn', onclick: () => { const c = page.querySelector(`[data-item="${it.id}"]`); if (c) { c.scrollIntoView({ block: 'center', behavior: 'smooth' }); c.classList.remove('flash'); void c.offsetWidth; c.classList.add('flash'); } } }, it.name)))]) : null,
+        ]);
+      })(),
       h('div', { class: 'earn-card' }, [
         h('b', {}, `How to earn ${SYMBOL}`),
         h('div', { class: 'earn-grid' }, [
@@ -37,7 +50,9 @@ export function renderShop(root) {
       ...CATEGORIES.map((c) => h('section', { class: 'shop-cat' }, [
         h('h2', {}, c.name),
         h('p', { class: 'muted' }, c.blurb),
-        h('div', { class: 'shop-grid' }, SHOP.filter((it) => it.cat === c.id).map(card)),
+        h('div', { class: 'shop-grid' }, SHOP.filter((it) => it.cat === c.id && !it.req).map(card)),
+        SHOP.some((it) => it.cat === c.id && it.req) ? h('h3', { class: 'achv-head' }, [h('span', {}, '\u{1F3C6}'), ' Achievement rewards ', h('small', { class: 'muted' }, 'Earn the right, then buy with Stardust')]) : null,
+        h('div', { class: 'shop-grid' }, SHOP.filter((it) => it.cat === c.id && it.req).map(card)),
       ])),
     );
   };
@@ -52,6 +67,18 @@ export function renderShop(root) {
     const afford = balance() >= it.price;
     const preview = h('div', { class: `shop-preview prev-${it.cat}` });
     fillPreview(it, preview);
+    if (it.req && !have) {
+      const rp = reqProgress(it.req);
+      const tag = h('span', { class: 'achv-tag' }, rp.met ? '\u2713 Unlocked' : '\u{1F512} Achievement');
+      const req = h('div', { class: 'achv-req' }, [h('span', {}, `${reqText(it.req)} (${rp.value.toLocaleString('en-US')}/${rp.goal.toLocaleString('en-US')})`), h('div', { class: 'achv-bar' }, h('i', { style: { width: `${(rp.value / rp.goal) * 100}%` } }))]);
+      const buyBtn = rp.met
+        ? h('button', { class: `btn ${afford ? 'primary' : 'ghost'} sm`, onclick: () => {
+          if (!buy(it)) { toast(`You need ${it.price - balance()} more ${SYMBOL}. Keep playing!`, 'bad'); return; }
+          equip(it.cat, it.id); applyCosmetics(); toast(`${it.name} unlocked and equipped!`, 'ok'); draw();
+        } }, [h('span', { class: 'sd' }, SYMBOL), String(it.price)])
+        : h('button', { class: 'btn ghost sm', disabled: true }, [icon('lock'), h('span', { class: 'sd' }, SYMBOL), String(it.price)]);
+      return h('div', { class: `shop-item achv ${rp.met ? 'met' : 'locked'}`, 'data-item': it.id }, [preview, h('div', { class: 'shop-meta' }, [tag, h('b', {}, it.name), h('span', {}, it.desc), req]), h('div', { class: 'shop-buy' }, [buyBtn])]);
+    }
     if (it.exclusive && !have) {
       const preview = h('div', { class: `shop-preview prev-${it.cat}` });
       fillPreview(it, preview);
@@ -71,7 +98,7 @@ export function renderShop(root) {
             draw();
           },
         }, [h('span', { class: 'sd' }, SYMBOL), String(it.price)]);
-    return h('div', { class: `shop-item ${on ? 'on' : ''} ${have ? 'owned' : ''}` }, [
+    return h('div', { class: `shop-item ${on ? 'on' : ''} ${have ? 'owned' : ''} ${it.req ? 'achv met' : ''}`, 'data-item': it.id }, [
       preview,
       h('div', { class: 'shop-meta' }, [h('b', {}, it.name), h('span', {}, it.desc)]),
       h('div', { class: 'shop-buy' }, [it.price === 0 && !have ? h('span', { class: 'muted small' }, 'Free') : null, btn]),
@@ -81,8 +108,11 @@ export function renderShop(root) {
   function fillPreview(it, el) {
     if (it.cat === 'ship') {
       el.innerHTML = `<div class="ship-demo">${shipSVG(it.id)}</div>`;
+    } else if (it.cat === 'pet') {
+      el.append(h('div', { class: 'pet-demo', html: petHTML(it.id) || '<span class="pet-none">Solo</span>' }));
     } else if (it.cat === 'fx') {
-      el.append(h('div', { class: `fx-demo ${it.id}` }, [h('i', { class: 'demo-orb' }), h('i', { class: 'demo-fx' })]));
+      const L = rewardLook(it.id);
+      el.append(h('div', { class: `fx-demo ${it.id}`, style: L ? { '--size': '70px' } : {} }, L ? [h('i', { class: 'demo-orb', style: { boxShadow: L.eclipse ? '0 0 0 2px #fff, 0 0 20px 6px #fff' : `0 0 20px ${L.aura}, inset -8px -8px 18px rgba(0,0,0,.5)`, filter: L.eclipse ? 'brightness(.3)' : '' } }), ...fxRing(L)] : [h('i', { class: 'demo-orb' }), h('i', { class: 'demo-fx' })]));
     } else if (it.cat === 'amb') {
       const b = h('button', { class: 'chip-btn', onclick: () => {
         clearTimeout(previewT);
@@ -97,10 +127,11 @@ export function renderShop(root) {
       const d = h('div', { class: `star-demo starc-${it.id.slice(5)}`, html: '<span class="star on"><svg viewBox="0 0 24 24"><path d="M12 2.8l2.8 5.8 6.3.9-4.6 4.4 1.1 6.3L12 17.2l-5.6 3 1.1-6.3L2.9 9.5l6.3-.9z" fill="currentColor"/></svg></span>'.repeat(3) });
       el.append(d);
     } else if (it.cat === 'trail') {
-      const glyph = it.id === 'trail-notes' ? '\u266A \u266B \u2669 ' : it.id === 'trail-stars' ? '\u2726 ' : '';
+      const glyph = it.id === 'trail-notes' ? '\u266A \u266B \u2669 ' : it.id === 'trail-stars' ? '\u2726 ' : (rewardLook(it.id) || {}).glyph || '';
       el.innerHTML = `<svg viewBox="0 0 200 90" class="route ${it.id}" style="width:100%;height:100%"><path id="p-${it.id}" d="M10 70 C60 70 60 20 110 20 S170 70 190 30" class="route-glow"/><path d="M10 70 C60 70 60 20 110 20 S170 70 190 30" class="route-dash"/>${glyph ? `<text class="route-text"><textPath href="#p-${it.id}">${glyph.repeat(12)}</textPath></text>` : ''}</svg>`;
     } else if (it.cat === 'sheet') {
-      const th = { 'sheet-classic': ['#fff', '#262340', '#B9B6CC'], 'sheet-parchment': ['#F6ECD6', '#3B2F25', '#C9B79A'], 'sheet-night': ['#17152E', '#ECEAF8', '#4C4874'], 'sheet-blueprint': ['#0F3D70', '#EAF3FF', '#5E8EC4'] }[it.id];
+      const L = rewardLook(it.id);
+      const th = L ? [L.paper, L.ink, L.line] : { 'sheet-classic': ['#fff', '#262340', '#B9B6CC'], 'sheet-parchment': ['#F6ECD6', '#3B2F25', '#C9B79A'], 'sheet-night': ['#17152E', '#ECEAF8', '#4C4874'], 'sheet-blueprint': ['#0F3D70', '#EAF3FF', '#5E8EC4'] }[it.id];
       el.innerHTML = `<svg viewBox="0 0 200 90" style="width:100%;height:100%"><rect width="200" height="90" fill="${th[0]}"/>${[25, 35, 45, 55, 65].map((y) => `<line x1="10" x2="190" y1="${y}" y2="${y}" stroke="${th[2]}"/>`).join('')}${[[50, 50], [80, 40], [110, 45], [140, 30], [170, 55]].map(([x, y]) => `<ellipse cx="${x}" cy="${y}" rx="6" ry="4.5" fill="${th[1]}" transform="rotate(-20 ${x} ${y})"/><line x1="${x + 5.5}" x2="${x + 5.5}" y1="${y}" y2="${y - 28}" stroke="${th[1]}" stroke-width="1.6"/>`).join('')}</svg>`;
     } else if (it.cat === 'kb') {
       const k = h('div', { class: `kb-demo kbt-${it.id.slice(3)}` });

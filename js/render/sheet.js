@@ -22,6 +22,9 @@ const SHEET_THEMES = {
   night: { paper: '#17152E', ink: '#ECEAF8', line: '#4C4874', faint: '#3B3760' },
   blueprint: { paper: '#0F3D70', ink: '#EAF3FF', line: '#5E8EC4', faint: '#3E6EA4' },
 };
+export function registerSheetThemes(map) {
+  Object.assign(SHEET_THEMES, map);
+}
 export function applySheetTheme(name) {
   Object.assign(COLORS, SHEET_THEMES[name] || SHEET_THEMES.classic);
 }

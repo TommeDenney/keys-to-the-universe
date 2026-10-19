@@ -1,3 +1,4 @@
+import { rewardLook } from '../data/rewards.js';
 // On-screen piano keyboard (DOM). Shows hints (next keys + fingers), echoes
 // what the player pressed, and can be played by touch.
 
@@ -152,6 +153,20 @@ export class Keyboard {
     else if (fx === 'notes') spawn('star note', 2, (p, i) => { p.textContent = ['\u266A', '\u266B', '\u2669'][Math.floor(Math.random() * 3)]; p.style.setProperty('--dx', `${(i ? 1 : -1) * (6 + Math.random() * 14)}px`); p.style.setProperty('--dy', `${-55 - Math.random() * 30}px`); });
     else if (fx === 'lightning') spawn('bolt', 1, () => {});
     else if (fx === 'fire') spawn('flame', 3, (p, i) => { p.style.setProperty('--dx', `${(i - 1) * 6}px`); p.style.animationDelay = `${i * 0.05}s`; });
+    else {
+      // Achievement key presses: glyph particles described in js/data/rewards.js.
+      const L = rewardLook(`press-${fx}`);
+      if (!L) return;
+      spawn('star glyph', L.n || 3, (p, i) => {
+        p.textContent = L.glyphs[Math.floor(Math.random() * L.glyphs.length)];
+        const c = L.color === 'rainbow' ? `hsl(${Math.floor(Math.random() * 360)} 90% 65%)` : L.color;
+        p.style.color = c;
+        p.style.textShadow = `0 0 8px ${L.glow}`;
+        p.style.fontSize = `${L.size || 14}px`;
+        p.style.setProperty('--dx', `${((i + 0.5) / (L.n || 3) - 0.5) * 50 + (Math.random() - 0.5) * 14}px`);
+        p.style.setProperty('--dy', `${-45 - Math.random() * 45}px`);
+      });
+    }
   }
 
   /** Flash a key: kind = 'good' | 'bad' | 'play' */

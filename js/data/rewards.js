@@ -155,7 +155,7 @@ export const PETS = [
   P('pet-crab', 'Crab', 'water', 160, '\u{1F980}', 'Plays piano sideways.'),
   P('pet-jelly', 'Jellyfish', 'water', 220, '\u{1FABC}', 'Glows softly in its bowl.'),
   P('pet-octopus', 'Octopus', 'water', 260, '\u{1F419}', 'Eight arms, eighty-eight keys. Show-off.'),
-  P('pet-seahorse', 'Seahorse', 'water', 240, '\u{1F40C}', 'Ok, technically a snail. It insists it’s a seahorse.'),
+  P('pet-shrimp', 'Shrimp', 'water', 140, '\u{1F990}', 'Tiny, pink and surprisingly good at rhythm.'),
   P('pet-dolphin', 'Dolphin', 'water', 400, '\u{1F42C}', 'A very small, very happy dolphin.', { kind: 'rogues', goal: 2 }),
   P('pet-shark', 'Shark', 'water', 480, '\u{1F988}', 'Smells a wrong note from a light year away.', { kind: 'life', stat: 'flawless', goal: 15 }),
   P('pet-whale', 'Pocket Whale', 'water', 520, '\u{1F433}', 'Sings whale songs in the key of C.', { kind: 'life', stat: 'minutes', goal: 600 }),

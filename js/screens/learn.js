@@ -31,16 +31,17 @@ export function galaxyStars(unit) {
 }
 
 export function lessonUnlocked(id) {
-  if (settings.get('unlockAll')) return true;
   const list = allLessons();
   const i = list.findIndex((l) => l.id === id);
   if (i <= 0 || i <= furthestDone(list)) return true; // never re-lock progress you've made
+  // A galaxy's Guardian can be challenged as soon as you reach the galaxy: beat it to skip ahead.
+  if (list[i].boss && list[i].unit.lessons[0].id !== id) return lessonUnlocked(list[i].unit.lessons[0].id);
   if (!progress.lesson(list[i - 1].id)) return false;
   // First world of a galaxy: the previous galaxy needs 80% of its stars.
   const unit = list[i].unit;
   if (unit.lessons[0].id === id) {
     const prev = COURSE[COURSE.indexOf(COURSE.find((u) => u.id === unit.id)) - 1];
-    if (prev) { const g = galaxyStars(prev); if (g.total < g.needed) return false; }
+    if (prev && !progress.skipped(prev.id)) { const g = galaxyStars(prev); if (g.total < g.needed) return false; }
   }
   return true;
 }

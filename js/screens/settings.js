@@ -149,7 +149,7 @@ export function renderSettings(root) {
     ]),
     h('section', { class: 'card' }, [
       h('h3', {}, [icon('star'), 'Progress']),
-      rowItem('Unlock all lessons', 'Skip ahead if you already know the basics.', toggle('unlockAll')),
+      rowItem('Skip ahead', 'Already know the basics? Beat a galaxy\u2019s Guardian (boss battle) to open the next galaxy. Skipped worlds give no stars or Stardust, but they stay playable.', h('span', { class: 'badge' }, '\u2694 Guardians')),
       backupRow(),
       constellationRow(),
       rowItem('Reset progress', 'Clears stars, streak and lesson progress on this device.', h('button', { class: 'btn ghost danger', onclick: () => modal((close) => [

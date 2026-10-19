@@ -1,5 +1,7 @@
 // Shop items (all bought with Stardust ✦, earned by playing).
 
+import { REWARD_ITEMS, PETS } from './rewards.js';
+
 export const SHOP = [
   // Spaceships (your marker on the Learn map)
   { id: 'ship-classic', cat: 'ship', name: 'Classic Rocket', price: 0, desc: 'Trusty white-and-red rocket.' },
@@ -76,10 +78,13 @@ export const SHOP = [
   { id: 'sheet-blueprint', cat: 'sheet', name: 'Blueprint', price: 200, desc: 'Engineer\u2019s blue with white ink.' },
 ];
 
+SHOP.push(...REWARD_ITEMS, ...PETS);
+
 export const CATEGORIES = [
+  { id: 'pet', name: 'Pet shop', blurb: 'A companion who travels with your ship. Water friends live in a fish bowl; space creatures are found on the planets of each galaxy.' },
   { id: 'ship', name: 'Spaceships', blurb: 'Your ship on the Learn map.' },
   { id: 'fx', name: 'Completion effects', blurb: 'What happens to a world when you complete it.' },
-  { id: 'amb', name: 'Ambience', blurb: 'Background sound on the Learn tab.' },
+  { id: 'amb', name: 'Ambience', blurb: 'Background sound on the Learn tab. Songs you unlock in the Songs tab can also be played as background music: tap the music bar at the bottom of the screen to pick them.' },
   { id: 'kb', name: 'Keyboard themes', blurb: 'The look of the on-screen keyboard.' },
   { id: 'press', name: 'Key presses', blurb: 'Effects when keys are played.' },
   { id: 'starc', name: 'Star colours', blurb: 'The colour of the stars you earn.' },

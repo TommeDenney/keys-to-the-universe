@@ -1,3 +1,4 @@
+import { rewardLook } from '../data/rewards.js';
 // Spaceship designs (SVG). The `.flame` / `.glow` parts animate via CSS.
 
 const SHIPS = {
@@ -71,5 +72,65 @@ const SHIPS = {
 };
 
 export function shipSVG(id = 'ship-classic') {
-  return `<svg viewBox="0 0 64 64" aria-hidden="true"><g class="ship-body">${SHIPS[id] || SHIPS['ship-classic']}</g></svg>`;
+  const look = !SHIPS[id] && rewardLook(id);
+  return `<svg viewBox="0 0 64 64" aria-hidden="true"><g class="ship-body">${look ? buildShip(id, look) : SHIPS[id] || SHIPS['ship-classic']}</g></svg>`;
+}
+
+// ---- Achievement ships, drawn from a few parameters (js/data/rewards.js) ---------------
+function buildShip(id, L) {
+  const g = `g${id.replace(/\W/g, '')}`;
+  const grad = `<defs><linearGradient id="${g}" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${L.hull2}"/><stop offset="1" stop-color="${L.hull}"/></linearGradient></defs>`;
+  const flame = (x = 32, w = 6, len = 16, y = 46) => `<path class="flame" d="M${x - w} ${y} Q${x} ${y + len} ${x + w} ${y} Z" fill="${L.flame}"/>`;
+  const deco = {
+    crown: `<path d="M22 20 L26 12 L29 18 L32 8 L35 18 L38 12 L42 20 Z" fill="#FBBF24" stroke="#92400E" stroke-width="1"/><circle class="glow" cx="32" cy="13" r="1.6" fill="#F472B6"/>`,
+    star: `<path class="glow" d="M32 0 L34.5 8 L42 8 L36 12.5 L38.5 20 L32 15.5 L25.5 20 L28 12.5 L22 8 L29.5 8 Z" fill="${L.cockpit}"/>`,
+    spots: `<circle cx="26" cy="26" r="3" fill="${L.hull2}"/><circle cx="38" cy="34" r="4" fill="${L.hull2}"/><circle cx="30" cy="38" r="2" fill="${L.wing}"/>`,
+    seams: `<path class="glow" d="M32 10 L30 22 L34 30 L31 42 M24 30 L30 32 M40 28 L34 30" stroke="${L.cockpit}" stroke-width="1.2" fill="none"/>`,
+    petals: `<g class="glow" fill="#FBCFE8"><circle cx="14" cy="18" r="2"/><circle cx="52" cy="22" r="1.6"/><circle cx="10" cy="40" r="1.4"/></g>`,
+    pipes: `<g fill="#FDE68A"><rect x="24" y="12" width="3" height="14" rx="1.5"/><rect x="28.5" y="8" width="3" height="18" rx="1.5"/><rect x="33" y="10" width="3" height="16" rx="1.5"/><rect x="37.5" y="14" width="3" height="12" rx="1.5"/></g><g fill="#fff"><rect x="23" y="34" width="3" height="7"/><rect x="27" y="34" width="3" height="7"/><rect x="31" y="34" width="3" height="7"/><rect x="35" y="34" width="3" height="7"/><rect x="39" y="34" width="3" height="7"/></g>`,
+  }[L.deco] || '';
+  const cockpit = (cy = 24, r = 5) => `<circle cx="32" cy="${cy}" r="${r}" fill="${L.cockpit}" stroke="#0F172A" stroke-opacity=".35" stroke-width="1.5"/><circle cx="${32 - r / 3}" cy="${cy - r / 3}" r="${r / 3}" fill="#fff" opacity=".7"/>`;
+  switch (L.shape) {
+    case 'bird': return `${grad}${flame(32, 6, 18, 44)}
+      <path d="M32 6 C38 14 38 24 36 32 L44 26 C50 22 58 22 60 18 C58 30 50 38 40 42 L36 46 L28 46 L24 42 C14 38 6 30 4 18 C6 22 14 22 20 26 L28 32 C26 24 26 14 32 6 Z" fill="url(#${g})"/>
+      <path d="M32 10 C35 16 35 24 34 30 L30 30 C29 24 29 16 32 10 Z" fill="${L.hull2}"/>
+      <path d="M40 40 C48 36 54 30 56 24 M24 40 C16 36 10 30 8 24" stroke="${L.flame}" stroke-width="2" fill="none"/>
+      <circle class="glow" cx="32" cy="18" r="2" fill="${L.cockpit}"/>`;
+    case 'baton': return `${flame(32, 3, 14, 48)}
+      <path d="M30 14 L34 14 L35 48 L29 48 Z" fill="${L.hull}" stroke="#CBD5E1" stroke-width="1"/>
+      <path d="M28 40 L36 40 L37 50 L27 50 Z" fill="${L.hull2}"/>${deco}
+      <path class="glow" d="M14 30 Q20 26 22 32 M50 30 Q44 26 42 32 M16 38 l2 -6 M48 38 l-2 -6" stroke="${L.wing}" stroke-width="1.6" fill="none"/>`;
+    case 'manta': return `${grad}${flame(26, 3, 12, 42)}${flame(38, 3, 12, 42)}
+      <path d="M32 8 C36 8 40 16 42 22 C50 24 58 30 60 38 C52 36 46 38 42 42 L22 42 C18 38 12 36 4 38 C6 30 14 24 22 22 C24 16 28 8 32 8 Z" fill="url(#${g})"/>
+      <path d="M22 22 C26 26 38 26 42 22" stroke="${L.hull2}" stroke-width="2" fill="none" class="glow"/>
+      <path d="M30 42 Q32 56 34 42" fill="${L.wing}"/>${cockpit(18, 4)}`;
+    case 'orb': return `${grad}${flame(32, 5, 14, 48)}
+      <path d="M20 44 L14 54 L24 48 Z M44 44 L50 54 L40 48 Z" fill="${L.wing}"/>
+      <ellipse cx="32" cy="30" rx="16" ry="19" fill="url(#${g})" stroke="${L.wing}" stroke-width="1.5"/>
+      <path d="M17 24 H47 M16 32 H48 M18 40 H46" stroke="${L.wing}" stroke-opacity=".45" stroke-width="1"/>${deco}${cockpit(22, 4)}
+      <rect x="28" y="8" width="8" height="4" rx="1.5" fill="${L.wing}"/>`;
+    case 'sail': return `${flame(32, 4, 14, 48)}
+      <path d="M32 4 L33 48 L31 48 Z" fill="#CBD5E1"/>
+      <path d="M33 6 C48 14 54 30 50 42 L34 42 Z" fill="${L.hull2}" opacity=".9" class="glow"/>
+      <path d="M31 10 C18 18 12 30 16 42 L30 42 Z" fill="${L.wing}" opacity=".85" class="glow"/>
+      <path d="M20 42 L44 42 L40 50 L24 50 Z" fill="${L.hull}"/>${cockpit(46, 2.5)}`;
+    case 'arrow': return `${grad}${flame(27, 3, 16, 46)}${flame(37, 3, 16, 46)}
+      <path d="M32 2 L40 26 L60 46 L38 42 L36 48 L28 48 L26 42 L4 46 L24 26 Z" fill="url(#${g})"/>
+      <path d="M4 46 L24 26 L26 42 Z M60 46 L40 26 L38 42 Z" fill="${L.wing}"/>${deco}${cockpit(26, 3.5)}`;
+    case 'glider': return `${grad}${flame(32, 4, 14, 44)}
+      <path d="M32 6 C36 12 37 24 36 44 L28 44 C27 24 28 12 32 6 Z" fill="url(#${g})"/>
+      <path d="M30 22 C20 14 8 16 4 24 C14 24 22 28 30 34 Z M34 22 C44 14 56 16 60 24 C50 24 42 28 34 34 Z" fill="${L.wing}" opacity=".9"/>
+      <path d="M30 36 C22 36 14 40 12 46 C20 44 26 44 30 42 Z M34 36 C42 36 50 40 52 46 C44 44 38 44 34 42 Z" fill="${L.hull2}"/>${deco}${cockpit(18, 3.5)}`;
+    case 'train': return `${flame(26, 3, 12, 50)}${flame(38, 3, 12, 50)}
+      <rect x="18" y="16" width="28" height="34" rx="6" fill="${L.hull}"/>
+      <path d="M18 22 Q32 2 46 22 Z" fill="${L.hull}"/>
+      <rect x="22" y="22" width="20" height="9" rx="3" fill="${L.cockpit}"/>
+      <path d="M18 36 H46 M18 42 H46" stroke="${L.hull2}" stroke-width="2.5"/>
+      <rect x="28" y="4" width="8" height="8" rx="2" fill="${L.wing}"/>
+      <circle class="glow" cx="32" cy="8" r="2" fill="${L.hull2}"/>
+      <path d="M14 46 L18 40 L18 50 Z M50 46 L46 40 L46 50 Z" fill="${L.hull2}"/>`;
+    default: return `${grad}${flame(32, 6, 16, 46)}
+      <path d="M32 6 C44 16 46 32 42 46 L22 46 C18 32 20 16 32 6 Z" fill="url(#${g})"/>
+      <path d="M22 46 L10 52 L16 34 Z M42 46 L54 52 L48 34 Z" fill="${L.wing}"/>${cockpit(30, 5)}${deco}`;
+  }
 }
