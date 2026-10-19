@@ -204,6 +204,38 @@ export const SONG_DEFS = [
     lh: `r/2. | (C3 E3 G3)/1 | (C3 E3 G3)/1 | (C3 E3 G3)/1 | (C3 E3 G3)/1 | (C3 E3 G3)/1 | (C3 E3 G3)/1 | (B2 F3 G3)/1 |
          (B2 F3 G3)/1 | (C3 E3 G3)/1 | (C3 E3 Bb3)/1 | (C3 F3 A3)/1 | (C3 E3 G3)/1 | (C3 E3 G3)/1 | (B2 F3 G3)/1 | (C3 E3 G3)/1 |`,
   },
+  // ---- Special boss: The Nature Goddess Divinae (original composition) ----
+  { id: 'divinae-garden', title: 'Divinae\u2019s Garden', composer: 'Ivory original (R&B slow jam)', level: 3, bpm: 88, tags: ['Boss', 'R&B', 'Both hands'],
+    about: 'An original neo-soul groove written for The Nature Goddess Divinae: a syncopated melody over Am, Dm, F and C.',
+    rh: `r/8 E4/8 G4/8 A4/8 r/8 G4/8 E4 | D4/2. r | r/8 E4/8 G4/8 A4/8 C5/8 A4/8 G4 | A4/2 G4 E4 |
+         r/8 E4/8 G4/8 A4/8 r/8 G4/8 E4 | D4/4. E4/8 C4/2 | r/8 C4/8 D4/8 E4/8 G4/8 E4/8 D4 | C4/1 |
+         C5/4. A4/8 G4 E4 | G4/8 A4/8 G4 E4/2 | C5/4. A4/8 G4 A4 | B4/2 r/2 |
+         C5/4. A4/8 G4 E4 | G4/8 A4/8 G4 E4 D4 | E4/8 D4/8 C4 D4 E4 | C4/1 |`,
+    lh: `A2/2 E3/2 | D3/2 A2/2 | A2/2 E3/2 | E3/2 B2/2 | A2/2 E3/2 | D3/2 C3/2 | F2/2 G2/2 | C3/1 |
+         F2/2 C3/2 | C3/2 G2/2 | F2/2 C3/2 | G2/2 D3/2 | F2/2 C3/2 | C3/2 E3/2 | D3/2 G2/2 | C3/1 |`,
+    sections: [[1, 8, 'Verse'], [9, 16, 'Chorus']] },
+
+  // ---- Boss battles: original test pieces, one per galaxy ----
+  { id: 'boss-u1', title: 'Primera Trial', composer: 'Ivory test piece', level: 1, bpm: 84, pos: { R: 'C4' }, tags: ['Boss'], about: 'C, D and E with mixed rhythms. Keep the beat!',
+    rh: 'C4 D4 E4 C4 | E4 D4 C4/2 | C4 C4 D4 D4 | E4/1 | E4 D4 C4 D4 | E4 E4 D4/2 | C4/8 D4/8 E4/8 D4/8 C4 E4 | C4/1 |' },
+  { id: 'boss-u2', title: 'Pentara Trial', composer: 'Ivory test piece', level: 2, bpm: 92, pos: { R: 'C4' }, tags: ['Boss'], about: 'All five fingers, eighth notes, a dotted rhythm and rests.',
+    rh: 'C4 E4 G4/2 | F4 E4 D4 r | E4/4. F4/8 G4 E4 | D4/2 r/2 | G4 F4/8 E4/8 D4 C4 | E4/2. D4 | C4 D4 E4 F4 | G4/2 C4/2 |' },
+  { id: 'boss-u3', title: 'Octavia Trial', composer: 'Ivory test piece', level: 2, bpm: 88, tags: ['Boss'], about: 'The whole octave: thumb under, A and B, and back down.',
+    rh: 'C4@1 D4@2 E4@3 F4@1 | G4@2 A4@3 B4@4 C5@5 | C5@5 B4@4 A4@3 G4@2 | A4/2 G4/2 | E4@1 G4@2 A4@3 C5@5 | B4@4 A4@3 G4@2/2 | F4@1 A4@3 G4@2 E4@1 | C4@1/1 |' },
+  { id: 'boss-u4', title: 'Basso Trial', composer: 'Ivory test piece', level: 2, bpm: 84, pos: { L: 'C3' }, tags: ['Boss'], about: 'A left-hand melody in C position, read from the bass clef.',
+    rh: '', lh: 'C3 E3 G3 E3 | F3 E3 D3/2 | E3 D3 C3 D3 | E3/2 G3/2 | G3 F3 E3 D3 | C3 D3 E3/2 | D3 E3 F3 D3 | C3/1 |' },
+  { id: 'boss-u5', title: 'Gemini Trial', composer: 'Ivory test piece', level: 3, bpm: 80, pos: { R: 'C4', L: 'C3' }, tags: ['Boss'], about: 'Melody in the right hand, bass notes in the left: together, in time.',
+    rh: 'E4 F4 G4/2 | E4 D4 C4/2 | D4 E4 F4 D4 | E4/1 | G4 F4 E4 D4 | C4 E4 G4/2 | F4 D4 E4 C4 | C4/1 |',
+    lh: 'C3/1 | G3/1 | G3/1 | C3/1 | C3/2 G3/2 | C3/1 | G3/1 | C3/1 |' },
+  { id: 'boss-u6', title: 'Chroma Trial', composer: 'Ivory test piece', level: 3, bpm: 88, key: 1, tags: ['Boss'], about: 'G major: watch every F\u266f.',
+    rh: 'G4 A4 B4 G4 | D5/2 B4/2 | C5 B4 A4 F#4 | G4/1 | B4 C5 D5 B4 | E5 D5 C5 A4 | F#4 G4 A4 F#4 | G4/1 |',
+    lh: 'G2/1 | G2/1 | D3/1 | G2/1 | G2/1 | C3/1 | D3/1 | G2/1 |' },
+  { id: 'boss-u7', title: 'Triad Trial', composer: 'Ivory test piece', level: 3, bpm: 76, tags: ['Boss'], about: 'C, F, G and Am chords over a moving bass. Change chords right on the beat.',
+    rh: '(C4 E4 G4)/2 (C4 E4 G4)/2 | (C4 F4 A4)/2 (C4 F4 A4)/2 | (B3 D4 G4)/2 (B3 D4 G4)/2 | (C4 E4 G4)/1 | (C4 E4 A4)/2 (C4 E4 A4)/2 | (C4 F4 A4)/2 (C4 F4 A4)/2 | (B3 D4 G4)/2 (B3 F4 G4)/2 | (C4 E4 G4)/1 |',
+    lh: 'C3/1 | F2/1 | G2/1 | C3/1 | A2/1 | F2/1 | G2/1 | C3/1 |' },
+  { id: 'boss-u9', title: 'Cathedral Trial', composer: 'Ivory test piece', level: 4, bpm: 72, instrument: 'organ', tags: ['Boss', 'Gospel'], about: 'Passing diminished chord and the Amen, on the organ, in time.',
+    rh: '(E4 G4 C5)/1 | (E4 G4 Bb4)/1 | (F4 A4 C5)/1 | (F4 G4 B4)/1 | (E4 G4 C5)/2 (F4 A4 C5)/2 | (E4 G4 C5)/2 (E4 G4 Bb4)/2 | (F4 A4 C5)/2 (F4 G4 B4)/2 | (E4 G4 C5)/1 |',
+    lh: 'C3/1 | C#3/1 | D3/1 | G2/1 | C3/2 F2/2 | C3/2 C#3/2 | D3/2 G2/2 | C3/1 |' },
 ];
 
 /** Apply "five-finger position" fingering to notes that have none. */

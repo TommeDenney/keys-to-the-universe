@@ -1,23 +1,25 @@
 // Song detail: practice plan broken into sections → hands → full song.
 
 import { h, icon, starsHTML, coverGradient, modal } from '../ui.js';
-import { builtinSong } from '../data/songs.js';
+import { getSong } from '../data/catalog.js';
 import { library, progress } from '../store.js';
 import { practicePlan, handsLabel, finalizeSong } from '../music/song.js';
 import { keyName } from '../music/theory.js';
 import { Player } from './player.js';
+import { rewardSongStep, rewardDaily } from '../economy.js';
+import { track } from '../challenges.js';
+import { songUnlocked } from '../unlocks.js';
+import { songPrice } from '../data/shop.js';
+import { buySong, balance, SYMBOL, walletPill } from '../economy.js';
+import { toast } from '../ui.js';
 import { input } from '../input/hub.js';
 
 async function loadSong(id) {
-  if (id.startsWith('imp-')) {
-    const rec = await library.get(id);
-    if (!rec) return null;
-    const s = rec.song;
-    s.id = id;
-    if (!s.hands) finalizeSong(s);
-    return s;
+  try {
+    return await getSong(id);
+  } catch {
+    return null;
   }
-  return builtinSong(id);
 }
 
 /** Open a full-screen player for a song. */
@@ -58,7 +60,15 @@ function build(page, song) {
       hands: step.hands, mode: step.mode, tempo: step.tempo || 1, range: step.range,
       title: `${song.title}`,
       subtitle: `${step.label} · ${handsLabel(step.hands)} · ${step.mode === 'wait' ? 'Your own pace' : `With the beat${step.tempo < 1 ? ` (${Math.round(step.tempo * 100)}%)` : ''}`}`,
-      onFinish: (r) => { if (r.stars > 0) progress.recordSongStep(song.id, step.key, r.stars); },
+      onFinish: (r) => {
+        if (r.stars <= 0) return;
+        const prev = progress.recordSongStep(song.id, step.key, r.stars);
+        rewardSongStep(prev, r.stars, step.key === 'full-timed');
+        track('steps');
+        if (r.stars > prev) track('stars', r.stars - prev);
+        if (step.key === 'full-timed' && r.stars === 3) track('mastered');
+        rewardDaily(progress.streak);
+      },
       actions: () => (plan[idx + 1] ? [{ label: 'Next step', primary: true, fn: () => { document.querySelectorAll('.player-host').forEach((e) => e._close()); launch(plan[idx + 1]); } }] : []),
     }, redraw);
   };
@@ -77,6 +87,7 @@ function build(page, song) {
       h('h1', {}, song.title),
       h('p', { class: 'by' }, song.composer || ''),
       song.about ? h('p', { class: 'about' }, song.about) : null,
+      song.source === 'catalog' ? h('p', { class: 'credit' }, ['Sheet music: ', h('a', { href: song.sourceUrl, target: '_blank', rel: 'noopener' }, 'Mutopia Project'), ` \u00b7 ${song.license}${song.maintainer ? ` \u00b7 typeset by ${song.maintainer}` : ''}`]) : null,
       h('div', { class: 'facts' }, [
         h('span', {}, keyName(song.keyFifths || 0)),
         h('span', {}, `${song.time[0]}/${song.time[1]}`),
@@ -90,6 +101,27 @@ function build(page, song) {
       nextStep ? h('button', { class: 'btn white solid', onclick: () => launch(nextStep) }, [icon('play'), Object.keys(recs).length ? 'Continue' : 'Start practising']) : null,
     ]),
   ]));
+
+  // Locked: reach it in the Learn path, or unlock it with Stardust.
+  if (song.source !== 'import' && !songUnlocked(song.id)) {
+    const price = songPrice(song);
+    page.append(h('section', { class: 'card unlock-card pop' }, [
+      h('div', { class: 'unlock-icon' }, icon('lock')),
+      h('div', { class: 'grow' }, [
+        h('h2', {}, 'This song is locked'),
+        h('p', { class: 'muted' }, `It unlocks for free when you reach it in the Learn path, or unlock it now for ${price} ${SYMBOL}. You can listen to it first.`),
+      ]),
+      walletPill(),
+      h('button', {
+        class: 'btn primary', onclick: () => {
+          if (!buySong(song.id, price)) { toast(`You need ${price - balance()} more ${SYMBOL}. Complete lessons and challenges to earn more!`, 'bad'); return; }
+          toast(`${song.title} unlocked!`, 'ok');
+          redraw();
+        },
+      }, [`Unlock for ${price} ${SYMBOL}`]),
+    ]));
+    return;
+  }
 
   // Practice plan
   const list = h('div', { class: 'plan' });

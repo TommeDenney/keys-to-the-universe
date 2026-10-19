@@ -2,12 +2,19 @@
 
 import { h, icon, starsHTML, toast, coverGradient } from '../ui.js';
 import { builtinSongs } from '../data/songs.js';
+import { catalogPieces } from '../data/catalog.js';
+import { songUnlocked } from '../unlocks.js';
+import { songPrice, IMPORT_COST } from '../data/shop.js';
+import { spend, balance, SYMBOL, walletPill } from '../economy.js';
 import { library, progress } from '../store.js';
 import { importFile } from '../music/importer.js';
 import { practicePlan } from '../music/song.js';
 
-const LEVELS = ['All', 'Beginner', 'Easy', 'Intermediate'];
-const levelName = (l) => (l <= 1 ? 'Beginner' : l <= 2 ? 'Easy' : l <= 3 ? 'Easy+' : 'Intermediate');
+const LEVELS = ['All', 'Beginner', 'Easy', 'Intermediate', 'Advanced', 'Professional'];
+const levelName = (l, grade) => {
+  if (grade) return grade <= 2 ? 'Beginner' : grade <= 4 ? 'Easy' : grade <= 6 ? 'Intermediate' : grade <= 8 ? 'Advanced' : 'Professional';
+  return l <= 1 ? 'Beginner' : l <= 2 ? 'Easy' : l <= 3 ? 'Easy+' : 'Intermediate';
+};
 
 export const SOURCES = [
   { name: 'MuseScore', url: 'https://musescore.com/sheetmusic/beginner/piano', fmt: 'MusicXML', note: 'Huge community library. On a score page choose Download → MusicXML (free account; some scores are Pro-only).' },
@@ -30,6 +37,9 @@ export async function renderLibrary(root) {
   const fileInput = h('input', { type: 'file', class: 'hidden', multiple: true, onchange: (e) => doImport([...e.target.files]) });
 
   async function doImport(files) {
+    // Importing your own music costs Stardust (per file).
+    const cost = IMPORT_COST * files.length;
+    if (!spend(cost)) { toast(`Importing costs ${IMPORT_COST} ${SYMBOL} per file. You need ${cost - balance()} more. Keep playing to earn Stardust!`, 'bad'); return; }
     for (const f of files) {
       try {
         const song = await importFile(f);
@@ -52,20 +62,21 @@ export async function renderLibrary(root) {
     const q = filter.q.toLowerCase();
     const items = [
       ...(filter.src === 'builtin' ? [] : imports.map((r) => ({ ...r.song, id: r.id, imported: true }))),
-      ...(filter.src === 'mine' ? [] : builtins),
+      ...(filter.src === 'mine' ? [] : builtins.filter((b) => !b.id.startsWith('boss-'))),
+      ...(filter.src === 'mine' ? [] : catalogPieces().map((p) => ({ ...p, tags: p.skills || [], piece: true }))),
     ].filter((s) => (!q || `${s.title} ${s.composer} ${(s.tags || []).join(' ')}`.toLowerCase().includes(q))
-      && (filter.level === 'All' || s.imported || levelName(s.level).startsWith(filter.level)));
+      && (filter.level === 'All' || s.imported || levelName(s.level, s.grade).startsWith(filter.level)));
     if (!items.length) grid.append(h('p', { class: 'muted empty' }, filter.src === 'mine' ? 'No imported music yet. Tap “Import sheet music” to add MusicXML or MIDI files.' : 'No songs match.'));
     for (const s of items) grid.append(songCard(s));
   };
 
   page.append(
-    h('header', { class: 'top' }, [h('div', {}, [h('div', { class: 'eyebrow' }, 'Library'), h('h1', {}, 'Songs')])]),
+    h('header', { class: 'top' }, [h('div', {}, [h('div', { class: 'eyebrow' }, 'Library'), h('h1', {}, 'Songs')]), walletPill('big')]),
     h('section', { class: 'import-card' }, [
       h('div', { class: 'import-icon' }, icon('upload')),
       h('div', { class: 'grow' }, [
         h('h3', {}, 'Import sheet music'),
-        h('p', {}, 'Add MusicXML (.musicxml, .xml, .mxl) or MIDI (.mid) files. The app reads the notes, splits them into hands and sections, and builds a practice plan.'),
+        h('p', {}, `Add MusicXML (.musicxml, .xml, .mxl) or MIDI (.mid) files. The app reads the notes, splits them into hands and sections, and builds a practice plan. Costs ${IMPORT_COST} ${SYMBOL} per file.`),
       ]),
       h('button', { class: 'btn primary', onclick: () => fileInput.click() }, [icon('upload'), 'Import']),
       fileInput,
@@ -83,14 +94,21 @@ export async function renderLibrary(root) {
 }
 
 function songCard(s) {
-  const plan = practicePlan(s);
   const recs = progress.songSteps(s.id);
-  const best = plan.reduce((a, p) => a + (recs[p.key] || 0), 0);
-  const pct = Math.round((best / (plan.length * 3)) * 100);
-  return h('a', { class: 'song-card', href: `#/song/${s.id}` }, [
+  let pct = 0;
+  if (s.piece) {
+    pct = Math.min(100, Math.round((Object.values(recs).reduce((a, b) => a + b, 0) / 30) * 100));
+  } else {
+    const plan = practicePlan(s);
+    const best = plan.reduce((a, p) => a + (recs[p.key] || 0), 0);
+    pct = Math.round((best / (plan.length * 3)) * 100);
+  }
+  const locked = !s.imported && !songUnlocked(s.id);
+  return h('a', { class: `song-card ${locked ? 'locked' : ''}`, href: `#/song/${s.id}` }, [
+    locked ? h('span', { class: 'price-tag' }, [icon('lock'), ` ${songPrice(s)} ${SYMBOL}`]) : null,
     h('div', { class: 'cover', style: { background: coverGradient(s.id + s.title) } }, [
       h('span', { class: 'cover-note' }, icon('note')),
-      s.imported ? h('span', { class: 'tag light' }, 'Imported') : h('span', { class: 'tag light' }, levelName(s.level)),
+      s.imported ? h('span', { class: 'tag light' }, 'Imported') : h('span', { class: 'tag light' }, s.grade ? `Grade ${s.grade} \u00b7 ${levelName(0, s.grade)}` : levelName(s.level)),
     ]),
     h('div', { class: 'meta' }, [
       h('b', {}, s.title),

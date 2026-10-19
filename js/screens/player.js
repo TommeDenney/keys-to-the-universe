@@ -12,6 +12,7 @@ import { Keyboard, rangeFor } from '../render/keyboard.js';
 import { sliceSong, buildEvents, handsLabel } from '../music/song.js';
 import { spellMidi, noteName } from '../music/theory.js';
 import { openCalibration } from './calibrate.js';
+import { track } from '../challenges.js';
 import { applySound, SOUNDS, appVoice } from '../sound.js';
 
 const PERFECT = 0.1;
@@ -81,11 +82,12 @@ export class Player {
   render() {
     const c = this.cfg;
     const subtitle = c.subtitle || `${handsLabel(this.hands)} · ${this.mode === 'wait' ? 'Your own pace' : 'With the beat'}`;
-    this.el = h('div', { class: 'player' }, [
+    this.el = h('div', { class: `player ${this.cfg.exam ? 'exam' : ''}` }, [
       h('header', { class: 'pl-top' }, [
         h('button', { class: 'icon-btn', 'aria-label': 'Close', onclick: () => this.exit() }, icon('close')),
         h('div', { class: 'pl-title' }, [h('div', { class: 't' }, c.title || this.slice.title), h('div', { class: 'sub' }, subtitle)]),
         h('div', { class: 'pl-progress' }, h('div', { class: 'bar' })),
+        this.cfg.exam ? h('div', { class: 'energy', title: 'Energy: keep it up!' }, [h('i'), h('span', {}, 'Energy')]) : null,
         h('div', { class: 'pl-input' }),
       ]),
       h('div', { class: 'pl-stage' }, [
@@ -149,6 +151,10 @@ export class Player {
 
   reset() {
     this.stopAudio();
+    this.energy = 0.6;
+    this.knockedOut = false;
+    const ebar = this.el && this.el.querySelector('.energy i');
+    if (ebar) ebar.style.transform = 'scaleX(0.6)';
     this.sheet.state.clear();
     this.sheet.effects = [];
     this.hits = 0;
@@ -177,6 +183,20 @@ export class Player {
 
   showStart() {
     const c = this.cfg;
+    if (c.exam) {
+      this.showOverlay(h('div', { class: 'card start-card boss-card pop' }, [
+        h('div', { class: 'boss-emblem' }, [h('i'), h('i'), h('span', {}, '\u2694')]),
+        h('div', { class: 'eyebrow' }, 'Boss battle'),
+        h('h2', {}, `${c.exam.name || 'The Guardian'} challenges you!`),
+        h('p', {}, `Play \u201c${this.slice.title}\u201d with the beat at full speed. Score ${Math.round(c.exam.pass * 100)}% or more to pass, and keep your energy up: misses drain it, good notes refill it.`),
+        this.inputNotice(),
+        h('div', { class: 'row' }, [
+          h('button', { class: 'btn ghost', onclick: () => { this.hideOverlay(); this.listen(); } }, [icon('ear'), 'Hear it first']),
+          h('button', { class: 'btn primary', onclick: () => this.begin() }, ['\u2694 Accept the challenge']),
+        ]),
+      ]));
+      return;
+    }
     const hint = this.mode === 'wait'
       ? 'Play each highlighted note when you’re ready. The music waits for you.'
       : 'Wait for the count-in, then play each note as it reaches the line.';
@@ -203,6 +223,7 @@ export class Player {
   async begin() {
     audio.ensure();
     this.hideOverlay();
+    if (!this.playStart) this.playStart = performance.now();
     // The key press that hit "Start" (piano navigation) must not count as the
     // first note, and its sound needs a moment to die away.
     this.readyAt = performance.now() + 1300;
@@ -400,6 +421,7 @@ export class Player {
       const early = best.start > b;
       const grade = bestD <= PERFECT ? 'perfect' : bestD <= GOOD ? 'good' : 'ok';
       this.grades[grade]++;
+      this.addEnergy(grade === 'perfect' ? 0.05 : grade === 'good' ? 0.035 : 0.02);
       this.hitNote(best);
       this.streak++;
       if (grade === 'perfect') this.sheet.popup(this.streak >= 10 ? `Perfect ×${this.streak}` : 'Perfect!', '#17B26A');
@@ -573,6 +595,7 @@ export class Player {
           if (!this.hitSet.has(n.id) && this.sheet.state.get(n.id) !== 'miss' && (this.beat - n.start) * this.spq > WINDOW) {
             this.sheet.state.set(n.id, 'miss');
             this.grades.miss++;
+            this.addEnergy(-0.1);
             this.streak = 0;
           }
         }
@@ -598,6 +621,23 @@ export class Player {
     this.raf = requestAnimationFrame((t) => this.frame(t));
   }
 
+  // ---- boss battles ---------------------------------------------------------
+
+  addEnergy(d) {
+    if (!this.cfg.exam || this.finished) return;
+    this.energy = Math.max(0, Math.min(1, (this.energy ?? 0.6) + d));
+    const bar = this.el.querySelector('.energy i');
+    if (bar) bar.style.transform = `scaleX(${this.energy})`;
+    const box = this.el.querySelector('.energy');
+    if (box) {
+      box.classList.toggle('low', this.energy < 0.3);
+      box.classList.remove('hit', 'hurt');
+      void box.offsetWidth;
+      box.classList.add(d > 0 ? 'hit' : 'hurt');
+    }
+    if (this.energy <= 0) { this.knockedOut = true; this.finish(); }
+  }
+
   // ---- results ------------------------------------------------------------
 
   finish() {
@@ -616,14 +656,26 @@ export class Player {
       score = total ? (g.perfect + g.good * 0.85 + g.ok * 0.6) / total : 1;
       score = Math.max(0, score - Math.min(0.15, this.wrong * 0.01));
     }
-    const stars = starsFor(score, this.mode);
+    if (this.knockedOut) score = Math.min(score, (this.beat / Math.max(1, this.endBeat)) * score);
+    const stars = this.knockedOut ? 0 : starsFor(score, this.mode);
     const result = { stars, score, mode: this.mode, wrong: this.wrong, grades: { ...this.grades }, total };
+    if (this.cfg.exam) {
+      result.exam = true;
+      result.passed = !this.knockedOut && score >= this.cfg.exam.pass;
+      result.knockedOut = !!this.knockedOut;
+    }
     if (stars > 0) audio.chime('good');
+    // Challenges: correct notes, results with the beat, 3-star runs.
+    const notesHit = this.mode === 'wait' ? this.hits : this.grades.perfect + this.grades.good + this.grades.ok;
+    if (notesHit) track('notes', notesHit);
+    if (this.mode === 'timed' && stars >= 2) track('timed');
+    if (stars === 3) track('threeStar');
     if (this.cfg.onFinish) this.cfg.onFinish(result);
     this.showResult(result);
   }
 
   showResult(r) {
+    if (r.exam) { this.showExamResult(r); return; }
     const titles = ['Keep practicing!', 'Nice work!', 'Great job!', 'Amazing!'];
     const pct = Math.round(r.score * 100);
     const stats = r.mode === 'wait'
@@ -641,6 +693,26 @@ export class Player {
       ]),
     ]));
     if (r.stars >= 2) confetti(this.el.querySelector('.pl-overlay'));
+  }
+
+  showExamResult(r) {
+    const pct = Math.round(r.score * 100);
+    const need = Math.round(this.cfg.exam.pass * 100);
+    const actions = (this.cfg.actions && this.cfg.actions(r)) || [];
+    this.showOverlay(h('div', { class: `card result-card exam-result ${r.passed ? 'won' : 'lost'} pop` }, [
+      h('div', { class: 'exam-badge' }, r.passed ? '\u2694 Victory' : '\u2620 Defeated'),
+      r.passed ? h('div', { class: 'stars-big', html: starsHTML(r.stars, 3, true) }) : null,
+      h('h2', {}, r.passed ? `${this.cfg.exam.name || 'The Guardian'} is defeated!` : r.knockedOut ? 'Your energy ran out' : 'Not quite enough'),
+      h('p', { class: 'muted' }, r.passed
+        ? 'The way to the next galaxy is open.'
+        : `You scored ${pct}%. You need ${need}% to pass. Practise the tricky parts in the lessons, then come back for a rematch.`),
+      h('div', { class: 'stats' }, [stat(`${pct}%`, 'score'), stat(`${need}%`, 'to pass'), stat(`${r.grades.perfect}`, 'perfect'), stat(`${r.grades.miss}`, 'missed')]),
+      h('div', { class: 'row' }, [
+        h('button', { class: `btn ${r.passed ? 'ghost' : 'primary'}`, onclick: () => { this.energy = 0.6; this.knockedOut = false; this.addEnergy(0); this.restart(); } }, [icon('restart'), r.passed ? 'Play again' : 'Rematch']),
+        ...actions.map((a) => h('button', { class: `btn ${a.primary ? 'primary' : 'ghost'}`, onclick: () => a.fn(r) }, a.label)),
+      ]),
+    ]));
+    if (r.passed) confetti(this.el.querySelector('.pl-overlay'));
   }
 
   showMicHelp() {
@@ -688,6 +760,7 @@ export class Player {
   }
 
   setTempo(t) {
+    if (this.cfg.exam) { this.toast('Boss battles are played at full speed. Practise slower in the lesson first.'); return; }
     const was = this.running && this.mode === 'timed';
     if (was) this.pause();
     this.tempo = Math.round(Math.max(0.4, Math.min(1.5, t)) * 10) / 10;
@@ -712,6 +785,8 @@ export class Player {
 
   destroy() {
     this.destroyed = true;
+    // Practice time counts toward challenges (capped so an idle screen doesn't farm minutes).
+    if (this.playStart) track('minutes', Math.min(30, (performance.now() - this.playStart) / 60000));
     if (Player.current === this) Player.current = null;
     applySound();
     cancelAnimationFrame(this.raf);

@@ -28,6 +28,9 @@ export class Keyboard {
     if (isBlack(hi)) hi++;
     this.el.innerHTML = '';
     this.el.classList.add('kb');
+    // Cosmetics: demo keyboards in the Shop bring their own look; others follow what's equipped.
+    if (/\bkbt-|\bpress-/.test(this.el.className)) this.el.dataset.fixedLook = '1';
+    else this.el.classList.add(`kbt-${document.body.dataset.kbtheme || 'classic'}`, `press-${document.body.dataset.press || 'glow'}`);
     const whites = [];
     for (let m = lo; m <= hi; m++) if (!isBlack(m)) whites.push(m);
     const ww = 100 / whites.length;
@@ -129,10 +132,30 @@ export class Keyboard {
     } else if (f) f.remove();
   }
 
+  /** Particle flourish for the equipped key-press effect. */
+  pressFx(k, m) {
+    const fx = (this.el.className.match(/\bpress-(\w+)/) || [])[1] || 'glow';
+    k.style.setProperty('--hue', `${((m * 47) % 360)}deg`);
+    const spawn = (cls, n, setup) => {
+      for (let i = 0; i < n; i++) {
+        const p = document.createElement('i');
+        p.className = `kfx ${cls}`;
+        setup(p, i);
+        k.appendChild(p);
+        setTimeout(() => p.remove(), 900);
+      }
+    };
+    if (fx === 'sparks') spawn('spark', 7, (p) => { p.style.setProperty('--dx', `${(Math.random() - 0.5) * 60}px`); p.style.setProperty('--dy', `${-30 - Math.random() * 50}px`); });
+    else if (fx === 'ripple') spawn('ripple', 1, () => {});
+    else if (fx === 'stars') spawn('star', 4, (p, i) => { p.textContent = '\u2726'; p.style.setProperty('--dx', `${(i - 1.5) * 14 + (Math.random() - 0.5) * 8}px`); p.style.setProperty('--dy', `${-50 - Math.random() * 40}px`); });
+    else if (fx === 'fire') spawn('flame', 3, (p, i) => { p.style.setProperty('--dx', `${(i - 1) * 6}px`); p.style.animationDelay = `${i * 0.05}s`; });
+  }
+
   /** Flash a key: kind = 'good' | 'bad' | 'play' */
   flash(m, kind = 'good', ms = 260) {
     const k = this.keys.get(m);
     if (!k) return;
+    if (kind === 'good' || kind === 'play') this.pressFx(k, m);
     const cls = `on-${kind}`;
     k.classList.remove('on-good', 'on-bad', 'on-play', 'on-soft');
     void k.offsetWidth; // restart animation
@@ -144,6 +167,7 @@ export class Keyboard {
   press(m, kind = 'good') {
     const k = this.keys.get(m);
     if (k) {
+      this.pressFx(k, m);
       clearTimeout(k._t);
       k.classList.remove('on-good', 'on-bad', 'on-play');
       k.classList.add(`on-${kind}`);

@@ -2,7 +2,11 @@
 
 import { h, icon, starsHTML } from '../ui.js';
 import { allLessons } from '../data/course.js';
-import { builtinSong, buildSong } from '../data/songs.js';
+import { buildSong } from '../data/songs.js';
+import { songNow, getSongs } from '../data/catalog.js';
+import { backupNow } from '../backup.js';
+import { rewardLesson, rewardDaily, earn, REWARD } from '../economy.js';
+import { track, bossRewardAvailable, markBossRewarded } from '../challenges.js';
 import { practicePlan, handsLabel, songFromDef } from '../music/song.js';
 import { progress } from '../store.js';
 import { Player, confetti } from './player.js';
@@ -13,7 +17,7 @@ import { input } from '../input/hub.js';
 import { lessonUnlocked } from './learn.js';
 
 function resolveSong(ref) {
-  return typeof ref === 'string' ? builtinSong(ref) : buildSong(ref);
+  return typeof ref === 'string' ? songNow(ref) : buildSong(ref);
 }
 
 function measureIdx(song, num) {
@@ -25,9 +29,12 @@ export function expandSteps(lesson) {
   const out = [];
   for (const st of lesson.steps) {
     if (st.t !== 'plan') { out.push(st); continue; }
-    const song = builtinSong(st.song);
+    const song = songNow(st.song);
+    if (!song) continue;
     let plan = practicePlan(song);
     if (st.only === 'both') plan = plan.filter((p) => p.hands === 'both' || p.section === -1);
+    // Compact plan for longer pieces: each part with both hands, then the whole piece.
+    if (st.compact && song.hands.R && song.hands.L) plan = plan.filter((p) => p.hands === 'both' || p.section === -1);
     for (const p of plan) {
       out.push({
         t: 'play', song: st.song, hands: p.hands, mode: p.mode, tempo: p.tempo || 1, rangeIdx: p.range,
@@ -88,13 +95,27 @@ export function learnVisual(st, visual) {
   return out;
 }
 
-export function openLesson(id, onClose) {
+/** Song ids a lesson needs loaded before it can run. */
+function lessonSongIds(lesson) {
+  return lesson.steps.filter((s) => typeof s.song === 'string').map((s) => s.song);
+}
+
+export async function openLesson(id, onClose) {
   const lesson = allLessons().find((l) => l.id === id);
   if (!lesson || !lessonUnlocked(id)) { onClose(); return; }
   document.querySelectorAll('.fullscreen').forEach((el) => el._close && el._close());
+  // Catalogue pieces are fetched on demand.
+  const ids = lessonSongIds(lesson);
+  if (ids.some((x) => !songNow(x))) {
+    const loading = h('div', { class: 'fullscreen open lesson-loading' }, [h('div', { class: 'spinner' }), h('p', {}, 'Loading the music\u2026')]);
+    document.body.appendChild(loading);
+    try { await getSongs(ids); } catch (e) { console.warn(e); }
+    loading.remove();
+  }
   const steps = expandSteps(lesson);
   const results = [];
-  let i = 0;
+  // Long lessons resume where you left off.
+  let i = Math.min(progress.lessonStep(lesson.id), Math.max(0, steps.length - 1));
   let player = null;
   let kb = null;
   let ro = null;
@@ -141,11 +162,13 @@ export function openLesson(id, onClose) {
     if (i >= steps.length) return finish();
     const st = steps[i];
     if (st.t === 'learn') showLearn(st);
+    else if (st.t === 'boss') showBoss(st);
     else showPlay(st);
   }
 
   function next() {
     i++;
+    progress.setLessonStep(lesson.id, i < steps.length ? i : 0);
     show();
   }
 
@@ -183,10 +206,77 @@ export function openLesson(id, onClose) {
     });
   }
 
+  function showBoss(st) {
+    const song = resolveSong(st.song);
+    const host = h('div', { class: 'ls-player' });
+    body.append(host);
+    const hands = song.hands.R && song.hands.L ? 'both' : song.hands.R ? 'R' : 'L';
+    player = new Player(host, {
+      song, hands, mode: 'timed', tempo: 1, title: song.title, subtitle: `Boss battle \u00b7 ${lesson.guardian || 'The Guardian'}`,
+      exam: { pass: 0.75, name: lesson.guardian || 'The Guardian' },
+      onExit: () => close(),
+      onFinish: (r) => {
+        if (r.passed) {
+          const stars = Math.max(1, r.stars);
+          progress.completeLesson(lesson.id, stars);
+          // Guardians pay out once per week (rematches are a way to earn).
+          if (bossRewardAvailable(lesson.id)) {
+            earn(REWARD.bossBase + REWARD.bossPerStar * stars, 'Guardian defeated');
+            markBossRewarded(lesson.id);
+          }
+          track('bosses');
+          track('worlds');
+          track('stars', stars);
+          rewardDaily(progress.streak);
+          progress.setLessonStep(lesson.id, 0);
+        }
+      },
+      actions: (r) => (r.passed
+        ? [{ label: 'Continue', primary: true, fn: () => { i = steps.length; victory(r); } }]
+        : [{ label: 'Back to course', primary: false, fn: close }]),
+    });
+  }
+
+  function victory(r) {
+    teardown();
+    body.replaceChildren();
+    updateBar();
+    const list = allLessons();
+    const nxt = list[list.findIndex((l) => l.id === lesson.id) + 1];
+    body.append(h('div', { class: 'ls-center' }, h('div', { class: 'card result-card boss-card pop' }, [
+      h('div', { class: 'boss-emblem' }, [h('i'), h('i'), h('span', {}, '\u{1F3C6}')]),
+      h('div', { class: 'eyebrow' }, 'Galaxy conquered'),
+      h('h2', {}, `${lesson.guardian || 'The Guardian'} is defeated!`),
+      h('div', { class: 'stars-big', html: starsHTML(r.stars, 3, true) }),
+      h('p', {}, nxt ? `A new galaxy awaits: ${nxt.unit.title}.` : 'You conquered the final galaxy. You can truly play the piano!'),
+      backupOffer(),
+      h('div', { class: 'row' }, [
+        nxt ? h('button', { class: 'btn primary', onclick: () => { teardown(); el.remove(); location.hash = `#/lesson/${nxt.id}`; } }, ['Onward', icon('chevron')]) : null,
+        h('button', { class: `btn ${nxt ? 'ghost' : 'primary'}`, onclick: close }, 'Back to the universe'),
+      ]),
+    ])));
+    confetti(el);
+  }
+
+  /** After each world: offer a one-tap backup (skippable). */
+  function backupOffer() {
+    const box = h('div', { class: 'backup-offer' }, [
+      h('span', {}, 'Save a backup of your progress?'),
+      h('button', { class: 'btn ghost sm', onclick: async () => { if (await backupNow()) box.replaceChildren(h('span', {}, 'Backed up \u2713')); } }, [icon('upload'), 'Back up']),
+      h('button', { class: 'btn ghost sm', onclick: () => box.remove() }, 'Not now'),
+    ]);
+    return box;
+  }
+
   function finish() {
+    progress.setLessonStep(lesson.id, 0);
     const played = results.filter((x) => x != null);
     const stars = played.length ? Math.max(1, Math.round(played.reduce((a, b) => a + b, 0) / played.length)) : 3;
-    progress.completeLesson(lesson.id, stars);
+    const prev = progress.completeLesson(lesson.id, stars);
+    rewardLesson(prev, stars, false);
+    track('worlds');
+    track('stars', stars);
+    rewardDaily(progress.streak);
     const list = allLessons();
     const nxt = list[list.findIndex((l) => l.id === lesson.id) + 1];
     const card = h('div', { class: 'card result-card pop' }, [
@@ -194,6 +284,7 @@ export function openLesson(id, onClose) {
       h('div', { class: 'stars-big', html: starsHTML(stars, 3, true) }),
       h('h2', {}, lesson.title),
       h('p', { class: 'muted' }, stars === 3 ? 'Perfect! You nailed it.' : 'Great work! Replay anytime to earn more stars.'),
+      backupOffer(),
       h('div', { class: 'row' }, [
         h('button', { class: 'btn ghost', onclick: () => { i = 0; results.length = 0; show(); } }, [icon('restart'), 'Replay']),
         nxt ? h('button', { class: 'btn primary', onclick: () => { teardown(); el.remove(); location.hash = `#/lesson/${nxt.id}`; } }, ['Next lesson', icon('chevron')]) : null,

@@ -43,6 +43,10 @@ function save() {
   } catch { /* private mode / quota */ }
 }
 
+/** Raw state access for modules that keep their own slice (e.g. the Stardust wallet). */
+export const getState = () => state;
+export const saveState = () => save();
+
 const subs = new Set();
 export function onChange(fn) {
   subs.add(fn);
@@ -81,11 +85,30 @@ export const progress = {
   lesson(id) {
     return state.lessons[id] || null;
   },
+  lessonStep(id) {
+    return (state.steps && state.steps[id]) || 0;
+  },
+  setLessonStep(id, i) {
+    state.steps ||= {};
+    if (i) state.steps[id] = i;
+    else delete state.steps[id];
+    save();
+  },
+  /** Returns the previous star count (0 if first completion). */
   completeLesson(id, stars) {
     const prev = state.lessons[id];
     state.lessons[id] = { stars: Math.max(stars, prev ? prev.stars : 0), done: true, at: Date.now() };
+    state.justCompleted = { id, at: Date.now() };
     touchStreak();
     changed();
+    return prev ? prev.stars : 0;
+  },
+  justCompleted() {
+    return state.justCompleted || null;
+  },
+  clearJustCompleted() {
+    delete state.justCompleted;
+    save();
   },
   songStep(songId, key) {
     return (state.songs[songId] && state.songs[songId][key]) || 0;
@@ -93,11 +116,14 @@ export const progress = {
   songSteps(songId) {
     return state.songs[songId] || {};
   },
+  /** Returns the previous star count for this step. */
   recordSongStep(songId, key, stars) {
     const s = (state.songs[songId] ||= {});
-    s[key] = Math.max(s[key] || 0, stars);
+    const prev = s[key] || 0;
+    s[key] = Math.max(prev, stars);
     touchStreak();
     changed();
+    return prev;
   },
   get streak() {
     const t = today();

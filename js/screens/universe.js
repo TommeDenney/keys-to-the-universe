@@ -11,6 +11,13 @@ import { progress } from '../store.js';
 import { lessonUnlocked, nextLesson } from './learn.js';
 import { installCard, fullscreenButton } from './install.js';
 import { worldTextures, WORLD_KINDS } from '../render/worlds.js';
+import { songNow, pieceMeta } from '../data/catalog.js';
+import { equipped, walletPill } from '../economy.js';
+import { shipSVG as skinSVG } from '../render/ships.js';
+import { challengesCard, openQuest } from './challenges.js';
+import { QUESTS } from '../data/quests.js';
+import { questDone } from '../economy.js';
+import { divinaeEl, DIVINAE } from './divinae.js';
 
 // Moons currently on screen, animated by the cosmos loop (3D-ish orbits that pass behind their planet).
 let ORBITS = [];
@@ -27,6 +34,17 @@ const GALAXIES = {
   u7: { name: 'Triad Crown', style: 'constellations', top: '#14100A', bottom: '#2E2208', neb: ['#EAB308', '#F59E0B', '#FDE68A'], star: '#FFF5CC' },
   u9: { name: 'Cathedral', style: 'rays', top: '#120826', bottom: '#2B0F4F', neb: ['#7C3AED', '#C084FC', '#F0ABFC'], star: '#F5E8FF' },
   u8: { name: 'Old Light', style: 'motes', top: '#1A070C', bottom: '#3A0D18', neb: ['#E11D48', '#FB7185', '#F97316'], star: '#FFE1E6' },
+  // Graded repertoire galaxies
+  g1: { name: 'Verdant Reach', style: 'twinkle', top: '#061A12', bottom: '#0B3324', neb: ['#22C55E', '#84CC16', '#10B981'], star: '#E8FFF0' },
+  g2: { name: 'Tidal Arc', style: 'bokeh', top: '#04161C', bottom: '#073340', neb: ['#06B6D4', '#22D3EE', '#0EA5E9'], star: '#E0FBFF' },
+  g3: { name: 'Sapphire Veil', style: 'sparkle', top: '#060E26', bottom: '#0B1F52', neb: ['#3B82F6', '#6366F1', '#38BDF8'], star: '#E6EEFF' },
+  g4: { name: 'Story Nebula', style: 'constellations', top: '#0C0A26', bottom: '#1C1650', neb: ['#6366F1', '#A78BFA', '#818CF8'], star: '#EDE9FF' },
+  g5: { name: 'Clockwork Spiral', style: 'twins', top: '#120A26', bottom: '#28124F', neb: ['#8B5CF6', '#C084FC', '#6366F1'], star: '#F3E8FF' },
+  g6: { name: 'Velvet Dusk', style: 'aurora', top: '#1A0820', bottom: '#3A0F45', neb: ['#D946EF', '#F472B6', '#A855F7'], star: '#FFE8FB' },
+  g7: { name: 'Syncopa', style: 'embers', top: '#1E0710', bottom: '#40101F', neb: ['#F43F5E', '#FB7185', '#F97316'], star: '#FFE4E8' },
+  g8: { name: 'Recital Rings', style: 'rays', top: '#1C0E06', bottom: '#3D1E0A', neb: ['#F97316', '#FDBA74', '#F43F5E'], star: '#FFF0E0' },
+  g9: { name: 'Virtuoso Expanse', style: 'motes', top: '#1A1404', bottom: '#3A2C08', neb: ['#EAB308', '#F59E0B', '#FDE047'], star: '#FFF8D6' },
+  g10: { name: 'Crown of Stars', style: 'sparkle', top: '#141008', bottom: '#2E2410', neb: ['#FACC15', '#FDE68A', '#F59E0B'], star: '#FFFBEA' },
 };
 const galaxyOf = (unit) => GALAXIES[unit.id] || GALAXIES.u1;
 export const galaxyName = (unit) => `${galaxyOf(unit).name} Galaxy`;
@@ -67,16 +85,39 @@ function bodyLook(id, gal) {
   };
 }
 
+/** Paint a world's surface only when it's about to be seen (100+ worlds stay fast). */
+let painter = null;
+function paintWhenVisible(el, paint) {
+  if (!('IntersectionObserver' in window)) { paint(); return; }
+  if (!painter) {
+    painter = new IntersectionObserver((entries) => {
+      for (const e of entries) {
+        if (!e.isIntersecting) continue;
+        painter.unobserve(e.target);
+        const fn = e.target._paint;
+        e.target._paint = null;
+        if (fn) fn();
+      }
+    }, { rootMargin: '600px 0px' });
+  }
+  el._paint = paint;
+  painter.observe(el);
+}
+
 /** A textured, spinning sphere (planet or moon). */
 function worldOrb(tag, attrs, id, look, kind) {
-  const tex = worldTextures(hash(id + 'tex'), kind, look.base);
-  return h(tag, attrs, [
-    h('i', { class: 'tiltw', style: { '--tilt': `${look.tilt}deg` } }, [
-      h('i', { class: 'tex', style: { backgroundImage: `url(${tex.surface})`, '--spin': `${look.spin}s`, '--dir': look.dir } }),
-      tex.clouds ? h('i', { class: 'tex clouds', style: { backgroundImage: `url(${tex.clouds})`, '--spin': `${(look.spin * look.cloudSpin).toFixed(1)}s`, '--dir': look.dir } }) : null,
-    ]),
+  const surface = h('i', { class: 'tex', style: { '--spin': `${look.spin}s`, '--dir': look.dir } });
+  const clouds = kind === 'terran' || kind === 'ocean' ? h('i', { class: 'tex clouds', style: { '--spin': `${(look.spin * look.cloudSpin).toFixed(1)}s`, '--dir': look.dir } }) : null;
+  const orb = h(tag, attrs, [
+    h('i', { class: 'tiltw', style: { '--tilt': `${look.tilt}deg` } }, [surface, clouds]),
     h('i', { class: `shade ${kind === 'terran' || kind === 'ocean' ? 'atmo' : ''}` }),
   ]);
+  paintWhenVisible(orb, () => {
+    const tex = worldTextures(hash(id + 'tex'), kind, look.base);
+    surface.style.backgroundImage = `url(${tex.surface})`;
+    if (clouds && tex.clouds) clouds.style.backgroundImage = `url(${tex.clouds})`;
+  });
+  return orb;
 }
 
 // ---- Course → universe structure -------------------------------------------
@@ -85,6 +126,7 @@ function worldOrb(tag, attrs, id, look, kind) {
 function buildSystems(unit) {
   const planets = [];
   for (const l of unit.lessons) {
+    if (l.boss) continue;
     const practiceOnly = !l.steps.some((s) => s.t === 'learn');
     const host = planets[planets.length - 1];
     if (practiceOnly && host && host.moons.length < 3) host.moons.push(l);
@@ -117,6 +159,7 @@ export function renderUniverse(root) {
     h('div', { class: 'pills' }, [
       h('div', { class: 'pill flame', title: 'Day streak' }, [icon('flame'), h('b', {}, String(progress.streak))]),
       h('div', { class: 'pill stars-pill', title: 'Stars' }, [icon('star'), h('b', {}, String(progress.totalStars))]),
+      walletPill(),
       h('a', { class: 'pill hb-pill', href: '#/handbook', title: 'Handbook: every lesson explanation' }, [icon('book'), h('b', {}, 'Handbook')]),
       fullscreenButton(),
     ]),
@@ -139,6 +182,8 @@ export function renderUniverse(root) {
   } else {
     page.append(h('section', { class: 'uni-next' }, [h('div', { class: 'grow' }, [h('div', { class: 'eyebrow' }, 'Universe explored'), h('h2', {}, 'You visited every world!'), h('p', {}, 'Keep playing songs from the library, or import your own music.')])]));
   }
+
+  page.append(challengesCard());
 
   const sections = [];
   COURSE.forEach((unit, gi) => {
@@ -169,7 +214,12 @@ export function renderUniverse(root) {
       sysEl.append(track);
       sec.append(sysEl);
     });
+    const boss = unit.lessons.find((l) => l.boss);
+    if (boss) sec.append(guardianEl(boss, gal, next));
+    if (unit.id === DIVINAE.galaxy) sec.append(divinaeEl());
     page.append(sec);
+    // Rogue planets drift through the space between galaxies.
+    for (const q of QUESTS.filter((x) => x.after === gi + 1)) page.append(roguePlanet(q, gal));
     sections.push(sec);
   });
 
@@ -199,14 +249,21 @@ function planetEl(p, gal, index, next) {
   const look = bodyLook(l.id, gal);
   const size = look.size;
   const side = index % 2 === 0 ? -1 : 1;
+  const fx = equipped('fx') || 'fx-check';
+  const just = progress.justCompleted();
+  const celebrate = rec && just && just.id === l.id && Date.now() - just.at < 120000;
   const el = h('div', {
-    class: `planet ${rec ? 'done' : ''} ${open ? '' : 'locked'} ${isNext ? 'current' : ''}`,
+    class: `planet ${rec ? 'done' : ''} ${open ? '' : 'locked'} ${isNext ? 'current' : ''} ${fx} ${!rec && fx === 'fx-restore' ? 'corrupt' : ''} ${celebrate ? 'celebrate' : ''}`,
     style: { '--off': `${side * (60 + (hash(l.id) % 4) * 28)}px`, '--size': `${size}px`, '--base': look.base, '--lift': `${look.lift}px`, '--bob': `${5 + (hash(l.id) % 5)}s` },
   });
   const orb = worldOrb(open ? 'a' : 'div', { class: 'orb', href: open ? `#/lesson/${l.id}` : null, 'aria-label': `${bodyName(l.id)}: ${l.title}` }, l.id, look, look.kind);
   if (!open) orb.append(h('span', { class: 'lock' }, icon('lock')));
-  if (rec) orb.append(h('span', { class: 'flag' }, icon('check')));
+  if (rec && fx === 'fx-check') orb.append(h('span', { class: 'flag' }, icon('check')));
+  if (!rec && fx === 'fx-restore') orb.append(h('i', { class: 'corruption' }));
+  if (celebrate) setTimeout(() => progress.clearJustCompleted(), 4000);
   const body = h('div', { class: 'planet-body' }, [
+    rec && fx !== 'fx-check' ? h('i', { class: 'fx-layer' }, fx === 'fx-bloom' ? Array.from({ length: 6 }, (_, i) => h('i', { class: 'bloom', style: { '--a': `${i * 60}deg` } })) : fx === 'fx-heavenly' ? [h('i', { class: 'halo' }), h('i', { class: 'rays' }), h('i', { class: 'cloud c1' }), h('i', { class: 'cloud c2' })] : fx === 'fx-supernova' ? [h('i', { class: 'nova-ring' }), h('i', { class: 'nova-ring r2' })] : [h('i', { class: 'healed' })]) : null,
+    celebrate ? h('i', { class: 'celebration' }, Array.from({ length: 18 }, (_, i) => h('i', { style: { '--a': `${i * 20}deg`, '--d': `${60 + (i % 3) * 25}px` } }))) : null,
     look.ring ? h('i', { class: 'p-ring ring-back', style: { '--rt': `${look.tilt - 12}deg` } }) : null,
     orb,
     look.ring ? h('i', { class: 'p-ring ring-front', style: { '--rt': `${look.tilt - 12}deg` } }) : null,
@@ -253,6 +310,37 @@ function planetEl(p, gal, index, next) {
       ]);
     })));
   }
+  return el;
+}
+
+/** A rogue planet (side quest) drifting between galaxies. */
+function roguePlanet(q, gal) {
+  const look = { ...bodyLook(q.id, gal), tilt: 18, spin: 30 };
+  const orb = worldOrb('button', { class: 'orb', 'aria-label': `Side quest: ${q.name}`, onclick: () => openQuest(q) }, q.id, look, q.kind);
+  return h('div', { class: `rogue ${questDone(q.id) ? 'done' : ''}` }, [
+    h('div', { class: 'rogue-body' }, [h('i', { class: 'rogue-trail' }), orb]),
+    h('div', { class: 'body-label' }, [h('small', {}, 'Rogue planet \u00b7 side quest'), h('b', {}, q.name), h('span', { class: 'g-sub' }, questDone(q.id) ? 'Conquered \u2713' : `Reward ${q.reward} \u2726`)]),
+  ]);
+}
+
+/** The Guardian: a boss world at the edge of each galaxy. */
+function guardianEl(l, gal, next) {
+  const rec = progress.lesson(l.id);
+  const open = lessonUnlocked(l.id);
+  const isNext = next && next.id === l.id;
+  const el = h('div', { class: `guardian ${rec ? 'done' : ''} ${open ? '' : 'locked'} ${isNext ? 'current' : ''}`, style: { '--g1': gal.neb[0], '--g2': gal.neb[1] } });
+  el.append(h(open ? 'a' : 'div', { class: 'guardian-orb', href: open ? `#/lesson/${l.id}` : null, 'aria-label': `Boss battle: ${l.guardian}` }, [
+    h('i', { class: 'disk' }), h('i', { class: 'disk d2' }), h('i', { class: 'core' }),
+    h('span', { class: 'g-icon' }, rec ? '\u{1F3C6}' : open ? '\u2694' : ''),
+    open ? null : h('span', { class: 'lock' }, icon('lock')),
+  ]));
+  if (isNext) el.append(h('div', { class: 'ship guardian-ship', html: shipSVG() }));
+  el.append(h('div', { class: 'body-label' }, [
+    h('small', {}, rec ? 'Guardian defeated' : 'Boss battle'),
+    h('b', {}, l.guardian || 'The Guardian'),
+    h('span', { class: 'g-sub' }, `Test: ${(songNow(l.song) || pieceMeta(l.song) || l).title.replace(/^Boss Battle: /, '')}`),
+    rec ? h('span', { class: 'mini-stars', html: starsHTML(rec.stars) }) : null,
+  ]));
   return el;
 }
 
@@ -305,6 +393,10 @@ function drawRoute(track) {
 }
 
 function shipSVG() {
+  return skinSVG(equipped('ship'));
+}
+
+function oldShipSVG() {
   return `<svg viewBox="0 0 64 64" aria-hidden="true">
     <g class="ship-body">
       <path class="flame" d="M26 46 Q32 64 38 46 Z"/>

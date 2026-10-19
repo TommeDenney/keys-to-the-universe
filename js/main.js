@@ -14,13 +14,23 @@ import { mic } from './input/mic.js';
 import { initPianoNav } from './nav.js';
 import { applyTheme } from './theme.js';
 import { applySound } from './sound.js';
+import { loadCatalog } from './data/catalog.js';
+import { applyCosmetics } from './cosmetics.js';
+import { renderShop } from './screens/shop.js';
+import { startAmbient, stopAmbient } from './audio/ambient.js';
+import { equipped } from './economy.js';
+import { renderChallenges } from './screens/challenges.js';
+import { touch as touchChallenges } from './challenges.js';
 
 applyTheme();
+applyCosmetics();
+touchChallenges();
 
 const TABS = [
   { id: 'learn', label: 'Learn', icon: 'learn' },
   { id: 'library', label: 'Songs', icon: 'library' },
   { id: 'chords', label: 'Chords', icon: 'chords' },
+  { id: 'shop', label: 'Shop', icon: 'shop' },
   { id: 'settings', label: 'Settings', icon: 'settings' },
 ];
 
@@ -43,6 +53,7 @@ let cleanup = null;
 async function route() {
   const hash = location.hash.replace(/^#\/?/, '') || 'learn';
   const [name, arg] = hash.split('/');
+  if (name !== 'learn' && name !== 'shop') stopAmbient();
   if (cleanup) { cleanup(); cleanup = null; }
   // Full-screen flows sit on top of the current tab.
   if (name === 'lesson') {
@@ -51,6 +62,13 @@ async function route() {
     return;
   }
   document.querySelectorAll('.fullscreen').forEach((el) => el._close && el._close());
+  if (name === 'challenges') {
+    setActiveTab('learn');
+    main.replaceChildren();
+    main.scrollTop = 0;
+    cleanup = renderChallenges(main);
+    return;
+  }
   if (name === 'handbook') {
     setActiveTab('learn');
     main.replaceChildren();
@@ -73,8 +91,11 @@ async function renderTab(name) {
   main.replaceChildren();
   main.scrollTop = 0;
   const learn = settings.get('learnLayout') === 'classic' ? renderLearn : renderUniverse;
-  const r = { learn, library: renderLibrary, chords: renderChords, settings: renderSettings }[name];
+  const r = { learn, library: renderLibrary, chords: renderChords, shop: renderShop, settings: renderSettings }[name];
   cleanup = (await r(main)) || null;
+  // Learn-tab ambience (bought in the Shop).
+  if (name === 'learn' && equipped('amb') !== 'amb-none') startAmbient(equipped('amb'));
+  else if (name !== 'shop') stopAmbient();
 }
 
 function setActiveTab(name) {
@@ -82,7 +103,8 @@ function setActiveTab(name) {
 }
 
 window.addEventListener('hashchange', route);
-route();
+// The graded repertoire galaxies come from a manifest; load it before the first render.
+loadCatalog().finally(() => route());
 
 if (!settings.get('onboarded')) setTimeout(() => showOnboarding(), 350);
 

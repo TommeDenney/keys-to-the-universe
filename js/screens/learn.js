@@ -4,16 +4,29 @@ import { h, icon, starsHTML } from '../ui.js';
 import { COURSE, allLessons } from '../data/course.js';
 import { progress, settings } from '../store.js';
 import { installCard, fullscreenButton } from './install.js';
+import { walletPill } from '../economy.js';
+import { challengesCard } from './challenges.js';
+
+/** Index of the furthest lesson ever completed (so content added later never re-locks your progress). */
+function furthestDone(list) {
+  let f = -1;
+  list.forEach((l, i) => { if (progress.lesson(l.id)) f = i; });
+  return f;
+}
 
 export function lessonUnlocked(id) {
   if (settings.get('unlockAll')) return true;
   const list = allLessons();
   const i = list.findIndex((l) => l.id === id);
-  return i <= 0 || !!progress.lesson(list[i - 1].id);
+  return i <= 0 || !!progress.lesson(list[i - 1].id) || i <= furthestDone(list);
 }
 
 export function nextLesson() {
-  return allLessons().find((l) => !progress.lesson(l.id) && lessonUnlocked(l.id)) || null;
+  const list = allLessons();
+  const f = furthestDone(list);
+  // Skip worlds you've already moved beyond (e.g. a boss added after you passed it).
+  return list.find((l, i) => i > f && !progress.lesson(l.id) && lessonUnlocked(l.id))
+    || list.find((l) => !progress.lesson(l.id) && lessonUnlocked(l.id)) || null;
 }
 
 function greeting() {
@@ -33,6 +46,7 @@ export function renderLearn(root) {
     h('div', { class: 'pills' }, [
       h('div', { class: 'pill flame', title: 'Day streak' }, [icon('flame'), h('b', {}, String(progress.streak))]),
       h('div', { class: 'pill stars-pill', title: 'Stars' }, [icon('star'), h('b', {}, String(progress.totalStars))]),
+      walletPill(),
       h('a', { class: 'pill hb-pill', href: '#/handbook', title: 'Handbook: every lesson explanation' }, [icon('book'), h('b', {}, 'Handbook')]),
       fullscreenButton(),
     ]),
@@ -74,7 +88,7 @@ export function renderLearn(root) {
       const rec = progress.lesson(l.id);
       const open = lessonUnlocked(l.id);
       const isNext = next && next.id === l.id;
-      const cls = `node ${rec ? 'done' : ''} ${open ? '' : 'locked'} ${isNext ? 'current' : ''}`;
+      const cls = `node ${rec ? 'done' : ''} ${open ? '' : 'locked'} ${isNext ? 'current' : ''} ${l.boss ? 'boss' : ''}`;
       const off = ZIG[k++ % ZIG.length];
       const node = h(open ? 'a' : 'div', { class: cls, style: { '--x': `${off}px`, '--c': unit.color }, href: open ? `#/lesson/${l.id}` : null }, [
         isNext ? h('div', { class: 'bubble' }, 'START') : null,
@@ -87,7 +101,7 @@ export function renderLearn(root) {
     path.append(nodes);
   }
 
-  root.append(h('div', { class: 'page learn' }, [header, installCard(), hero, path]));
+  root.append(h('div', { class: 'page learn' }, [header, installCard(), hero, challengesCard(), path]));
   // Scroll the current lesson into view.
   requestAnimationFrame(() => {
     const cur = root.querySelector('.node.current');

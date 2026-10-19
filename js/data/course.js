@@ -392,6 +392,24 @@ export const COURSE = [
   },
 ];
 
+// Boss battles: the last world of each galaxy. Pass (75%+, with the beat) to move on.
+const BOSSES = {
+  u1: ['boss-u1', 'The Keeper of Middle C'],
+  u2: ['boss-u2', 'The Pentarch'],
+  u3: ['boss-u3', 'Octavian the Wide'],
+  u4: ['boss-u4', 'Lord of the Low End'],
+  u5: ['boss-u5', 'The Twin Sentinels'],
+  u6: ['boss-u6', 'The Chroma Warden'],
+  u7: ['boss-u7', 'The Triad Monarch'],
+  u9: ['boss-u9', 'The Choir Master'],
+  u8: ['fur-elise', 'The Old Light Maestro'],
+};
+for (const unit of COURSE) {
+  const b = BOSSES[unit.id];
+  if (!b || unit.lessons.some((l) => l.boss)) continue;
+  unit.lessons.push({ id: `boss-${unit.id}`, title: b[0] === 'fur-elise' ? 'Final Exam: F\u00fcr Elise' : 'Boss Battle', icon: '\u2694', song: b[0], boss: true, guardian: b[1], steps: [{ t: 'boss', song: b[0] }] });
+}
+
 export function allLessons() {
   return COURSE.flatMap((u) => u.lessons.map((l) => ({ ...l, unit: u })));
 }

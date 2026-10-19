@@ -8,6 +8,7 @@ import { audio } from '../audio/engine.js';
 import { noteName } from '../music/theory.js';
 import { NAV_KEYS } from '../nav.js';
 import { openCalibration } from './calibrate.js';
+import { backupNow } from '../backup.js';
 import { THEMES, applyTheme } from '../theme.js';
 import { SOUNDS, applySound } from '../sound.js';
 
@@ -183,21 +184,7 @@ function backupRow() {
       toast(err.message || 'Couldn\u2019t read that backup.', 'bad');
     }
   } });
-  const backup = async () => {
-    const data = await makeBackup();
-    const name = `ivory-backup-${new Date().toISOString().slice(0, 10)}.json`;
-    const blob = new Blob([JSON.stringify(data)], { type: 'application/json' });
-    const file = new File([blob], name, { type: 'application/json' });
-    // iPad: the share sheet lets you "Save to Files" (iCloud Drive). Elsewhere: download.
-    if (navigator.canShare && navigator.canShare({ files: [file] })) {
-      try { await navigator.share({ files: [file], title: 'Ivory backup' }); toast('Backup ready \u2713', 'ok'); return; } catch (e) { if (e && e.name === 'AbortError') return; }
-    }
-    const a = h('a', { href: URL.createObjectURL(blob), download: name });
-    document.body.append(a);
-    a.click();
-    a.remove();
-    toast('Backup saved \u2713', 'ok');
-  };
+  const backup = () => backupNow();
   return h('div', { class: 'sub-card backup' }, [
     h('div', { class: 'sub-head' }, [h('b', {}, 'Keep your progress safe'), status]),
     h('p', { class: 'muted small' }, 'Progress lives in this browser on this device. Clearing Safari\u2019s website data, or switching devices, would lose it. Save a backup to iCloud Drive (Files) now and then. You can restore it on any device.'),
