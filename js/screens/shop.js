@@ -47,6 +47,8 @@ export function renderInventory(root) {
 }
 
 export function renderShop(root, { inventory = false } = {}) {
+  const lazy = new Set(); // shop grids still waiting to build their cards
+  let lazyIO = null;
   const page = h('div', { class: `page shop ${inventory ? 'inventory' : ''}` });
   root.append(page);
   const kbs = [];
@@ -87,7 +89,7 @@ export function renderShop(root, { inventory = false } = {}) {
         const ready = SHOP.filter((it) => it.req && !owns(it.id) && reqProgress(it.req).met);
         return h('div', { class: 'achv-top' }, [
           h('a', { class: 'achv-badges', href: '#/badges' }, [h('span', { class: 'ab-icon' }, '\u{1F396}\uFE0F'), h('span', {}, [h('b', {}, 'Badges'), h('small', {}, `${got} of ${all.length} earned`)]), icon('chevron')]),
-          ready.length ? h('div', { class: 'achv-ready' }, [h('b', {}, `\u{1F381} ${ready.length} achievement reward${ready.length === 1 ? '' : 's'} ready to buy`), h('div', { class: 'achv-chips' }, ready.slice(0, 8).map((it) => h('button', { class: 'chip-btn', onclick: () => { const c = page.querySelector(`[data-item="${it.id}"]`); if (c) { c.scrollIntoView({ block: 'center', behavior: 'smooth' }); c.classList.remove('flash'); void c.offsetWidth; c.classList.add('flash'); } } }, it.name)))]) : null,
+          ready.length ? h('div', { class: 'achv-ready' }, [h('b', {}, `\u{1F381} ${ready.length} achievement reward${ready.length === 1 ? '' : 's'} ready to buy`), h('div', { class: 'achv-chips' }, ready.slice(0, 8).map((it) => h('button', { class: 'chip-btn', onclick: () => { fillAll(); const c = page.querySelector(`[data-item="${it.id}"]`); if (c) { c.scrollIntoView({ block: 'center', behavior: 'smooth' }); c.classList.remove('flash'); void c.offsetWidth; c.classList.add('flash'); } } }, it.name)))]) : null,
         ]);
       })(),
       h('div', { class: 'earn-card' }, [
@@ -104,9 +106,9 @@ export function renderShop(root, { inventory = false } = {}) {
       ...CATEGORIES.map((c) => (c.id === 'avatar' ? avatarSections(c) : h('section', { class: 'shop-cat', id: `shop-${c.id}` }, [
         h('h2', {}, c.name),
         h('p', { class: 'muted' }, c.blurb),
-        h('div', { class: 'shop-grid' }, SHOP.filter((it) => it.cat === c.id && !it.req && !it.event && (!it.exclusive || owns(it.id) || offered(it.id))).map(card)),
+        lazyGrid(SHOP.filter((it) => it.cat === c.id && !it.req && !it.event && (!it.exclusive || owns(it.id) || offered(it.id)))),
         SHOP.some((it) => it.cat === c.id && it.req) ? h('h3', { class: 'achv-head' }, [h('span', {}, '\u{1F3C6}'), ' Achievement rewards ', h('small', { class: 'muted' }, 'Earn the right, then buy with Stardust')]) : null,
-        h('div', { class: 'shop-grid' }, achvOrder(SHOP.filter((it) => it.cat === c.id && it.req)).map(card)),
+        lazyGrid(achvOrder(SHOP.filter((it) => it.cat === c.id && it.req))),
       ]))),
     ].filter(Boolean));
   };
@@ -186,6 +188,7 @@ export function renderShop(root, { inventory = false } = {}) {
   function shopTabs() {
     const tabs = [['featured', '\u2B50 Featured'], ...(vaultEvents().length ? [['vault', '\u{1F5DD}\uFE0F Vault']] : []), ...CATEGORIES.map((c) => [c.id, c.name])];
     const bar = h('nav', { class: 'shop-tabs av-tabs' }, tabs.map(([id, name]) => h('button', { class: 'chip-btn', 'data-tab': id, onclick: () => {
+      fillAll(); // so the sections above have their real height before we jump
       const el = page.querySelector(`#shop-${id}`);
       if (!el) return;
       const scroller = root;
@@ -225,10 +228,29 @@ export function renderShop(root, { inventory = false } = {}) {
       ...groups.map(([name, parts]) => {
         const list = achvOrder(items.filter((it) => parts.includes(it.part)));
         if (!list.length) return null;
-        return h('div', { class: 'av-shop-group' }, [h('h3', { class: 'achv-head' }, [name, h('small', { class: 'muted' }, `  ${list.length} looks`)]), h('div', { class: 'shop-grid' }, list.map(card))]);
+        return h('div', { class: 'av-shop-group' }, [h('h3', { class: 'achv-head' }, [name, h('small', { class: 'muted' }, `  ${list.length} looks`)]), lazyGrid(list)]);
       }),
     ]);
   }
+
+  /**
+   * A grid that builds its cards only when you scroll near it (the Shop has ~450
+   * items with live previews; building them all up front made the tab slow to open).
+   * Until then it holds roughly the right amount of space.
+   */
+  function lazyGrid(items) {
+    const grid = h('div', { class: 'shop-grid lazy' });
+    if (!items.length) return grid;
+    const perRow = innerWidth > 1000 ? 4 : innerWidth > 700 ? 3 : 2;
+    grid.style.minHeight = `${Math.ceil(items.length / perRow) * 300}px`;
+    grid._fill = () => { if (!grid._fill) return; grid._fill = null; lazy.delete(grid); if (lazyIO) lazyIO.unobserve(grid); grid.style.minHeight = ''; grid.classList.remove('lazy'); grid.append(...items.map(card)); };
+    lazy.add(grid);
+    lazyIO ||= new IntersectionObserver((es) => es.forEach((e) => e.isIntersecting && e.target._fill && e.target._fill()), { root, rootMargin: '900px 0px' });
+    lazyIO.observe(grid);
+    return grid;
+  }
+  /** Build every remaining card (before jumping to a particular item). */
+  const fillAll = () => [...lazy].forEach((g) => g._fill && g._fill());
 
   /** Arrived from the explorer editor? Scroll to that item and make it glow. */
   function focusRequested() {
@@ -236,6 +258,7 @@ export function renderShop(root, { inventory = false } = {}) {
     try { id = sessionStorage.getItem('ivory.shopFocus'); sessionStorage.removeItem('ivory.shopFocus'); } catch { /* storage blocked */ }
     if (!id) return;
     setTimeout(() => {
+      fillAll();
       const c = page.querySelector(`[data-item="${CSS.escape(id)}"]`);
       if (c) { c.scrollIntoView({ block: 'center', behavior: 'smooth' }); c.classList.add('flash'); }
     }, 350);
