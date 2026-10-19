@@ -163,6 +163,47 @@ export const SONG_DEFS = [
     rh: '(C4@1 E4@3 G4@5)/1 | (B3@1 D4@2 G4@5)/1 | (C4@1 E4@3 A4@5)/1 | (C4@1 F4@3 A4@5)/1 | (C4 E4 G4)/1 | (B3 D4 G4)/1 | (C4 E4 A4)/1 | (C4 F4 A4)/1 |',
     lh: 'C3/1 | G2/1 | A2/1 | F2/1 | C3/1 | G2/1 | A2/1 | F2/1 |',
   },
+  // ---- Gospel organ: progressions in the style (patterns, not copyrighted songs) ----
+  {
+    id: 'gospel-amen', title: 'The Amen Cadence', composer: 'Gospel organ pattern', level: 2, bpm: 66, instrument: 'organ',
+    tags: ['Gospel', 'Organ', 'Chords'], about: 'IV to I, the \u201cAmen\u201d at the end of a hymn. The heartbeat of church organ playing.',
+    rh: '(E4@1 G4@2 C5@5)/1 | (F4@1 A4@3 C5@5)/1 | (E4 G4 C5)/1 | (F4 A4 C5)/2 (E4 G4 C5)/2 | (E4 G4 C5)/1 | (F4 A4 C5)/1 | (F4 A4 C5)/2 (E4 G4 C5)/2 | (E4 G4 C5)/1 |',
+    lh: 'C3@5/1 | C3/1 | C3/1 | C3/1 | C3/1 | F2@5/1 | F2/2 C3/2 | C3/1 |',
+  },
+  {
+    id: 'gospel-blues', title: '12-Bar Gospel Blues', composer: 'Gospel organ pattern', level: 3, bpm: 76, instrument: 'organ',
+    tags: ['Gospel', 'Organ', 'Dominant 7ths'], about: 'Dominant 7th chords (C7, F7, G7) over twelve bars: the bluesy side of gospel and the root of rock & roll.',
+    rh: `(E4@1 G4@2 Bb4@4)/1 | (Eb4@1 F4@2 A4@4)/1 | (E4 G4 Bb4)/1 | (E4 G4 Bb4)/1 |
+         (Eb4 F4 A4)/1 | (Eb4 F4 A4)/1 | (E4 G4 Bb4)/1 | (E4 G4 Bb4)/1 |
+         (F4@1 G4@2 B4@4)/1 | (Eb4 F4 A4)/1 | (E4 G4 Bb4)/1 | (F4 G4 B4)/1 |`,
+    lh: 'C3@5/1 | F2@5/1 | C3/1 | C3/1 | F2/1 | F2/1 | C3/1 | C3/1 | G2/1 | F2/1 | C3/1 | G2/1 |',
+  },
+  {
+    id: 'gospel-walkup', title: 'Walk-Up Bass', composer: 'Gospel organ pattern', level: 3, bpm: 72, instrument: 'organ',
+    tags: ['Gospel', 'Organ', 'Bass lines'], about: 'The left hand walks up step by step into the next chord: C D E \u2192 F, F F\u266f G \u2192 C.',
+    rh: '(E4 G4 C5)/1 | (F4 A4 C5)/1 | (F4 G4 B4)/1 | (E4 G4 C5)/1 | (E4 G4 C5)/1 | (F4 A4 C5)/1 | (F4 G4 B4)/1 | (E4 G4 C5)/1 |',
+    lh: 'C3@5/2 D3@4 E3@3 | F3@2/1 | F3@5/2 F#3@4 G3@3 | C3@5/1 | C3/2 D3 E3 | F3/1 | F3/2 F#3 G3 | C3/1 |',
+  },
+  {
+    id: 'gospel-passing', title: 'The Passing Diminished Chord', composer: 'Gospel organ pattern', level: 4, bpm: 66, instrument: 'organ',
+    tags: ['Gospel', 'Organ', 'Diminished'], about: 'C \u2192 C\u266fdim7 \u2192 Dm7 \u2192 G7 \u2192 C. The bass climbs a half step and the chord in between adds that classic church tension.',
+    rh: '(E4@1 G4@2 C5@5)/1 | (E4@1 G4@2 Bb4@4)/1 | (F4@1 A4@3 C5@5)/1 | (F4@1 G4@2 B4@4)/1 | (E4 G4 C5)/1 | (E4 G4 Bb4)/1 | (F4 A4 C5)/1 | (F4 G4 B4)/2 (E4 G4 C5)/2 |',
+    lh: 'C3/1 | C#3/1 | D3/1 | G2/1 | C3/1 | C#3/1 | D3/1 | G2/2 C3/2 |',
+  },
+  {
+    id: 'gospel-251', title: 'Gospel 2-5-1', composer: 'Gospel organ pattern', level: 4, bpm: 70, instrument: 'organ',
+    tags: ['Gospel', 'Organ', '7th chords'], about: 'Dm7 \u2192 G7 \u2192 Cmaj7: the move behind countless gospel and jazz endings, with smooth right-hand voicings.',
+    rh: '(F4@1 A4@3 C5@5)/1 | (F4@1 G4@2 B4@4)/1 | (E4@1 G4@2 B4@4)/1 | (E4 G4 B4)/1 | (F4 A4 C5)/1 | (F4 G4 B4)/1 | (E4 G4 B4)/2 (E4 G4 C5)/2 | (E4 G4 C5)/1 |',
+    lh: 'D3/1 | G2/1 | C3/1 | C3/1 | D3/1 | G2/1 | C3/1 | C3/1 |',
+  },
+  {
+    id: 'saints-organ', title: 'When the Saints (Organ)', level: 3, bpm: 100, pickup: 3, instrument: 'organ', pos: { R: 'C4' },
+    tags: ['Gospel', 'Organ', 'Spiritual'], about: 'The spiritual on the organ, with left-hand chords instead of single bass notes.',
+    rh: `C4 E4 F4 | G4/1 | r C4 E4 F4 | G4/1 | r C4 E4 F4 | G4/2 E4/2 | C4/2 E4/2 | D4/1 |
+         r E4 E4 D4 | C4/2. C4 | E4/2 G4 G4 | F4/1 | r E4 F4 G4 | E4/2 C4/2 | D4/1 | C4/1 |`,
+    lh: `r/2. | (C3 E3 G3)/1 | (C3 E3 G3)/1 | (C3 E3 G3)/1 | (C3 E3 G3)/1 | (C3 E3 G3)/1 | (C3 E3 G3)/1 | (B2 F3 G3)/1 |
+         (B2 F3 G3)/1 | (C3 E3 G3)/1 | (C3 E3 Bb3)/1 | (C3 F3 A3)/1 | (C3 E3 G3)/1 | (C3 E3 G3)/1 | (B2 F3 G3)/1 | (C3 E3 G3)/1 |`,
+  },
 ];
 
 /** Apply "five-finger position" fingering to notes that have none. */

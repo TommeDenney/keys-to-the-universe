@@ -600,3 +600,5 @@ input[type=range] { width: 100%; accent-color: var(--brand); height: 28px; }
 .vol-row { display: flex; align-items: center; gap: 12px; margin: 18px 0 4px; color: var(--brand); }
 .vol-row input { flex: 1; }
 .vol-val { min-width: 48px; font-weight: 900; color: var(--ink); text-align: right; }
+.kb-key.on-soft.kb-white { background: linear-gradient(180deg, #F4F3F8, #E2E0EC); }
+.kb-key.on-soft.kb-black { background: #5B5878; }

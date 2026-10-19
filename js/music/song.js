@@ -185,6 +185,7 @@ export function songFromDef(def) {
     level: def.level || 1,
     tags: def.tags || [],
     about: def.about || '',
+    instrument: def.instrument || null,
     bpm: def.bpm || 90,
     time,
     keyFifths: def.key || 0,

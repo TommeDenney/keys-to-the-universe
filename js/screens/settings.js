@@ -9,6 +9,7 @@ import { noteName } from '../music/theory.js';
 import { NAV_KEYS } from '../nav.js';
 import { openCalibration } from './calibrate.js';
 import { THEMES, applyTheme } from '../theme.js';
+import { SOUNDS, applySound } from '../sound.js';
 
 function seg(key, opts, after) {
   return h('div', { class: 'seg' }, opts.map(([v, l]) => h('button', {
@@ -94,6 +95,7 @@ export function renderSettings(root) {
     h('section', { class: 'card' }, [
       h('h3', {}, [icon('piano'), 'How you play']),
       rowItem('Input', 'Auto uses a MIDI piano when connected, otherwise the microphone.', seg('input', [['auto', 'Auto'], ['mic', 'Microphone'], ['touch', 'On-screen only']])),
+      rowItem('My keyboard\u2019s sound', 'Set this to the mode your keyboard is in. The listener adjusts (e.g. organ notes don\u2019t fade, pads swell slowly).', seg('keyboardSound', SOUNDS.map((x) => [x.id, x.name.replace(' (bass + piano)', '')]), () => applySound())),
       h('div', { class: 'sub-card' }, [
         h('div', { class: 'sub-head' }, [h('b', {}, 'Microphone'), micBtn]),
         h('div', { class: 'mic-test' }, [meter, h('div', {}, [h('small', {}, 'Hearing'), heard])]),
@@ -122,6 +124,7 @@ export function renderSettings(root) {
     h('section', { class: 'card' }, [
       h('h3', {}, [icon('ear'), 'Sound']),
       rowItem('Piano volume', 'Listen, the auto-played other hand and on-screen keys. Keep it low if your iPad is at full volume.', h('div', { class: 'inline' }, slider('musicVolume', 0, 1, 0.05, (v) => `${Math.round(v * 100)}%`, (v) => { audio.setMusicVolume(v); settings.set('musicVolumeSet', true); }))),
+      rowItem('App sound', 'The voice used for Listen, the other hand and on-screen keys. \u201cMatch\u201d follows your keyboard (gospel songs use organ).', seg('appSound', [['match', 'Match'], ...SOUNDS.map((x) => [x.id, x.name.replace(' (bass + piano)', '')])], () => applySound())),
       rowItem('Effects & metronome volume', null, h('div', { class: 'inline' }, slider('volume', 0, 1, 0.05, (v) => `${Math.round(v * 100)}%`, (v) => audio.setVolume(v)))),
       rowItem('Metronome', 'Click along in “with the beat” mode.', toggle('metronome')),
       rowItem('Play the other hand', 'When practising one hand with the beat, the app plays the other.', toggle('otherHand')),
@@ -139,6 +142,7 @@ export function renderSettings(root) {
       }, [h('i', { style: { background: t.bg } }), t.name])))),
       rowItem('Note names on notes', 'Auto: shown early in the course, hidden when you’re learning to read.', seg('noteNames', [['auto', 'Auto'], ['always', 'Always'], ['never', 'Never']])),
       rowItem('Keyboard hints', 'Highlight the next keys to play.', toggle('keyHints')),
+      rowItem('Wrong-note feedback', 'What happens when the app hears a key you weren\u2019t meant to play. Off: nothing is shown and it doesn\u2019t affect your stars.', seg('wrongNotes', [['off', 'Off'], ['subtle', 'Subtle'], ['on', 'Red']])),
       rowItem('Key labels', null, seg('keyLabels', [['c', 'C only'], ['all', 'All'], ['none', 'None']])),
     ]),
     h('section', { class: 'card' }, [

@@ -12,6 +12,7 @@ import { Keyboard, rangeFor } from '../render/keyboard.js';
 import { sliceSong, buildEvents, handsLabel } from '../music/song.js';
 import { spellMidi, noteName } from '../music/theory.js';
 import { openCalibration } from './calibrate.js';
+import { applySound, SOUNDS, appVoice } from '../sound.js';
 
 const PERFECT = 0.1;
 const GOOD = 0.2;
@@ -32,6 +33,7 @@ export class Player {
   constructor(container, cfg) {
     this.cfg = { hands: 'both', mode: 'wait', tempo: 1, ...cfg };
     Player.current = this;
+    applySound(cfg.song && cfg.song.instrument);
     this.container = container;
     this.mode = this.cfg.mode;
     this.tempo = this.cfg.tempo;
@@ -354,7 +356,7 @@ export class Player {
       const n = playList[this.schedIdx++];
       if (n.start < this.scheduleFrom - 1e-6) continue;
       const t = this.t0 + n.start * spq;
-      audio.schedule(n.midi, t, Math.max(0.15, n.dur * spq * 0.95), this.mode === 'listen' ? 0.7 : 0.45);
+      audio.schedule(n.midi, t, Math.max(0.15, n.dur * spq * 0.95), this.mode === 'listen' ? 0.7 : 0.45, n.hand);
       this.accomp.push({ midi: n.midi, t });
     }
     if (this.accomp.length > 64) this.accomp = this.accomp.filter((a) => a.t > now - 1);
@@ -429,14 +431,18 @@ export class Player {
       // …and the previous notes still ringing after we moved on.
       if (this.prevMidis && this.prevMidis.has(e.midi) && performance.now() - (this.lastAdvance || 0) < 700) return;
     }
+    // Wrong-note feedback is optional (Settings › Display). Off: not shown and
+    // not counted against you.
+    const style = settings.get('wrongNotes');
+    if (style === 'off') return;
     const now = performance.now();
     if (now - (this.lastWrong.get(e.midi) || 0) < 500) return;
     this.lastWrong.set(e.midi, now);
     this.wrong++;
     this.streak = 0;
     const hand = e.midi >= 60 || this.hands === 'R' ? (this.hands === 'L' ? 'L' : 'R') : 'L';
-    this.sheet.wrong({ ...spellMidi(e.midi, this.slice.keyFifths || 0), midi: e.midi, hand: this.hands === 'both' ? (e.midi >= 60 ? 'R' : 'L') : hand });
-    this.kb.flash(e.midi, 'bad', 400);
+    this.sheet.wrong({ ...spellMidi(e.midi, this.slice.keyFifths || 0), midi: e.midi, hand: this.hands === 'both' ? (e.midi >= 60 ? 'R' : 'L') : hand }, style === 'subtle');
+    this.kb.flash(e.midi, style === 'subtle' ? 'soft' : 'bad', 400);
     if (this.mode === 'wait' && this.wrong % 3 === 0) {
       const ev = this.events[this.ei];
       if (ev) this.toast(`Look for ${ev.notes.filter((n) => !this.hitSet.has(n.id)).map((n) => noteName(n.midi, this.slice.keyFifths)).join(' + ')} — it’s highlighted on the keyboard`);
@@ -471,6 +477,15 @@ export class Player {
       h('p', {}, then
         ? 'Set how loud the app’s piano plays. It’s saved, so you only do this once. Metronome and effects keep their own volume.'
         : 'How loud the app’s piano plays (Listen, the other hand and on-screen keys). Metronome and effects aren’t affected.'),
+      h('label', { class: 'field' }, [h('span', {}, 'App sound'), h('div', { class: 'seg' }, [['match', 'Match keyboard'], ...SOUNDS.map((x) => [x.id, x.name.replace(' (bass + piano)', '')])].map(([id, name]) => h('button', {
+        class: settings.get('appSound') === id ? 'on' : '',
+        onclick: (ev) => {
+          settings.set('appSound', id);
+          applySound(this.cfg.song && this.cfg.song.instrument);
+          ev.currentTarget.parentNode.querySelectorAll('button').forEach((b) => b.classList.toggle('on', b === ev.currentTarget));
+          sample();
+        },
+      }, name)))]),
       h('div', { class: 'vol-row' }, [
         icon('volume'),
         h('input', { type: 'range', min: 0, max: 1, step: 0.05, value: settings.get('musicVolume'), oninput: (e) => {
@@ -698,6 +713,7 @@ export class Player {
   destroy() {
     this.destroyed = true;
     if (Player.current === this) Player.current = null;
+    applySound();
     cancelAnimationFrame(this.raf);
     clearTimeout(this.chordTimer);
     clearTimeout(this.readyT);

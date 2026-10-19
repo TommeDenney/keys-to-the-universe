@@ -103,7 +103,26 @@ export class PianoDetector {
     this.expected = new Set();
     this.pending = [];
     this.setSensitivity(0.5);
+    this.setInstrument('piano');
     this.setPitchOffset(0);
+  }
+
+  /**
+   * The keyboard's sound changes what a "note" looks like:
+   *  - organ: no decay, rotary/vibrato wobble → looser pitch steadiness
+   *  - pad: slow swell → watch a longer rise window
+   *  - epiano / bass / piano: percussive attack, like piano
+   */
+  setInstrument(id) {
+    const P = {
+      piano: { hist: 6, steady: 1, decay: 9 },
+      epiano: { hist: 6, steady: 1.2, decay: 12 },
+      organ: { hist: 6, steady: 2, decay: 20 },
+      pad: { hist: 18, steady: 1.6, decay: 20 },
+      bass: { hist: 6, steady: 1.2, decay: 12 },
+    };
+    this.instrument = P[id] ? id : 'piano';
+    this.profile = P[this.instrument];
   }
 
   /**
@@ -253,11 +272,12 @@ export class PianoDetector {
       const hist = this.hist[m];
       const minPrev = hist.length ? Math.min(...hist) : e;
       hist.push(e);
-      if (hist.length > 6) hist.shift();
+      if (hist.length > this.profile.hist) hist.shift();
 
       const floor = this.floor[m];
       const above = e - floor;
-      const onDb = Math.max(exp ? this.onDb - 3 : this.onDb + 3, 4 * this.dev[m]);
+      // A noisy room raises the bar a little, but never so far that soft playing is lost.
+      const onDb = Math.max(exp ? this.onDb - 3 : this.onDb + 3, Math.min(exp ? 16 : 20, 2.2 * this.dev[m]));
       const riseDb = exp ? 5 : 8;
       if (!warm && level > -70) {
         if (!this.active[m]) {
@@ -298,16 +318,38 @@ export class PianoDetector {
         if (k !== m && !this.expected.has(k) && fine[k] > nb) nb = fine[k];
       }
       const above = this.E[m] - this.floor[m];
-      if (above < this.onDb * 0.4) continue; // faded away: it was a transient
-      if (!p.expected && this.isOvertone(m)) continue; // octave/twelfth ghost of a sounding note
-      if (!p.expected && above < this.onDb + 6) continue; // a wrong note has to be played clearly
+      // Every rejection re-arms the note, so a genuine strike a moment later
+      // still counts as a fresh rise (otherwise it would look "already sounding").
+      if (above < this.onDb * 0.4) { this.rearm(m); continue; } // faded away: a transient
+      if (!p.expected && this.isOvertone(m)) { this.rearm(m); continue; } // ghost of a sounding note
+      if (!p.expected && above < this.onDb + 6) { this.rearm(m); continue; } // wrong notes must be clear
+      // Percussive noises (taps, knocks, doors) collapse within ~100 ms; a
+      // piano note keeps ringing.
+      p.maxE = Math.max(p.maxE ?? -Infinity, this.E[m]);
+      if (this.E[m] < p.maxE - this.profile.decay) { this.rearm(m); continue; }
       const own = this.lowHarmonicsPresent(m);
       // A real key is one of the dominant sounds, not a faint overtone match
       // inside a much louder (wrong) note.
       const dominant = raw[m] >= maxRaw - 10;
-      p.ok = fine[m] >= nb - 0.5 && own && dominant ? (p.ok || 0) + 1 : 0;
-      if (p.ok >= (p.expected ? 1 : 3) && p.n >= 2) onsets.push(p);
-      else if (p.n < 8) still.push(p);
+      // It must sound like a string: narrow harmonic peaks standing well above
+      // the spectrum around them (noise is broadband).
+      const tonal = this.isTonal(m);
+      if (fine[m] >= nb - 0.5 && own && dominant && tonal) {
+        p.ok = (p.ok || 0) + 1;
+        const f = this.peakPitch(m);
+        if (f) (p.pitches ||= []).push(f);
+      } else p.ok = 0;
+      // …and hold a steady pitch (creaks, barks and voices glide).
+      // (Judge the latest readings: early ones are skewed while the window fills.)
+      // Expected notes: 3 readings within 0.15 semitone (fast enough for 16ths);
+      // anything else (a possible wrong note) needs 4 readings within 0.2.
+      const need = p.expected ? 3 : 4;
+      const ps = (p.pitches || []).slice(-need);
+      const avg = ps.reduce((x, y) => x + y, 0) / (ps.length || 1);
+      const spread = ps.length ? Math.max(...ps) - Math.min(...ps) : 99;
+      const steady = ps.length >= need && spread <= (p.expected ? 0.15 : 0.2) * this.profile.steady && Math.abs(avg - (m + this.offset)) <= 0.45;
+      if (p.ok >= need && p.n >= need + 1 && steady) onsets.push(p);
+      else if (p.n < 12) still.push(p);
       else {
         // Never confirmed (a ghost). Re-arm so a genuine strike later is
         // judged as a fresh rise from the current level.
@@ -320,6 +362,63 @@ export class PianoDetector {
     return { onsets, level, loudest };
   }
 
+  /** Give up on a pending candidate but allow a genuine strike later. */
+  rearm(m) {
+    this.peak[m] = this.E[m];
+    this.trough[m] = this.E[m];
+  }
+
+  /** Peak of the long (high-resolution) spectrum within a harmonic's bins, and its prominence. */
+  harmonicPeak(range) {
+    const spec = this.magL;
+    let k0 = range[0];
+    for (let k = range[0]; k <= range[1]; k++) if (spec[k] > spec[k0]) k0 = k;
+    // Background: median of bins a little away on both sides.
+    const bg = [];
+    for (let d = 4; d <= 12; d++) {
+      if (k0 - d > 0) bg.push(spec[k0 - d]);
+      if (k0 + d < spec.length) bg.push(spec[k0 + d]);
+    }
+    // A low percentile: in a chord, neighbouring notes put a few peaks into
+    // this background; broadband noise raises all of it.
+    bg.sort((a, b) => a - b);
+    const ref = bg[Math.floor(bg.length * 0.25)] || 1e-9;
+    return { k: k0, v: spec[k0], prom: spec[k0] / (ref + 1e-12) };
+  }
+
+  /** At least two clearly peaked harmonics, including the fundamental (or 2nd harmonic for bass notes). */
+  isTonal(m) {
+    const list = this.harm[m].list;
+    let count = 0;
+    let baseOk = false;
+    for (let i = 0; i < Math.min(5, list.length); i++) {
+      const pk = this.harmonicPeak(list[i].rL);
+      if (pk.prom >= 4) {
+        count++;
+        // Below Middle C a piano's 2nd harmonic is often stronger than its fundamental.
+        if (i === 0 || (i === 1 && m < 60)) baseOk = true;
+      }
+    }
+    return baseOk && count >= 2;
+  }
+
+  /** Precise pitch (in semitones) of the note's fundamental/2nd harmonic, searched ±1 semitone so glides show up. */
+  peakPitch(m) {
+    const list = this.harm[m].list;
+    // Measure from the stronger of the fundamental and 2nd harmonic below Middle C.
+    let i = 0;
+    if (m < 60 && list[1] && this.harmonicPeak(list[1].rL).v > this.harmonicPeak(list[0].rL).v) i = 1;
+    const cb = (440 * Math.pow(2, (m - 69 + this.offset) / 12) * (i + 1)) / this.binL;
+    const { k } = this.harmonicPeak([Math.max(1, Math.floor(cb / 1.06)), Math.min(this.magL.length - 2, Math.ceil(cb * 1.06))]);
+    const s = this.magL;
+    if (k < 1 || k + 1 >= s.length) return null;
+    const a = s[k - 1]; const b = s[k]; const c = s[k + 1];
+    const denom = a - 2 * b + c;
+    const off = denom ? 0.5 * (a - c) / denom : 0;
+    const f = ((k + Math.max(-0.5, Math.min(0.5, off))) * this.binL) / (i + 1);
+    return 69 + 12 * Math.log2(f / 440);
+  }
+
   /**
    * A real key has energy at its fundamental or 2nd harmonic. A note that only
    * shares higher partials with other sounding notes (e.g. E4 inside C4's
@@ -330,8 +429,9 @@ export class PianoDetector {
     const peak = ([a, b]) => { let p = 0; for (let k = a; k <= b; k++) if (this.magL[k] > p) p = this.magL[k]; return p; };
     let max = 0;
     for (const hm of list) max = Math.max(max, peak(hm.rL));
-    // From C3 up a piano's fundamental is strong; below that allow the 2nd harmonic.
-    const low = m >= 48 ? peak(list[0].rL) : Math.max(peak(list[0].rL), list[1] ? peak(list[1].rL) : 0);
+    // From Middle C up a piano's fundamental is strong. Below it (especially
+    // through small digital-piano speakers) the 2nd harmonic often carries the note.
+    const low = m >= 60 ? peak(list[0].rL) : Math.max(peak(list[0].rL), list[1] ? peak(list[1].rL) : 0);
     return low >= max * 0.18;
   }
 

@@ -134,7 +134,7 @@ export class Keyboard {
     const k = this.keys.get(m);
     if (!k) return;
     const cls = `on-${kind}`;
-    k.classList.remove('on-good', 'on-bad', 'on-play');
+    k.classList.remove('on-good', 'on-bad', 'on-play', 'on-soft');
     void k.offsetWidth; // restart animation
     k.classList.add(cls);
     clearTimeout(k._t);

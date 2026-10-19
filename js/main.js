@@ -11,6 +11,7 @@ import { input } from './input/hub.js';
 import { mic } from './input/mic.js';
 import { initPianoNav } from './nav.js';
 import { applyTheme } from './theme.js';
+import { applySound } from './sound.js';
 
 applyTheme();
 
@@ -32,6 +33,7 @@ audio.setMusicVolume(settings.get('musicVolume'));
 mic.setSensitivity(settings.get('micSensitivity'));
 mic.setPitchOffset(settings.get('micPitchOffset'));
 mic.setGhosts(settings.get('micGhosts'));
+applySound();
 onChange(() => { audio.setVolume(settings.get('volume')); audio.setMusicVolume(settings.get('musicVolume')); });
 
 let cleanup = null;

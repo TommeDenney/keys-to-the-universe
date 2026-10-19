@@ -199,9 +199,9 @@ export class Sheet {
     }
   }
 
-  wrong(n) {
+  wrong(n, subtle = false) {
     // n: {midi, step, alter, octave, hand}
-    this.effects.push({ type: 'w', note: n, t: 0, life: 0.9 });
+    this.effects.push({ type: 'w', note: n, t: 0, life: subtle ? 0.6 : 0.9, subtle });
   }
 
   popup(text, color = COLORS.hit) {
@@ -580,10 +580,10 @@ export class Sheet {
         const d = diatonic(n.step, n.octave);
         const y = this.y(st, d);
         const x = this.playheadX + 2.2 * s;
-        ctx.globalAlpha = 1 - k;
-        ctx.fillStyle = COLORS.miss;
+        ctx.globalAlpha = (1 - k) * (e.subtle ? 0.45 : 1);
+        ctx.fillStyle = e.subtle ? '#9C99B3' : COLORS.miss;
         ctx.save();
-        ctx.translate(x + Math.sin(e.t * 50) * s * 0.25 * (1 - k), y);
+        ctx.translate(x + (e.subtle ? 0 : Math.sin(e.t * 50) * s * 0.25 * (1 - k)), y);
         ctx.rotate(-0.33);
         ctx.beginPath();
         ctx.ellipse(0, 0, 0.7 * s, 0.52 * s, 0, 0, Math.PI * 2);
@@ -594,7 +594,7 @@ export class Sheet {
         ctx.fillText(n.step + accidentalSymbol(n.alter), x + 1.2 * s, y + 0.4 * s);
         // ledger lines for the ghost
         const ref = st === 'R' ? TREBLE_TOP : BASS_TOP;
-        ctx.strokeStyle = COLORS.miss;
+        ctx.strokeStyle = e.subtle ? '#9C99B3' : COLORS.miss;
         ctx.lineWidth = Math.max(1, s * 0.12);
         for (let dd = ref - 10; dd >= d; dd -= 2) { const yy = this.y(st, dd); ctx.beginPath(); ctx.moveTo(x - 1.1 * s, yy); ctx.lineTo(x + 1.1 * s, yy); ctx.stroke(); }
         for (let dd = ref + 2; dd <= d; dd += 2) { const yy = this.y(st, dd); ctx.beginPath(); ctx.moveTo(x - 1.1 * s, yy); ctx.lineTo(x + 1.1 * s, yy); ctx.stroke(); }

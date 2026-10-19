@@ -59,6 +59,7 @@ class Mic {
       this.detector = new PianoDetector(ctx.sampleRate);
       this.detector.setSensitivity(this.sensitivity);
       this.detector.setPitchOffset(this.pitchOffset || 0);
+      this.detector.setInstrument(this.instrument || 'piano');
       this.detector.setExpected(this.expected);
       this.timer = setInterval(() => this.tick(), 16);
       this.state = 'on';
@@ -89,6 +90,11 @@ class Mic {
   setPitchOffset(o) {
     this.pitchOffset = o;
     if (this.detector) this.detector.setPitchOffset(o);
+  }
+
+  setInstrument(id) {
+    this.instrument = id;
+    if (this.detector) this.detector.setInstrument(id);
   }
 
   /** Ghost intervals learned by calibration (signed semitones relative to a played note). */

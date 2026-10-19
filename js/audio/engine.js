@@ -93,14 +93,22 @@ class AudioEngine {
    * Play a note. `when` in AudioContext time (default now), `dur` seconds
    * (undefined = hold until noteOff(key)).
    */
-  play(midi, { when = 0, dur, velocity = 0.8, key } = {}) {
+  /** Which voice plays a note (split = bass in the left hand, piano in the right). */
+  voiceFor(hand) {
+    if (this.voice === 'split') return hand === 'L' ? 'bass' : 'piano';
+    return this.voice || 'piano';
+  }
+
+  play(midi, { when = 0, dur, velocity = 0.8, key, voice, hand } = {}) {
     const ctx = this.ensure();
     const t = Math.max(when || 0, ctx.currentTime);
+    const v = voice || this.voiceFor(hand || (midi < 60 ? 'L' : 'R'));
     const gain = ctx.createGain();
     const amp = 0.15 + 0.85 * velocity * velocity;
     gain.connect(this.musicBus);
     let src;
-    const sm = this.nearestSample(midi);
+    let rel = 0.08;
+    const sm = v === 'piano' ? this.nearestSample(midi) : null;
     if (sm != null) {
       src = ctx.createBufferSource();
       src.buffer = this.buffers.get(sm);
@@ -108,26 +116,108 @@ class AudioEngine {
       gain.gain.setValueAtTime(amp, t);
       src.connect(gain);
     } else {
-      // Fallback synth: a few decaying partials.
-      src = ctx.createOscillator();
-      const wave = ctx.createPeriodicWave(new Float32Array([0, 1, 0.45, 0.25, 0.12, 0.06]), new Float32Array(6));
-      src.setPeriodicWave(wave);
-      src.frequency.value = midiToFreq(midi);
-      gain.gain.setValueAtTime(0, t);
-      gain.gain.linearRampToValueAtTime(amp * 0.35, t + 0.005);
-      gain.gain.setTargetAtTime(amp * 0.12, t + 0.01, 0.4);
-      src.connect(gain);
+      ({ src, rel } = this.synth(v, midi, t, amp, gain));
     }
     src.start(t);
-    const voice = { src, gain };
+    const vo = { src, gain, rel };
     if (dur != null) {
-      this.release(voice, t + dur);
+      this.release(vo, t + dur);
     } else if (key != null) {
       const old = this.voices.get(key);
       if (old) this.release(old, ctx.currentTime);
-      this.voices.set(key, voice);
+      this.voices.set(key, vo);
     }
-    return voice;
+    return vo;
+  }
+
+  /**
+   * Synth voices for keyboards' other modes. Returns {src, rel} where src has
+   * start/stop like an AudioNode (several oscillators may hide behind it).
+   */
+  synth(v, midi, t, amp, out) {
+    const ctx = this.ctx;
+    const f = midiToFreq(midi);
+    const oscs = [];
+    const osc = (type, freq, g, dest = out) => {
+      const o = ctx.createOscillator();
+      o.type = type;
+      o.frequency.value = freq;
+      const gn = ctx.createGain();
+      gn.gain.value = g;
+      o.connect(gn).connect(dest);
+      oscs.push(o);
+      return { o, gn };
+    };
+    const group = { start: (at) => oscs.forEach((o) => o.start(at)), stop: (at) => oscs.forEach((o) => { try { o.stop(at); } catch { /* stopped */ } }) };
+    const env = out.gain;
+    if (v === 'organ') {
+      // Drawbar organ, gospel-style registration (16' 8' 5 1/3' 4' 2 2/3' 2'),
+      // with scanner-style vibrato, 3rd-harmonic percussion and a key click.
+      const bars = [[0.5, 0.55], [1, 1], [1.5, 0.55], [2, 0.5], [3, 0.22], [4, 0.25]];
+      const lfo = ctx.createOscillator();
+      lfo.frequency.value = 6.7;
+      oscs.push(lfo);
+      for (const [mul, g] of bars) {
+        const { o } = osc('sine', f * mul, g * 0.16);
+        const depth = ctx.createGain();
+        depth.gain.value = f * mul * 0.0035;
+        lfo.connect(depth).connect(o.frequency);
+      }
+      const perc = osc('sine', f * 3, 0.18);
+      perc.gn.gain.setValueAtTime(0.18, t);
+      perc.gn.gain.setTargetAtTime(0, t, 0.12);
+      env.setValueAtTime(0, t);
+      env.linearRampToValueAtTime(amp * 0.9, t + 0.006);
+      return { src: group, rel: 0.02 };
+    }
+    if (v === 'epiano') {
+      // Tine electric piano: sine body + soft 2nd harmonic + quick bell partial.
+      osc('sine', f, 0.5);
+      const h2 = osc('sine', f * 2, 0.18);
+      h2.gn.gain.setTargetAtTime(0.03, t, 0.4);
+      const bell = osc('sine', f * 7.1, 0.07);
+      bell.gn.gain.setTargetAtTime(0, t, 0.05);
+      env.setValueAtTime(0, t);
+      env.linearRampToValueAtTime(amp * 0.85, t + 0.004);
+      env.setTargetAtTime(amp * 0.25, t + 0.01, 1.2);
+      return { src: group, rel: 0.12 };
+    }
+    if (v === 'pad') {
+      // Warm pad: detuned saws through a soft low-pass, slow swell.
+      const lp = ctx.createBiquadFilter();
+      lp.type = 'lowpass';
+      lp.frequency.value = Math.min(4000, 900 + f * 2);
+      lp.Q.value = 0.6;
+      lp.connect(out);
+      osc('sawtooth', f * Math.pow(2, 6 / 1200), 0.09, lp);
+      osc('sawtooth', f * Math.pow(2, -6 / 1200), 0.09, lp);
+      osc('triangle', f / 2, 0.08, lp);
+      env.setValueAtTime(0, t);
+      env.linearRampToValueAtTime(amp * 0.8, t + 0.35);
+      return { src: group, rel: 0.45 };
+    }
+    if (v === 'bass') {
+      const lp = ctx.createBiquadFilter();
+      lp.type = 'lowpass';
+      lp.frequency.value = 700;
+      lp.connect(out);
+      osc('triangle', f, 0.5, lp);
+      osc('sine', f, 0.4, lp);
+      osc('square', f, 0.05, lp);
+      env.setValueAtTime(0, t);
+      env.linearRampToValueAtTime(amp * 0.9, t + 0.005);
+      env.setTargetAtTime(amp * 0.35, t + 0.02, 0.6);
+      return { src: group, rel: 0.06 };
+    }
+    // Fallback while piano samples load: a few decaying partials.
+    const o = ctx.createOscillator();
+    o.setPeriodicWave(ctx.createPeriodicWave(new Float32Array([0, 1, 0.45, 0.25, 0.12, 0.06]), new Float32Array(6)));
+    o.frequency.value = f;
+    o.connect(out);
+    env.setValueAtTime(0, t);
+    env.linearRampToValueAtTime(amp * 0.35, t + 0.005);
+    env.setTargetAtTime(amp * 0.12, t + 0.01, 0.4);
+    return { src: o, rel: 0.08 };
   }
 
   release(voice, at) {
@@ -135,8 +225,8 @@ class AudioEngine {
     const t = Math.max(at, ctx.currentTime);
     voice.gain.gain.cancelScheduledValues(t);
     voice.gain.gain.setValueAtTime(voice.gain.gain.value || 0.5, t);
-    voice.gain.gain.setTargetAtTime(0, t, 0.08);
-    try { voice.src.stop(t + 0.6); } catch { /* already stopped */ }
+    voice.gain.gain.setTargetAtTime(0, t, voice.rel || 0.08);
+    try { voice.src.stop(t + 0.6 + (voice.rel || 0) * 5); } catch { /* already stopped */ }
   }
 
   /** Release every note scheduled or held (e.g. on pause). */
@@ -157,8 +247,8 @@ class AudioEngine {
   }
 
   /** Schedule a note that can be cancelled by stopAll(). */
-  schedule(midi, when, dur, velocity = 0.7) {
-    const v = this.play(midi, { when, dur, velocity });
+  schedule(midi, when, dur, velocity = 0.7, hand) {
+    const v = this.play(midi, { when, dur, velocity, hand });
     (this.scheduled ||= []).push(v);
     if (this.scheduled.length > 200) this.scheduled.splice(0, 100);
     return v;

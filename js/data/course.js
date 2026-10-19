@@ -349,6 +349,37 @@ export const COURSE = [
     ],
   },
   {
+    id: 'u9', title: 'Gospel Organ', subtitle: 'Church chords on your keyboard\u2019s organ mode', color: '#7C3AED',
+    lessons: [
+      {
+        id: 'l-g-amen', title: 'The Amen', icon: '\u271D', song: 'gospel-amen',
+        steps: [
+          { t: 'learn', title: 'Switch to organ', text: 'Set your keyboard to <b>Organ</b> mode, and in Ivory\u2019s <b>Settings \u203a My keyboard\u2019s sound</b> choose <b>Organ</b> so the listener knows. Organ notes don\u2019t fade: they ring <b>exactly as long as you hold the key</b>, so hold every chord for its full length.' },
+          { t: 'learn', title: 'IV \u2192 I: the Amen', text: 'Gospel and hymns end on the <b>\u201cAmen\u201d cadence</b>: F chord to C chord. Keep <b>C</b> on top in both chords and only two fingers move.', chords: [{ label: 'C', notes: [64, 67, 72] }, { label: 'F/C', notes: [65, 69, 72] }], keys: [64, 65, 67, 69, 72], range: [55, 79] },
+          { t: 'play', title: 'The Amen, your own pace', song: 'gospel-amen', hands: 'both', mode: 'wait' },
+          { t: 'play', title: 'The Amen with the beat', song: 'gospel-amen', hands: 'both', mode: 'timed', tempo: 0.85 },
+        ],
+      },
+      {
+        id: 'l-g-blues', title: 'Dominant 7ths', icon: '7', song: 'gospel-blues',
+        steps: [
+          { t: 'learn', title: 'The 7th', text: 'Add the <b>flat 7th</b> to a major chord and it gets that bluesy, churchy pull: <b>C7 = C E G B\u266d</b>. On the organ we play just the colorful top notes (E G B\u266d) and let the left hand take the root.', chords: [{ label: 'C7', notes: [48, 64, 67, 70] }, { label: 'F7', notes: [41, 63, 65, 69] }, { label: 'G7', notes: [43, 65, 67, 71] }] },
+          { t: 'plan', song: 'gospel-blues' },
+        ],
+      },
+      { id: 'l-g-walkup', title: 'Walk-Up Bass', icon: '\u2197', song: 'gospel-walkup', steps: [
+        { t: 'learn', title: 'Walking into the next chord', text: 'Gospel bass lines <b>walk</b>: instead of jumping from C to F, the left hand climbs <b>C D E \u2192 F</b>. Then <b>F F\u266f G \u2192 C</b> brings it home.', keys: [48, 50, 52, 53, 54, 55], hand: 'L', range: [43, 64], labels: true },
+        { t: 'plan', song: 'gospel-walkup' },
+      ] },
+      { id: 'l-g-passing', title: 'Passing Diminished', icon: '\u00B0', song: 'gospel-passing', steps: [
+        { t: 'learn', title: 'The church passing chord', text: 'Between <b>C</b> and <b>Dm7</b>, gospel players slip in <b>C\u266fdim7</b>: the bass rises a half step (C \u2192 C\u266f \u2192 D) while the right hand barely moves. It\u2019s the sound of a thousand Sunday mornings.', chords: [{ label: 'C', notes: [48, 64, 67, 72] }, { label: 'C\u266fdim7', notes: [49, 64, 67, 70] }, { label: 'Dm7', notes: [50, 65, 69, 72] }, { label: 'G7', notes: [43, 65, 67, 71] }] },
+        { t: 'plan', song: 'gospel-passing' },
+      ] },
+      { id: 'l-g-251', title: 'Gospel 2-5-1', icon: '\u266A', song: 'gospel-251', steps: [{ t: 'plan', song: 'gospel-251' }] },
+      { id: 'l-g-saints', title: 'Saints on the Organ', icon: '\u2605', song: 'saints-organ', steps: [{ t: 'plan', song: 'saints-organ' }] },
+    ],
+  },
+  {
     id: 'u8', title: 'Classics', subtitle: 'Real pieces, broken into parts', color: '#E11D48',
     lessons: [
       { id: 'l-c-saints', title: 'When the Saints, Both Hands', icon: '★', song: 'saints', steps: [{ t: 'plan', song: 'saints', only: 'both' }] },

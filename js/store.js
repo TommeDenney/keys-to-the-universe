@@ -17,6 +17,9 @@ const DEFAULT_SETTINGS = {
   otherHand: true, // play the hand you're not practising during timed play
   noteNames: 'auto', // auto | always | never
   keyHints: true,
+  wrongNotes: 'off', // off | subtle | on: feedback when a wrong key is heard
+  keyboardSound: 'piano', // what your keyboard is set to: piano | epiano | organ | pad | bass | split
+  appSound: 'match', // the app's own playback voice: match | piano | epiano | organ | pad | bass
   keyLabels: 'c', // c | all | none
   unlockAll: false,
   pianoNav: true, // navigate menus with piano keys around Middle C
