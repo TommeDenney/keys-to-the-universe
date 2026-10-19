@@ -177,8 +177,6 @@ export function renderUniverse(root) {
       h('div', { class: 'pill flame', title: 'Day streak: finish every daily challenge to grow it' }, [icon('flame'), h('b', {}, String(progress.streak))]),
       giftReady() ? h('button', { class: 'pill gift-pill', title: 'Your daily gift is ready', onclick: (e) => openDailyGift(() => e.target.closest('.gift-pill')?.remove()) }, [h('span', {}, '\u{1F381}'), h('b', {}, 'Gift')]) : null,
       h('a', { class: 'pill hb-pill', href: '#/handbook', title: 'Handbook: every lesson explanation' }, [icon('book'), h('b', {}, 'Handbook')]),
-      h('a', { class: 'pill inv-pill', href: '#/arcade', title: 'Arcade: Endless, Boss Rush, Battle and mini games' }, [h('span', { class: 'inv-ico' }, '\u{1F579}\uFE0F'), h('b', {}, 'Arcade')]),
-      h('a', { class: 'pill inv-pill', href: '#/inventory', title: 'Inventory: everything you own' }, [h('span', { class: 'inv-ico' }, '\u{1F392}'), h('b', {}, 'Inventory')]),
       fullscreenButton(),
     ]),
   ]));

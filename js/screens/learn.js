@@ -86,8 +86,6 @@ export function renderLearn(root) {
     h('div', { class: 'pills' }, [
       h('div', { class: 'pill flame', title: 'Day streak: finish every daily challenge to grow it' }, [icon('flame'), h('b', {}, String(progress.streak))]),
       h('a', { class: 'pill hb-pill', href: '#/handbook', title: 'Handbook: every lesson explanation' }, [icon('book'), h('b', {}, 'Handbook')]),
-      h('a', { class: 'pill inv-pill', href: '#/arcade', title: 'Arcade' }, [h('span', { class: 'inv-ico' }, '\u{1F579}\uFE0F'), h('b', {}, 'Arcade')]),
-      h('a', { class: 'pill inv-pill', href: '#/inventory', title: 'Inventory: everything you own' }, [h('span', { class: 'inv-ico' }, '\u{1F392}'), h('b', {}, 'Inventory')]),
       fullscreenButton(),
     ]),
   ]);

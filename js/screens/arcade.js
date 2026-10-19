@@ -52,7 +52,7 @@ export function renderArcade(root) {
   ]);
   const bosses = defeatedGuardians();
   page.append(
-    h('header', { class: 'top' }, [h('div', {}, [h('a', { class: 'back-link', href: '#/learn' }, [icon('back'), 'Learn']), h('div', { class: 'eyebrow' }, 'Play for fun'), h('h1', {}, '\u{1F579}️ Arcade')]), walletPill('big')]),
+    h('header', { class: 'top' }, [h('div', {}, [h('div', { class: 'eyebrow' }, 'Play for fun'), h('h1', {}, '\u{1F579}️ Arcade')])]),
     h('p', { class: 'muted arc-note' }, `Arcade runs earn a little Stardust (up to ${DAILY_CAP} ${SYMBOL} a day). Best scores are saved.`),
     h('div', { class: 'arc-grid' }, [
       card('endless', '♾️', 'Endless', 'Random songs back to back, getting harder as you go, even past the grades you’ve reached. Misses drain energy. Rifts restore it.', `Best: ${bestOf('endless').toLocaleString('en-US')} pts`, () => startEndless(root)),

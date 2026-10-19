@@ -48,8 +48,10 @@ touchChallenges();
 const TABS = [
   { id: 'learn', label: 'Learn', icon: 'learn' },
   { id: 'library', label: 'Songs', icon: 'library' },
+  { id: 'arcade', label: 'Arcade', icon: 'arcade' },
   { id: 'handbook', label: 'Handbook', icon: 'book' },
   { id: 'shop', label: 'Shop', icon: 'shop' },
+  { id: 'inventory', label: 'Inventory', icon: 'backpack' },
   { id: 'settings', label: 'Settings', icon: 'settings' },
 ];
 
@@ -89,14 +91,14 @@ async function route() {
     return;
   }
   if (name === 'inventory') {
-    setActiveTab('shop');
+    setActiveTab('inventory');
     main.replaceChildren();
     main.scrollTop = 0;
     cleanup = renderInventory(main);
     return;
   }
   if (name === 'arcade') {
-    setActiveTab('learn');
+    setActiveTab('arcade');
     main.replaceChildren();
     main.scrollTop = 0;
     stopTabAmbient();
@@ -161,9 +163,48 @@ async function renderTab(name) {
   else if (name !== 'shop') stopTabAmbient();
 }
 
-function setActiveTab(name) {
-  tabbar.querySelectorAll('.tab').forEach((t) => t.classList.toggle('active', t.dataset.tab === name));
+/**
+ * Switch the highlighted tab. The highlight glides to the new tab like a drop of
+ * liquid: it stretches to cover both tabs, then lets go of the old one, and the
+ * new tab's icon pops.
+ */
+const tabInk = h('i', { class: 'tab-ink', 'aria-hidden': 'true' });
+tabbar.prepend(tabInk);
+let inkFrom = null;
+function placeInk(el, animate) {
+  if (!el) { tabInk.style.opacity = '0'; return; }
+  const vertical = getComputedStyle(tabbar).flexDirection === 'column';
+  const box = (t) => ({ x: t.offsetLeft, y: t.offsetTop, w: t.offsetWidth, h: t.offsetHeight });
+  const to = box(el);
+  const set = (b) => Object.assign(tabInk.style, { opacity: '1', transform: `translate(${b.x}px, ${b.y}px)`, width: `${b.w}px`, height: `${b.h}px` });
+  tabInk.classList.toggle('instant', !animate);
+  if (animate && inkFrom && inkFrom !== el && document.contains(inkFrom)) {
+    const from = box(inkFrom);
+    // Stretch over both tabs first…
+    const x = Math.min(from.x, to.x), y = Math.min(from.y, to.y);
+    const span = vertical
+      ? { x: to.x, y, w: to.w, h: Math.max(from.y + from.h, to.y + to.h) - y }
+      : { x, y: to.y, w: Math.max(from.x + from.w, to.x + to.w) - x, h: to.h };
+    tabInk.classList.add('stretch');
+    set(span);
+    // …then settle on the new one.
+    clearTimeout(placeInk.t);
+    placeInk.t = setTimeout(() => { tabInk.classList.remove('stretch'); set(to); }, 170);
+  } else set(to);
+  inkFrom = el;
 }
+function setActiveTab(name) {
+  let active = null;
+  tabbar.querySelectorAll('.tab').forEach((t) => {
+    const on = t.dataset.tab === name;
+    if (on && !t.classList.contains('active')) { t.classList.remove('pop'); void t.offsetWidth; t.classList.add('pop'); }
+    t.classList.toggle('active', on);
+    if (on) active = t;
+  });
+  placeInk(active, !!inkFrom);
+}
+addEventListener('resize', () => placeInk(inkFrom, false));
+new MutationObserver(() => requestAnimationFrame(() => placeInk(inkFrom, false))).observe(document.body, { attributes: true, attributeFilter: ['data-tabpos'] });
 
 window.addEventListener('hashchange', route);
 // The graded repertoire galaxies come from a manifest; load it before the first render.

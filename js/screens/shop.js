@@ -56,7 +56,7 @@ export function renderShop(root, { inventory = false } = {}) {
 
   const inventoryPage = () => [
     h('header', { class: 'top' }, [
-      h('div', {}, [h('a', { class: 'back-link', href: '#/shop' }, [icon('back'), 'Shop']), h('div', { class: 'eyebrow' }, `${ownedCount()} items`), h('h1', {}, 'Inventory')]),
+      h('div', {}, [h('div', { class: 'eyebrow' }, `${ownedCount()} items`), h('h1', {}, 'Inventory')]),
     ]),
     ...CATEGORIES.map((c) => {
       const mine = SHOP.filter((it) => it.cat === c.id && owns(it.id));

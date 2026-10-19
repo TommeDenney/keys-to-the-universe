@@ -1952,3 +1952,26 @@ body[data-tabpos="top"][data-dock="stack"] .hud-dock { top: calc(var(--tab-botto
 /* Side tab bars: the dock stands up under the bar */
 body[data-dock="vertical"] .hud-dock { flex-direction: column; padding: 6px 4px; border-radius: 26px; top: calc(var(--tab-bottom) + 12px); bottom: auto; left: calc((var(--tab-left) + var(--tab-right)) / 2); right: auto; transform: translateX(-50%); }
 body[data-dock="vertical"] .hud-dock .pill { padding: 0 8px; }
+
+/* ---- Tab bar: a highlight that glides between tabs ---- */
+.tabbar { position: fixed; }
+.tabbar .tab { position: relative; z-index: 1; }
+.tabbar .tab.active { background: transparent; color: #fff; transition: color .25s .1s; }
+.tab-ink { position: absolute; left: 0; top: 0; z-index: 0; border-radius: 999px; background: var(--ink); pointer-events: none; box-shadow: 0 6px 18px rgba(30,27,58,.28);
+  transition: transform .42s cubic-bezier(.3, 1.45, .5, 1), width .42s cubic-bezier(.3, 1.45, .5, 1), height .42s cubic-bezier(.3, 1.45, .5, 1), opacity .2s; }
+.tab-ink.stretch { transition-duration: .17s; transition-timing-function: cubic-bezier(.4, 0, .9, .6); }
+.tab-ink.instant { transition: none; }
+body[data-tabpos="left"] .tab-ink, body[data-tabpos="right"] .tab-ink { border-radius: 20px; }
+.tab.pop .ico { animation: tab-pop .55s cubic-bezier(.3, 1.6, .5, 1); }
+@keyframes tab-pop { 0% { transform: scale(.6) rotate(-14deg); } 55% { transform: scale(1.25) rotate(6deg); } 100% { transform: none; } }
+@media (prefers-reduced-motion: reduce) { .tab-ink { transition: opacity .2s; } .tab.pop .ico { animation: none; } }
+/* Seven tabs on a phone: icons only, a little tighter */
+@media (max-width: 480px) {
+  .tabbar { gap: 0; padding: 5px; }
+  .tab { padding: 0 11px; height: 46px; }
+  .tab.active span { display: none; }
+}
+/* The piano-keys legend sits above the dock and music bar, never on them */
+body[data-dock="side"]:not([data-tabpos="top"]) .nav-legend:not(.low) { bottom: calc(var(--tab-mid) + var(--tab-h) / 2 + 10px); }
+body[data-dock="above"]:not([data-tabpos="top"]) .nav-legend:not(.low) { bottom: calc(var(--tab-mid) + var(--tab-h) / 2 + 68px); }
+body[data-dock="stack"]:not([data-tabpos="top"]) .nav-legend:not(.low) { bottom: calc(var(--tab-mid) + var(--tab-h) / 2 + 122px); }
