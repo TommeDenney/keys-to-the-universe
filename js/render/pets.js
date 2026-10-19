@@ -5,6 +5,7 @@
 import { PETS } from '../data/rewards.js';
 import { EVENT_ITEMS } from '../data/events.js';
 import { critterSVG } from './critters.js';
+import { aquaSVG } from './aqua.js';
 
 export const petById = (id) => PETS.find((p) => p.id === id) || EVENT_ITEMS.find((p) => p.id === id && p.cat === 'pet') || null;
 
@@ -13,7 +14,7 @@ export function petHTML(id) {
   const p = petById(id);
   if (!p || p.type === 'none') return '';
   if (p.type === 'land') return typeof p.look === 'string' ? `<span class="pet pet-land"><span class="pet-emoji">${p.look}</span></span>` : `<span class="pet pet-land pet-drawn">${critterSVG(p.id, p.look)}</span>`;
-  if (p.type === 'water') return `<span class="pet pet-water"><span class="bowl"><i class="water"></i><i class="bubble b1"></i><i class="bubble b2"></i><span class="pet-emoji">${p.look}</span></span></span>`;
+  if (p.type === 'water') { const art = aquaSVG(p.id, p.look); return `<span class="pet pet-water"><span class="bowl"><i class="water"></i><i class="bubble b1"></i><i class="bubble b2"></i>${art || `<span class="pet-emoji">${p.look}</span>`}</span></span>`; }
   return `<span class="pet pet-space">${creatureSVG(p.id, p.look)}</span>`;
 }
 

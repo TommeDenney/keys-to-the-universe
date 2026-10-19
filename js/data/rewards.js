@@ -132,7 +132,7 @@ export const REWARD_ITEMS = [
 ];
 
 // ---- Pets: a companion who travels with your ship -------------------------------------
-// type: 'land' (emoji), 'water' (emoji in a fish bowl), 'space' (a drawn alien found on a galaxy's planets).
+// type: 'land' (drawn animals), 'water' (drawn sea friends in a fish bowl, see render/aqua.js), 'space' (drawn creatures).
 const P = (id, name, type, price, look, desc, req) => ({ id, cat: 'pet', name, type, price, look, desc, req });
 
 export const PETS = [

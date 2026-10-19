@@ -1986,3 +1986,8 @@ body[data-dock="stack"]:not([data-tabpos="top"]) .nav-legend:not(.low) { bottom:
 .mini-stars:has(.star.mega.on) .star:not(.mega) { display: none; }
 .mini-stars:has(.star.mega.on) .star.mega { margin-left: 0; }
 .mini-stars .star.mega.on svg { width: calc(var(--sz) * 1.9); height: calc(var(--sz) * 1.9); }
+
+/* Drawn sea friends in their bowls */
+.pet-water .bowl .aqua { position: relative; z-index: 1; width: 82%; height: 82%; margin-top: 8%; animation: aqua-swim 3.2s ease-in-out infinite; }
+@keyframes aqua-swim { 0%, 100% { transform: translate(-2px, 0) rotate(-3deg); } 50% { transform: translate(2px, -2px) rotate(3deg); } }
+@media (prefers-reduced-motion: reduce) { .pet-water .bowl .aqua { animation: none; } }
