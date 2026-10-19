@@ -106,7 +106,7 @@ export function renderShop(root, { inventory = false } = {}) {
       ...CATEGORIES.map((c) => (c.id === 'avatar' ? avatarSections(c) : h('section', { class: 'shop-cat', id: `shop-${c.id}` }, [
         h('h2', {}, c.name),
         h('p', { class: 'muted' }, c.blurb),
-        lazyGrid(SHOP.filter((it) => it.cat === c.id && !it.req && !it.event && (!it.exclusive || owns(it.id) || offered(it.id)))),
+        lazyGrid(byPrice(SHOP.filter((it) => it.cat === c.id && !it.req && !it.event && (!it.exclusive || owns(it.id) || offered(it.id))))),
         SHOP.some((it) => it.cat === c.id && it.req) ? h('h3', { class: 'achv-head' }, [h('span', {}, '\u{1F3C6}'), ' Achievement rewards ', h('small', { class: 'muted' }, 'Earn the right, then buy with Stardust')]) : null,
         lazyGrid(achvOrder(SHOP.filter((it) => it.cat === c.id && it.req))),
       ]))),
@@ -174,14 +174,19 @@ export function renderShop(root, { inventory = false } = {}) {
    * bought yet, then still-locked ones (closest to unlocking first). Items without a
    * requirement keep their place among the unlocked group.
    */
+  /** Cheapest first (free items lead). */
+  function byPrice(list) {
+    return list.map((it, i) => ({ it, i })).sort((a, b) => (a.it.price || 0) - (b.it.price || 0) || a.i - b.i).map((x) => x.it);
+  }
   function achvOrder(list) {
     const rankOf = (it) => {
       if (owns(it.id)) return [0, 0];
       if (!it.req) return [1, 0];
       const p = reqProgress(it.req);
-      return p.met ? [1, 0] : [2, -(p.value / p.goal)];
+      return p.met ? [1, 0] : [2, 0];
     };
-    return list.map((it, i) => ({ it, i, r: rankOf(it) })).sort((a, b) => a.r[0] - b.r[0] || a.r[1] - b.r[1] || a.i - b.i).map((x) => x.it);
+    // Owned, then ready to buy, then still locked; cheapest first within each.
+    return list.map((it, i) => ({ it, i, r: rankOf(it) })).sort((a, b) => a.r[0] - b.r[0] || (a.it.price || 0) - (b.it.price || 0) || a.i - b.i).map((x) => x.it);
   }
 
   /** Quick-jump tabs (sticky): tap to scroll to a section; the current one is highlighted. */

@@ -2088,3 +2088,7 @@ body:not([data-tabpos="top"])[data-dock="stack"] .screen { padding-bottom: calc(
 .ps-meta small { color: var(--ink-3); font-weight: 700; }
 .arc-go { justify-content: flex-start; margin-top: 18px; }
 .arc-go .btn .gl { width: 22px; height: 22px; }
+
+/* Achievement rewards sit on a slightly darker card than regular items */
+.shop-item.achv { background: color-mix(in srgb, var(--surface, #fff) 90%, #1E1B4B); }
+.shop-item.achv .shop-meta { background: transparent; }
