@@ -156,7 +156,7 @@ export class Keyboard {
     else {
       // Achievement key presses: glyph particles described in js/data/rewards.js.
       const L = rewardLook(`press-${fx}`);
-      if (!L) return;
+      if (!L || !L.glyphs || !L.glyphs.length) return; // glow-only key colours
       spawn('star glyph', L.n || 3, (p, i) => {
         p.textContent = L.glyphs[Math.floor(Math.random() * L.glyphs.length)];
         const c = L.color === 'rainbow' ? `hsl(${Math.floor(Math.random() * 360)} 90% 65%)` : L.color;

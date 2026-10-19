@@ -88,6 +88,12 @@ export const REWARD_ITEMS = [
   R('press-ghosts', 'press', 'Phantoms', 320, { kind: 'boss', id: 'boss-g6' }, 'Friendly ghosts drift up from the Romantic Phantom’s keys.', { glyphs: ['\u{1F47B}'], color: '#FFFFFF', glow: '#C4B5FD', n: 1, size: 18 }),
   R('press-comets', 'press', 'Comets', 380, { kind: 'life', stat: 'notes', goal: 30000 }, 'Comets streak off with every note.', { glyphs: ['☄'], color: '#FDE68A', glow: '#FB923C', n: 2, size: 16 }),
 
+  // ---- Key glow colours (no particles: the played key lights up in this colour) ----
+  ...[['press-glowblue', 'Ocean Blue Glow', '#38BDF8', 60], ['press-glowviolet', 'Violet Glow', '#A78BFA', 60], ['press-glowgold', 'Gold Glow', '#FBBF24', 90],
+    ['press-glowpink', 'Hot Pink Glow', '#F472B6', 70], ['press-glowruby', 'Ruby Glow', '#F43F5E', 80], ['press-gloworange', 'Sunset Orange Glow', '#FB923C', 70],
+    ['press-glowteal', 'Teal Glow', '#2DD4BF', 60], ['press-glowice', 'Ice White Glow', '#E0F2FE', 100], ['press-glowlime', 'Lime Glow', '#A3E635', 60], ['press-glowindigo', 'Indigo Glow', '#6366F1', 120]]
+    .map(([id, name, keyColor, price]) => R(id, 'press', name, price, null, `Played keys light up ${name.replace(' Glow', '').toLowerCase()}.`, { glyphs: [], keyColor })),
+
   // ---- Completion star colours ---------------------------------------------------------
   R('star-obsidian', 'starc', 'Obsidian Flame', 250, { kind: 'dailyDone', goal: 50 }, 'Black glass stars with a burning edge.', { color: '#1C1917', glow: ['#F97316', '#EA580C'] }),
   R('star-aurora', 'starc', 'Aurora', 300, { kind: 'weeklyDone', goal: 15 }, 'Teal-to-violet stars that ripple like the northern lights.', { color: '#2DD4BF', shift: '#A78BFA' }),
