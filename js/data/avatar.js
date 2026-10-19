@@ -3,6 +3,7 @@
 // Fantasy and whimsical pieces are bought with Stardust, earned by achievements,
 // or arrive with seasonal packs (see js/data/events.js).
 
+import { NEW_GLASSES, NEW_CLOTHES } from '../render/wardrobe.js';
 import { LOOKS } from '../render/avatar.js';
 
 export const PARTS = [
@@ -57,6 +58,8 @@ export const AVATAR_ITEMS = [
   A('expr-shy', 'expr', 'Shy', 100), A('expr-determined', 'expr', 'Determined', 150, { kind: 'guardians', goal: 5 }), A('expr-singing', 'expr', 'Singing along', 150, { kind: 'life', stat: 'mastered', goal: 3 }),
   ...free('glasses', [['glasses-none', 'None'], ['glasses-round', 'Round glasses'], ['glasses-square', 'Square glasses']]),
   A('glasses-cateye', 'glasses', 'Cat-eye glasses', 120), A('glasses-shades', 'glasses', 'Sunglasses', 150), A('glasses-heart', 'glasses', 'Heart shades', 150),
+  ...NEW_GLASSES.map(([id, name, price]) => A(id, 'glasses', name, price)),
+  ...NEW_CLOTHES.map(([id, name, price]) => A(id, 'clothes', name, price)),
   ...free('clothes', [['clothes-tee', 'T-shirt'], ['clothes-hoodie', 'Hoodie'], ['clothes-sweater', 'Cozy sweater'], ['clothes-collar', 'Collared shirt']]),
   A('clothes-jacket', 'clothes', 'Denim jacket', 150),
   A('clothes-mozart', 'clothes', 'Mozart frock coat', 200), A('clothes-bach', 'clothes', 'Baroque cantor coat (Bach)', 200), A('clothes-beethoven', 'clothes', 'Romantic coat & cravat (Beethoven)', 200), A('clothes-chopin', 'clothes', 'Concert tailcoat (Chopin)', 180), A('clothes-liszt', 'clothes', 'Virtuoso velvet coat (Liszt)', 180), A('clothes-overalls', 'clothes', 'Overalls', 150), A('clothes-spacesuit', 'clothes', 'Space suit', 300, { kind: 'planets', goal: 10 }), A('clothes-tux', 'clothes', 'Concert tux', 350, { kind: 'life', stat: 'mastered', goal: 5 }), A('clothes-robe', 'clothes', 'Starry robe', 400, { kind: 'galaxies', goal: 3 }), A('clothes-armor', 'clothes', 'Guardian armour', 500, { kind: 'guardians', goal: 8 }),

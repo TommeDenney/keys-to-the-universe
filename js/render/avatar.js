@@ -6,6 +6,7 @@
 // a deeper shade of the same tone, highlights a warm glow, and blush and lips are
 // drawn from the skin itself.
 
+import { NEW_GLASSES, NEW_CLOTHES } from './wardrobe.js';
 import { HAIR } from './hair.js';
 
 /**
@@ -284,3 +285,7 @@ Object.assign(LOOKS.clothes, {
   'clothes-spooky': { name: 'Pumpkin sweater', draw: (c) => shoulders({ ...c, cloth: '#1F2937' }, `<circle cx="50" cy="90" r="8" fill="#F97316"/><path d="M46 88 L48 86 L50 88 Z M52 88 L54 86 L54 88 Z M46 92 Q50 95 54 92" fill="#FDE047" stroke="#FDE047" stroke-width=".8"/>`), collar: () => `<path d="M40 72 Q50 82 60 72" stroke="#F97316" stroke-width="2.4" fill="none"/>` },
   'clothes-holiday': { name: 'Holiday sweater', draw: (c) => shoulders({ ...c, cloth: '#15803D' }, `<path d="M12 86 H88" stroke="#F8FAFC" stroke-width="3" stroke-dasharray="4 3"/><path d="M50 80 L45 90 H55 Z" fill="#F8FAFC"/><circle cx="50" cy="80" r="1.6" fill="#FDE68A"/>`), collar: () => `<path d="M38 72 Q50 80 62 72 L62 76 Q50 84 38 76 Z" fill="#DC2626"/>` },
 });
+
+// The bigger wardrobe (render/wardrobe.js): dozens more glasses and outfits.
+for (const [id, name, , draw] of NEW_GLASSES) LOOKS.glasses[id] = { name, draw };
+for (const [id, name, , draw, collar] of NEW_CLOTHES) LOOKS.clothes[id] = { name, draw, ...(collar ? { collar } : {}) };
