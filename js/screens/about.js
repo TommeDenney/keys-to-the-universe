@@ -26,6 +26,7 @@ export function renderAbout(root) {
     sec('About Keys to the Universe',
       h('p', {}, 'Keys to the Universe is a free, open-source piano course that runs in your browser. It listens to your piano, follows your playing on the sheet music, and turns practice into a journey through the galaxies.'),
       h('p', {}, ['The source code is public at ', link(REPO, 'github.com/TommeDenney/keys-to-the-universe'), '. Issues and suggestions are welcome.']),
+      h('p', {}, [link('privacy.html', 'Privacy Policy'), ' · ', link('terms.html', 'Terms of Service')]),
     ),
 
     sec('Disclosures',

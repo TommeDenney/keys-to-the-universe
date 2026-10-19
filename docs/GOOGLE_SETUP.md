@@ -16,7 +16,8 @@ Keys to the Universe signs in with Google and saves progress to the player's own
 3. App name: **Keys to the Universe**. User support email: your email. App logo: optional.
 4. App domain:
    - Home page: `https://tommedenney.github.io/keys-to-the-universe/`
-   - Privacy policy: `https://tommedenney.github.io/keys-to-the-universe/#/about`
+   - Privacy policy: `https://tommedenney.github.io/keys-to-the-universe/privacy.html`
+   - Terms of service: `https://tommedenney.github.io/keys-to-the-universe/terms.html`
 5. Developer contact: your email.
 6. **Scopes / Data access:** add `openid`, `.../auth/userinfo.email`, `.../auth/userinfo.profile` and `.../auth/drive.file`. All four are non-sensitive, so no security review is needed.
 7. **Audience:** while it says *Testing*, only the test users you add can sign in (up to 100). Add yourself and anyone testing. When you're ready for everyone, click **Publish app**.
