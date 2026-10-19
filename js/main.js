@@ -71,7 +71,21 @@ onChange(() => { audio.setVolume(settings.get('volume')); audio.setMusicVolume(s
 
 let cleanup = null;
 
+/**
+ * Safety net for iPad Safari, which sometimes stalls entrance animations inside the
+ * scrolling area until you scroll: shortly after a page opens, finish any that stalled.
+ */
+function settlePage() {
+  clearTimeout(settlePage.t);
+  settlePage.t = setTimeout(() => {
+    for (const el of main.querySelectorAll('.page, .page > *, .pop')) {
+      for (const a of el.getAnimations ? el.getAnimations() : []) if (a.playState !== 'finished' && a.effect && a.effect.getComputedTiming().iterations === 1) a.finish();
+    }
+  }, 900);
+}
+
 async function route() {
+  settlePage();
   const hash = location.hash.replace(/^#\/?/, '') || 'learn';
   const [name, arg] = hash.split('/');
   if (name !== 'learn' && name !== 'shop') stopTabAmbient();
@@ -207,12 +221,15 @@ addEventListener('resize', () => placeInk(inkFrom, false));
 new MutationObserver(() => requestAnimationFrame(() => placeInk(inkFrom, false))).observe(document.body, { attributes: true, attributeFilter: ['data-tabpos'] });
 
 window.addEventListener('hashchange', route);
+document.addEventListener('visibilitychange', () => { if (!document.hidden) settlePage(); });
 // The graded repertoire galaxies come from a manifest; load it before the first render.
 // Accounts first: a sign-in that just came back from Google carries its result in the
 // URL, which has to be read (and cleaned up) before the router looks at it.
 const accountReady = startAccount().catch(() => ({ status: 'error' }));
 Promise.all([loadCatalog(), loadConstellations(), accountReady]).then(async ([, , acct]) => {
   if (acct && acct.status === 'renewing') return; // off to Google for a moment; we'll be right back
+  // A fresh launch always opens at the top of Learn (except straight back from a Google sign-in).
+  if (!(acct && acct.fresh)) history.replaceState(null, '', `${location.pathname}${location.search}#/learn`);
   route();
   mountMusicBar();
   mountDock();

@@ -292,8 +292,7 @@ export function renderUniverse(root) {
       returnToOrbit(left, back.completed);
       return;
     }
-    const cur = page.querySelector('.planet.current, .moon-chip.current');
-    if (cur && done > 0) cur.scrollIntoView({ block: 'center', behavior: 'smooth' });
+    // Otherwise the map opens at the top: Fly there takes you to your next world.
   });
 
   /** Back from a world: shrink into it, then (if you finished it) fly on to the next one. */
