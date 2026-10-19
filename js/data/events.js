@@ -180,9 +180,9 @@ export const EVENT_ITEMS = [
   ...[
     ['hat-pinkbeanie', 'pink', 'hat', 'Pink Ribbon Beanie', 1000], ['expr-kiss', 'pink', 'expr', 'Blown Kiss', 1000], ['clothes-pinkribbon', 'pink', 'clothes', 'Pink Ribbon Tee', 1000],
     ['hat-leafcrown', 'fall', 'hat', 'Autumn Leaf Crown', 1200], ['expr-cozy', 'fall', 'expr', 'Cozy Cocoa Smile', 1000], ['clothes-flannel', 'fall', 'clothes', 'Fall Flannel', 1000],
-    ['hat-witch', 'halloween', 'hat', 'Witch Hat', 1400], ['expr-fangs', 'halloween', 'expr', 'Vampire Fangs', 1000], ['expr-jackolantern', 'halloween', 'expr', 'Jack-o\u2019-Lantern Grin', 1000], ['hat-pumpkin', 'halloween', 'hat', 'Pumpkin Cap', 1200], ['clothes-spooky', 'halloween', 'clothes', 'Pumpkin Sweater', 1000],
+    ['hat-witch', 'halloween', 'hat', 'Witch Hat', 1400], ['skin-skull', 'halloween', 'skin', 'Skeleton Head', 1600], ['skin-witch', 'halloween', 'skin', 'Witch Face', 1400], ['expr-fangs', 'halloween', 'expr', 'Vampire Fangs', 1000], ['expr-jackolantern', 'halloween', 'expr', 'Jack-o\u2019-Lantern Grin', 1000], ['hat-pumpkin', 'halloween', 'hat', 'Pumpkin Cap', 1200], ['clothes-spooky', 'halloween', 'clothes', 'Pumpkin Sweater', 1000],
     ['hat-santa', 'christmas', 'hat', 'Santa Hat', 1200], ['expr-jolly', 'christmas', 'expr', 'Jolly Cheeks', 1000], ['clothes-holiday', 'christmas', 'clothes', 'Holiday Sweater', 1000],
-    ['hat-earmuffs', 'winter', 'hat', 'Fluffy Earmuffs', 1000], ['expr-starstruck', 'newyear', 'expr', 'Starstruck', 1000],
+    ['hat-earmuffs', 'winter', 'hat', 'Fluffy Earmuffs', 1000], ['skin-snowman', 'winter', 'skin', 'Snowman Head', 1500], ['expr-starstruck', 'newyear', 'expr', 'Starstruck', 1000],
   ].map(([id, event, part, name, price]) => ({ id, event, cat: 'avatar', part, name, price, desc: `${name} for your explorer. A seasonal rare.`, rare: true })),
 ];
 

@@ -73,19 +73,23 @@ export function avatarSVG(a, { size = 100, uid = 'av' } = {}) {
   // Hair behind the head (some head coverings hide the hair and ears)
   if (hat.back) out.push(hat.back(ctx));
   // Ears (behind the head shape)
-  const ears = hat.hidesEars ? {} : (L.ears[a.ears] || L.ears['ears-human']);
+  const ears = hat.hidesEars || skin.noEars ? {} : (L.ears[a.ears] || L.ears['ears-human']);
   if (ears.back) out.push(ears.back(ctx));
-  // Head
-  out.push(`<ellipse cx="50" cy="46" rx="20" ry="22" fill="${SK}"/>`);
+  // Head (special heads draw their own shape, and some bring their own face)
+  if (skin.behind) out.push(skin.behind(ctx));
+  out.push(skin.head ? skin.head(ctx) : `<ellipse cx="50" cy="46" rx="20" ry="22" fill="${SK}"/>`);
   if (skin.galaxy) out.push([[40, 34], [58, 30], [62, 52], [36, 56], [50, 62]].map(([x, y]) => `<circle cx="${x}" cy="${y}" r=".9" fill="#fff" opacity=".9"/>`).join(''));
   if (skin.robot) out.push(`<path d="M30 46 H70" stroke="${shade}" stroke-width="1" opacity=".5"/><circle cx="33" cy="58" r="1.3" fill="${shade}"/><circle cx="67" cy="58" r="1.3" fill="${shade}"/>`);
   if (ears.front) out.push(ears.front(ctx));
   // Face
-  out.push((L.eyes[a.eyes] || L.eyes['eyes-round']).draw(ctx));
-  out.push(`<ellipse cx="37" cy="54" rx="4" ry="2.4" fill="${blush}" opacity=".55"/><ellipse cx="63" cy="54" rx="4" ry="2.4" fill="${blush}" opacity=".55"/>`);
-  out.push(`<path d="M48.5 51.5 Q50 53.5 51.5 51.5" stroke="${shade}" stroke-width="1.4" fill="none" stroke-linecap="round"/>`);
-  out.push((L.expr[a.expr] || L.expr['expr-smile']).draw(ctx));
-  out.push((L.facial[a.facial] || L.facial['facial-none']).draw(ctx));
+  if (!skin.noEyes) out.push((L.eyes[a.eyes] || L.eyes['eyes-round']).draw(ctx));
+  if (!skin.noFace) {
+    out.push(`<ellipse cx="37" cy="54" rx="4" ry="2.4" fill="${blush}" opacity=".55"/><ellipse cx="63" cy="54" rx="4" ry="2.4" fill="${blush}" opacity=".55"/>`);
+    out.push(`<path d="M48.5 51.5 Q50 53.5 51.5 51.5" stroke="${shade}" stroke-width="1.4" fill="none" stroke-linecap="round"/>`);
+  }
+  if (!skin.noExpr) out.push((L.expr[a.expr] || L.expr['expr-smile']).draw(ctx));
+  if (!skin.noFacial) out.push((L.facial[a.facial] || L.facial['facial-none']).draw(ctx));
+  if (skin.face) out.push(skin.face(ctx));
   out.push((L.glasses[a.glasses] || L.glasses['glasses-none']).draw(ctx));
   // Hair in front, then hats
   if (hair.front && !hat.hidesHair) out.push(hair.front(ctx));
@@ -215,6 +219,44 @@ for (const [id, name, color] of TONES) LOOKS.skin[id] = { name, color };
 Object.assign(LOOKS.skin, {
   'skin-alien': { name: 'Alien Green', color: '#7DD87A' }, 'skin-cosmic': { name: 'Cosmic Blue', color: '#6CA6F0' }, 'skin-lilac': { name: 'Lilac', color: '#B9A3F0' },
   'skin-coral': { name: 'Coral', color: '#F59A8A' }, 'skin-robot': { name: 'Chrome', color: '#B8C2CF', robot: true }, 'skin-gold': { name: 'Gold', color: '#E9B949' }, 'skin-galaxy': { name: 'Galaxy', color: '#4338CA', galaxy: true },
+});
+
+// Special heads: space and seasonal. They replace the head shape; some bring their own
+// face (noEyes / noExpr / noFace hide the parts you picked) and none show ears.
+const starPts = (cx, cy, R, r, n = 5) => [...Array(n * 2)].map((_, i) => { const a = -Math.PI / 2 + (i * Math.PI) / n; const d = i % 2 ? r : R; return `${(cx + d * Math.cos(a)).toFixed(1)},${(cy + d * Math.sin(a)).toFixed(1)}`; }).join(' ');
+Object.assign(LOOKS.skin, {
+  'skin-alienhead': {
+    name: 'Space Alien', color: '#8EE07E', specialHead: true, noEars: true, noEyes: true,
+    head: (c) => `<path d="M40 22 L33 7 M60 22 L67 7" stroke="#5FB04F" stroke-width="2" stroke-linecap="round"/><circle cx="33" cy="7" r="3" fill="#F0ABFC"/><circle cx="67" cy="7" r="3" fill="#F0ABFC"/><ellipse cx="50" cy="42" rx="23" ry="25" fill="${c.SK}"/>`,
+    face: () => `<ellipse cx="40.5" cy="45" rx="6.6" ry="4.2" transform="rotate(28 40.5 45)" fill="#111827"/><ellipse cx="59.5" cy="45" rx="6.6" ry="4.2" transform="rotate(-28 59.5 45)" fill="#111827"/><circle cx="38.4" cy="43.2" r="1.4" fill="#fff"/><circle cx="57.4" cy="43.2" r="1.4" fill="#fff"/>`,
+  },
+  'skin-starhead': {
+    name: 'Star', color: '#FCD34D', specialHead: true, noEars: true,
+    head: (c) => `<polygon points="${starPts(50, 47, 30, 16)}" fill="${c.SK}" stroke="#F59E0B" stroke-width="1.5" stroke-linejoin="round"/><polygon points="${starPts(50, 47, 30, 16)}" fill="none" stroke="#FEF3C7" stroke-width="5" opacity=".25" stroke-linejoin="round"/>`,
+  },
+  'skin-asteroid': {
+    name: 'Asteroid', color: '#A8A29E', specialHead: true, noEars: true,
+    head: (c) => `<path d="M31 32 Q34 22 46 23 Q54 19 62 25 Q72 27 71 38 Q75 47 70 56 Q67 66 55 67 Q46 71 38 65 Q28 62 29 52 Q25 41 31 32 Z" fill="${c.SK}"/><circle cx="62" cy="33" r="3.4" fill="${c.shade}" opacity=".6"/><circle cx="35" cy="58" r="2.6" fill="${c.shade}" opacity=".55"/><circle cx="66" cy="57" r="2" fill="${c.shade}" opacity=".5"/><circle cx="40" cy="29" r="1.8" fill="${c.shade}" opacity=".5"/>`,
+  },
+  'skin-comet': {
+    name: 'Comet', color: '#BFDBFE', specialHead: true, noEars: true,
+    behind: (c) => `<defs><linearGradient id="${c.g('tail')}" x1="0" y1="1" x2="1" y2="0"><stop offset="0" stop-color="#93C5FD" stop-opacity=".9"/><stop offset=".5" stop-color="#C4B5FD" stop-opacity=".55"/><stop offset="1" stop-color="#C4B5FD" stop-opacity="0"/></linearGradient></defs><path d="M38 34 Q66 2 106 -8 Q76 22 66 58 Z" fill="url(#${c.g('tail')})"/><path d="M46 30 Q72 8 100 0" stroke="#fff" stroke-width="1.2" opacity=".5" fill="none"/>`,
+    head: (c) => `<circle cx="50" cy="46" r="27" fill="#BFDBFE" opacity=".25"/><ellipse cx="50" cy="46" rx="20.5" ry="22" fill="${c.SK}"/><circle cx="58" cy="34" r="3" fill="#fff" opacity=".7"/>`,
+  },
+  'skin-skull': {
+    name: 'Skeleton', color: '#F1EFE6', specialHead: true, noEars: true, noEyes: true, noExpr: true, noFace: true, noFacial: true,
+    head: (c) => `<ellipse cx="50" cy="43" rx="21" ry="21" fill="${c.SK}"/><rect x="38" y="54" width="24" height="13" rx="5" fill="${c.SK}"/>`,
+    face: () => `<ellipse cx="41" cy="45" rx="5.6" ry="6.2" fill="#231D33"/><ellipse cx="59" cy="45" rx="5.6" ry="6.2" fill="#231D33"/><path d="M50 51 L47.5 56 H52.5 Z" fill="#231D33"/><path d="M40 61 H60" stroke="#231D33" stroke-width="1.2"/>${[43, 47, 51, 55].map((x) => `<path d="M${x + 1} 58.5 V63.5" stroke="#231D33" stroke-width="1"/>`).join('')}<path d="M35 34 Q38 30 43 31" stroke="#fff" stroke-width="1.4" opacity=".6" fill="none" stroke-linecap="round"/>`,
+  },
+  'skin-witch': {
+    name: 'Witch', color: '#93C572', specialHead: true,
+    face: (c) => `<path d="M49 47 Q53 51 56 58 Q52 59 49.5 56" fill="${c.shade}"/><circle cx="58" cy="54" r="1.4" fill="#4D7C0F"/>`,
+  },
+  'skin-snowman': {
+    name: 'Snowman', color: '#F8FAFC', specialHead: true, noEars: true, noEyes: true, noExpr: true, noFace: true, noFacial: true,
+    head: (c) => `<circle cx="50" cy="46" r="22" fill="${c.SK}"/><circle cx="50" cy="46" r="22" fill="none" stroke="#CBD5E1" stroke-width="1"/>`,
+    face: () => `<circle cx="42" cy="42" r="2.7" fill="#1F2937"/><circle cx="58" cy="42" r="2.7" fill="#1F2937"/><circle cx="41.2" cy="41.2" r=".8" fill="#fff" opacity=".7"/><circle cx="57.2" cy="41.2" r=".8" fill="#fff" opacity=".7"/><path d="M50 47 L66 50 L50 52 Z" fill="#F97316"/><path d="M50 49 L60 50.2" stroke="#C2410C" stroke-width=".6"/>${[[40, 56], [44, 58.6], [50, 59.6], [56, 58.6], [60, 56]].map(([x, y]) => `<circle cx="${x}" cy="${y}" r="1.6" fill="#1F2937"/>`).join('')}`,
+  },
 });
 
 // Clothes: shoulders + collar, all in the chosen colour.

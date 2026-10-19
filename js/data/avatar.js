@@ -40,9 +40,11 @@ const A = (id, part, name, price = 0, req) => ({ id, cat: 'avatar', part, name, 
 const free = (part, ids) => ids.map(([id, name]) => A(id, part, name));
 
 export const AVATAR_ITEMS = [
-  ...Object.entries(LOOKS.skin).filter(([id]) => !['skin-alien', 'skin-cosmic', 'skin-lilac', 'skin-coral', 'skin-robot', 'skin-gold', 'skin-galaxy'].includes(id)).map(([id, s]) => A(id, 'skin', s.name)),
+  ...Object.entries(LOOKS.skin).filter(([id, s]) => !s.specialHead && !['skin-alien', 'skin-cosmic', 'skin-lilac', 'skin-coral', 'skin-robot', 'skin-gold', 'skin-galaxy'].includes(id)).map(([id, s]) => A(id, 'skin', s.name)),
   A('skin-alien', 'skin', 'Alien Green', 150), A('skin-cosmic', 'skin', 'Cosmic Blue', 150), A('skin-lilac', 'skin', 'Lilac', 150), A('skin-coral', 'skin', 'Coral', 150),
   A('skin-robot', 'skin', 'Chrome', 300, { kind: 'life', stat: 'perfect', goal: 3000 }), A('skin-gold', 'skin', 'Gold', 400, { kind: 'guardians', goal: 10 }), A('skin-galaxy', 'skin', 'Galaxy', 600, { kind: 'galaxies', goal: 5 }),
+  // Space heads
+  A('skin-alienhead', 'skin', 'Space Alien head', 350), A('skin-starhead', 'skin', 'Star head', 450, { kind: 'threeStar', goal: 10 }), A('skin-asteroid', 'skin', 'Asteroid head', 350), A('skin-comet', 'skin', 'Comet head', 500, { kind: 'rogues', goal: 3 }),
   // Hair: a free starter set (a few for every look); the rest are bought with Stardust.
   ...HAIR_NAMES.map(([id, name, price, req]) => A(id, 'hair', name, price, req)),
   ...free('eyes', [['eyes-round', 'Round'], ['eyes-happy', 'Happy'], ['eyes-sleepy', 'Sleepy'], ['eyes-wide', 'Wide'], ['eyes-lashes', 'Lashes']]),
