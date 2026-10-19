@@ -36,7 +36,7 @@ export function account() {
   if (!auth || !auth.email) return null;
   return {
     email: auth.email, name: auth.name, picture: auth.picture, remember: !!auth.remember,
-    connected: tokenValid(), lastSync: auth.lastSync || null, error: auth.error || null, syncing,
+    connected: tokenValid(), lastSync: auth.lastSync || null, error: auth.error || null, syncing, conflict: auth.conflict || null,
   };
 }
 const tokenValid = () => !!(auth && auth.token && auth.expires > Date.now() + 30000);
@@ -241,6 +241,72 @@ const hasProgress = (st) => !!st && (Object.keys(st.lessons || {}).length > 0 ||
  * Bring this device and Drive together. `choose(local, remote)` is asked only when
  * both have different progress the first time a device links (returns 'local' | 'remote').
  */
+/** What a save holds, to compare two saves safely (and show them to you). */
+export function summarize(st) {
+  st = st || {};
+  return {
+    stars: Object.values(st.lessons || {}).reduce((a, l) => a + ((l && l.stars) || 0), 0),
+    worlds: Object.keys(st.lessons || {}).length,
+    stardust: (st.wallet && st.wallet.balance) || 0,
+    earned: (st.wallet && st.wallet.earned) || 0,
+    avatar: !!(st.avatar && Object.keys(st.avatar).length),
+    updatedAt: st.updatedAt || null,
+  };
+}
+/**
+ * "Best of both": combine two saves. Stars per planet, songs, items, badges and
+ * lifetime stats take the higher/union of the two; the custom explorer wins over a
+ * default one; the Stardust balance is the higher of the two (never added, so it
+ * can't be inflated). Settings and in-progress things come from the save with more stars.
+ */
+export function mergeSaves(a, b) {
+  const sa = summarize(a), sb = summarize(b);
+  const [base, other] = sa.stars > sb.stars || (sa.stars === sb.stars && sa.earned >= sb.earned) ? [a, b] : [b, a];
+  const out = JSON.parse(JSON.stringify(base));
+  const o = other || {};
+  const union = (x = [], y = []) => [...new Set([...(x || []), ...(y || [])])];
+  const maxMap = (x = {}, y = {}) => { const r = { ...x }; for (const [k, v] of Object.entries(y || {})) if (typeof v === 'number') r[k] = Math.max(r[k] ?? -Infinity, v); else if (!(k in r)) r[k] = v; return r; };
+  // Planets / lessons: the better record for each.
+  out.lessons = { ...(out.lessons || {}) };
+  for (const [id, rec] of Object.entries(o.lessons || {})) {
+    const cur = out.lessons[id];
+    if (!cur || (rec.stars || 0) > (cur.stars || 0)) out.lessons[id] = { ...rec, done: rec.done || (cur && cur.done) };
+  }
+  out.steps = maxMap(out.steps, o.steps);
+  out.songs = { ...(out.songs || {}) };
+  for (const [id, steps] of Object.entries(o.songs || {})) out.songs[id] = maxMap(out.songs[id], steps);
+  // Wallet: everything owned on either device; the higher balance.
+  const w = out.wallet || {}, ow = o.wallet || {};
+  out.wallet = { ...w,
+    balance: Math.max(w.balance || 0, ow.balance || 0), earned: Math.max(w.earned || 0, ow.earned || 0),
+    owned: union(w.owned, ow.owned), songs: union(w.songs, ow.songs), migrations: union(w.migrations, ow.migrations),
+    paid: maxMap(w.paid, ow.paid), quests: { ...(ow.quests || {}), ...(w.quests || {}) }, petNames: { ...(ow.petNames || {}), ...(w.petNames || {}) }, backpay: 0 };
+  // Explorer: a customised one beats the default.
+  if (!(out.avatar && Object.keys(out.avatar).length) && o.avatar && Object.keys(o.avatar).length) out.avatar = o.avatar;
+  if (!out.profile && o.profile) out.profile = o.profile;
+  if (!out.personal && o.personal) out.personal = o.personal;
+  // Lifetime stats and bests: the higher; lists: everything from both.
+  const lt = { ...(out.lifetime || {}) };
+  for (const [k, v] of Object.entries(o.lifetime || {})) lt[k] = Array.isArray(v) ? union(lt[k], v) : typeof v === 'number' ? Math.max(lt[k] || 0, v) : lt[k] ?? v;
+  out.lifetime = lt;
+  if (o.arcade) out.arcade = { ...(o.arcade), ...(out.arcade || {}), best: maxMap((out.arcade || {}).best, o.arcade.best) };
+  for (const k of ['skyUnlocked', 'practiceDays', 'birthdayGifts']) if (Array.isArray(o[k]) || Array.isArray(out[k])) out[k] = union(out[k], o[k]);
+  if (o.streak && (o.streak.count || 0) > ((out.streak && out.streak.count) || 0)) out.streak = o.streak;
+  for (const [k, v] of Object.entries(o)) if (!(k in out)) out[k] = v; // anything only the other save has
+  out.updatedAt = Date.now();
+  return out;
+}
+
+/** Does save a have clearly less progress than save b? (fewer stars, or less Stardust ever earned) */
+const lessThan = (a, b) => a.stars < b.stars || a.earned < b.earned - 1;
+
+/**
+ * Bring this device and Drive together. It never silently replaces one save with
+ * another that has less progress, or picks a side when both changed: then it asks
+ * (`choose(local, remote)` returns 'local' | 'remote' | null), or, if it can't ask
+ * right now, leaves both untouched and flags the conflict on the Account card.
+ * Before a download replaces this device's progress, a copy is kept for Undo.
+ */
 export async function syncNow({ choose } = {}) {
   if (!auth || !tokenValid() || syncing) return { status: 'skipped' };
   syncing = true; emit();
@@ -252,19 +318,56 @@ export async function syncNow({ choose } = {}) {
     const rT = (remoteState && remoteState.updatedAt) || 0;
     const lT = local.updatedAt || 0;
     let action = 'upload';
-    if (remoteState) {
+    let conflict = false;
+    if (remoteState && rT !== lT) {
+      const L = summarize(local), R = summarize(remoteState);
+      const both = hasProgress(local) && hasProgress(remoteState);
+      const localChanged = lT > (auth.localSeen ?? auth.lastSync ?? 0);
+      const remoteChanged = rT > (auth.remoteSeen || 0);
       if (!auth.lastSync) { // first time this device links to this account
         if (!hasProgress(local)) action = 'download';
-        else if (hasProgress(remoteState) && rT !== lT) action = choose ? await choose({ local, remote: remoteState }) === 'remote' ? 'download' : 'upload' : (rT > lT ? 'download' : 'upload');
-      } else if (rT > (auth.remoteSeen || 0) && rT > lT) action = 'download'; // changed on another device
+        else if (both) conflict = true;
+      } else if (remoteChanged && localChanged && both) conflict = true; // changed in both places
+      else if (remoteChanged && rT > lT) { action = 'download'; if (both && lessThan(R, L)) conflict = true; } // newer, but less progress?
+      else if (both && lessThan(L, R)) conflict = true; // about to upload less progress over more
     }
-    if (action === 'download') {
+    if (conflict) {
+      // Two different saves: keep a copy of BOTH in Drive first (once per pair), so nothing can be lost.
+      const sig = `${lT}|${rT}`;
+      if (auth.keptPair !== sig) {
+        await keepInDrive(await makeBackup({ forCloud: true }), 'this device');
+        await keepInDrive(remote, 'google drive');
+        auth.keptPair = sig;
+        persist();
+      }
+      const pick = choose ? await choose({ local, remote: remoteState }) : null;
+      if (pick === 'remote') action = 'download';
+      else if (pick === 'local') action = 'upload';
+      else if (pick === 'combine') action = 'combine';
+      else {
+        auth.conflict = { local: summarize(local), remote: summarize(remoteState), at: Date.now() };
+        auth.error = 'This device and your Google Drive have different progress. Choose which to keep.';
+        return { status: 'conflict' };
+      }
+    }
+    if (action === 'combine') {
+      const mine = await makeBackup({ forCloud: true });
+      keepUndo(mine);
+      applying = true;
+      try { await restoreBackup({ ...mine, state: mergeSaves(local, remoteState), scores: [...(mine.scores || []), ...((remote && remote.scores) || [])] }); } finally { applying = false; }
+      await upload(fileId);
+      auth.localSeen = getState().updatedAt || Date.now();
+    } else if (action === 'download') {
+      keepUndo(await makeBackup({ forCloud: true }));
       applying = true;
       try { await restoreBackup(remote); } finally { applying = false; }
       auth.remoteSeen = rT;
+      auth.localSeen = getState().updatedAt || rT;
     } else {
       await upload(fileId);
+      auth.localSeen = getState().updatedAt || Date.now();
     }
+    auth.conflict = null;
     auth.lastSync = Date.now();
     auth.error = null;
     return { status: action };
@@ -275,6 +378,69 @@ export async function syncNow({ choose } = {}) {
     syncing = false;
     persist();
   }
+}
+
+// ---- Safety nets ------------------------------------------------------------------
+/** Keep a save as its own file in the Drive folder ("progress-kept-…json"); never overwritten or synced. */
+async function keepInDrive(data, label) {
+  auth.folderId = await ensureFolder();
+  const stamp = new Date().toISOString().slice(0, 16).replace('T', ' ').replace(':', '');
+  const meta = { name: `progress-kept ${stamp} ${label}.json`, parents: [auth.folderId], mimeType: 'application/json', description: 'A copy of your Keys to the Universe progress, kept when two saves disagreed.' };
+  await multipart('POST', `${API}/upload/drive/v3/files?uploadType=multipart&fields=id`, meta, JSON.stringify(data));
+}
+const UNDO_KEY = 'ivory.beforeSync';
+function keepUndo(backup) {
+  try { localStorage.setItem(UNDO_KEY, JSON.stringify({ at: Date.now(), backup })); } catch { /* storage full: Drive versions still exist */ }
+}
+/** The progress this device had before the last download replaced it (or null). */
+export function undoInfo() {
+  try { const u = JSON.parse(localStorage.getItem(UNDO_KEY)); return u && u.backup ? { at: u.at, summary: summarize(u.backup.state) } : null; } catch { return null; }
+}
+/** Put back the progress from before the last download, and save it to Drive. */
+export async function undoLastSync() {
+  const u = JSON.parse(localStorage.getItem(UNDO_KEY) || 'null');
+  if (!u || !u.backup) throw new Error('Nothing to undo.');
+  await useSave(u.backup);
+  localStorage.removeItem(UNDO_KEY);
+}
+
+/**
+ * Older saves you can bring back: earlier versions of the Drive save (Drive keeps
+ * them for about 30 days) and any other save files the app made. Newest first.
+ */
+export async function olderSaves() {
+  const fileId = await ensureFile({ create: false });
+  const out = [];
+  const read = async (url) => { try { const d = await (await gfetch(url)).json(); return d && d.app === 'ivory' && d.state ? d : null; } catch (e) { if (e.code === 'auth') throw e; return null; } };
+  if (fileId) {
+    const r = await gfetch(`${API}/drive/v3/files/${fileId}/revisions?fields=revisions(id,modifiedTime)&pageSize=200`);
+    const revs = ((await r.json()).revisions || []).slice(-25).reverse();
+    for (const v of revs) {
+      const d = await read(`${API}/drive/v3/files/${fileId}/revisions/${v.id}?alt=media`);
+      if (d) out.push({ id: `rev:${v.id}`, at: v.modifiedTime, kind: 'version', summary: summarize(d.state), data: d });
+    }
+  }
+  for (const f of await list(`name contains 'progress' and trashed=false and mimeType='application/json'`)) {
+    if (f.id === fileId) continue;
+    const d = await read(`${API}/drive/v3/files/${f.id}?alt=media`);
+    if (d) out.push({ id: `file:${f.id}`, at: f.modifiedTime, kind: /kept/.test(f.name) ? `kept copy (${f.name.replace(/^progress-kept \S+ \S+ |\.json$/g, '')})` : 'other save file', summary: summarize(d.state), data: d });
+  }
+  // Collapse identical consecutive versions (auto-save writes often).
+  out.sort((x, y) => Date.parse(y.at) - Date.parse(x.at));
+  return out.filter((v, i, a) => i === 0 || v.kind !== a[i - 1].kind || JSON.stringify(v.summary) !== JSON.stringify(a[i - 1].summary));
+}
+/** Make a chosen save the one on this device and in Drive. */
+export async function useSave(data) {
+  keepUndo(await makeBackup({ forCloud: true }));
+  applying = true;
+  try { await restoreBackup(data); } finally { applying = false; }
+  const fileId = await ensureFile();
+  await upload(fileId);
+  auth.localSeen = getState().updatedAt || Date.now();
+  auth.lastSync = Date.now();
+  auth.conflict = null;
+  auth.error = null;
+  persist();
 }
 
 async function upload(fileId) {

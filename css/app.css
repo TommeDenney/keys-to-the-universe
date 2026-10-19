@@ -2092,3 +2092,16 @@ body:not([data-tabpos="top"])[data-dock="stack"] .screen { padding-bottom: calc(
 /* Achievement rewards sit on a slightly darker card than regular items */
 .shop-item.achv { background: color-mix(in srgb, var(--surface, #fff) 90%, #1E1B4B); }
 .shop-item.achv .shop-meta { background: transparent; }
+
+/* Save conflicts and older saves */
+.acct-conflict { display: grid; gap: 4px; padding: 12px 14px; border-radius: 14px; background: #FEF3C7; color: #78350F; margin: 8px 0; }
+.acct-conflict .btn { justify-self: start; margin-top: 6px; }
+.choose-opt.more { box-shadow: inset 0 0 0 2px #22C55E; }
+.older-modal { display: grid; gap: 8px; max-width: 620px; }
+.older-saves { display: grid; gap: 8px; max-height: 56vh; overflow-y: auto; }
+.older-save { display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 14px; background: var(--surface-2, #F3F1FA); }
+.older-save .grow { display: grid; gap: 2px; }
+.older-save small { color: var(--ink-2); }
+.choose-opt .rec { margin-left: 8px; padding: 2px 8px; border-radius: 99px; background: #DCFCE7; color: #166534; font-size: 11px; font-weight: 900; text-transform: uppercase; letter-spacing: .04em; }
+.choose-opt small.warn { color: #B45309; font-weight: 800; }
+.choose-opt small { display: block; }

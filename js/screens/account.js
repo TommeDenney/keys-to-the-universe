@@ -5,7 +5,7 @@ import { h, icon, modal, toast } from '../ui.js';
 import { getState, saveState } from '../store.js';
 import {
   cloudConfigured, account, onAccount, signIn, signOut, setRemember, syncNow, locateSave,
-  pickerAvailable, pickSave, googleGivenName,
+  pickerAvailable, pickSave, googleGivenName, summarize, olderSaves, useSave, undoInfo, undoLastSync,
 } from '../cloud.js';
 import { profile, saveProfile, age, birthdayLocked, LEVELS, MONTHS, BIRTHDAY_GIFT, displayName } from '../profile.js';
 import { SYMBOL } from '../economy.js';
@@ -84,20 +84,73 @@ export function openProfile({ first = false, done } = {}) {
 }
 
 /** Both this device and Drive have progress: which one wins? */
+/** One save, described so you can recognise it: stars, Stardust, explorer and when. */
+function saveLine(sm) {
+  const when = sm.updatedAt ? new Date(sm.updatedAt).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) : 'unknown time';
+  return `${sm.stars} stars · ${sm.stardust.toLocaleString('en-US')} ${SYMBOL} · ${sm.worlds} worlds · ${sm.avatar ? 'custom explorer' : 'default explorer'} · ${when}`;
+}
+
+/** What one save is missing compared with the other (to spot a stale or wrong save). */
+function lacks(x, y) {
+  const out = [];
+  if (x.stars < y.stars) out.push(`${y.stars - x.stars} fewer stars`);
+  if (x.worlds < y.worlds) out.push(`${y.worlds - x.worlds} fewer planets completed`);
+  if (x.earned < y.earned - 1) out.push(`${(y.earned - x.earned).toLocaleString('en-US')} less ${SYMBOL} earned`);
+  if (!x.avatar && y.avatar) out.push('default explorer');
+  return out;
+}
+
+/**
+ * Two different saves: you choose, and nothing is lost. A copy of both is already
+ * kept in Drive. "Combine both" keeps the best of each. Closing changes nothing.
+ */
 export function chooseSave({ local, remote }) {
-  const sum = (st) => {
-    const worlds = Object.keys(st.lessons || {}).length;
-    const dust = (st.wallet && st.wallet.balance) || 0;
-    const when = st.updatedAt ? new Date(st.updatedAt).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) : 'unknown';
-    return `${worlds} worlds · ${dust.toLocaleString('en-US')} ${SYMBOL} · saved ${when}`;
-  };
-  return new Promise((ok) => modal((close) => [h('div', { class: 'choose-modal' }, [
-    h('h2', {}, 'Which progress should we keep?'),
-    h('p', { class: 'muted' }, 'This device and your Google Drive both have progress. Pick the one to keep; the other is replaced.'),
-    h('button', { class: 'choose-opt', onclick: () => { close(); ok('remote'); } }, [h('b', {}, '☁️ Google Drive'), h('small', {}, sum(remote))]),
-    h('button', { class: 'choose-opt', onclick: () => { close(); ok('local'); } }, [h('b', {}, '\u{1F4F1} This device'), h('small', {}, sum(local))]),
-    h('p', { class: 'muted small' }, 'Tip: make a backup file first (Settings › Progress) if you’re not sure.'),
-  ])], { onClose: () => ok('local') }));
+  const L = summarize(local), R = summarize(remote);
+  const lLacks = lacks(L, R), rLacks = lacks(R, L);
+  const best = lLacks.length && rLacks.length ? 'combine' : lLacks.length ? 'remote' : rLacks.length ? 'local' : 'combine';
+  const opt = (key, title, sm, missing, extra) => h('button', { class: `choose-opt ${best === key ? 'more' : ''}`, onclick: () => ok(key) }, [
+    h('b', {}, [title, best === key ? h('span', { class: 'rec' }, 'Recommended') : null]),
+    sm ? h('small', {}, saveLine(sm)) : null,
+    extra ? h('small', {}, extra) : null,
+    missing && missing.length ? h('small', { class: 'warn' }, `Looks behind: ${missing.join(', ')}`) : null,
+  ]);
+  let ok, close;
+  return new Promise((resolve) => modal((c) => {
+    close = c;
+    ok = (v) => { resolve(v); close(); };
+    return [h('div', { class: 'choose-modal' }, [
+      h('h2', {}, 'Your saves don’t match'),
+      h('p', { class: 'muted' }, 'This device and your Google Drive have different progress. A copy of both has been kept in your Drive, so nothing is lost whichever you pick.'),
+      opt('combine', 'Combine both', null, null, `Best of each: ${Math.max(L.stars, R.stars)}+ stars, the higher ${SYMBOL} balance, everything you own on either device, and your custom explorer.`),
+      opt('remote', 'Use Google Drive', R, rLacks),
+      opt('local', 'Use this device', L, lLacks),
+      h('p', { class: 'muted small' }, 'Not sure? Close this: nothing changes until you choose. Older versions and the kept copies are in Settings › Account › Find an older save.'),
+    ])];
+  }, { onClose: () => resolve(null) }));
+}
+
+/** Older versions of your Drive save (and any duplicate save files): bring one back. */
+export async function openOlderSaves() {
+  let list = null, error = null;
+  const m = modal((close) => {
+    const body = h('div', { class: 'older-saves' }, [h('p', { class: 'muted' }, 'Looking through your Google Drive…')]);
+    olderSaves().then((l) => { list = l; draw(); }).catch((e) => { error = e.message; draw(); });
+    function draw() {
+      if (error) { body.replaceChildren(h('p', {}, error)); return; }
+      if (!list.length) { body.replaceChildren(h('p', {}, 'No older saves found.')); return; }
+      body.replaceChildren(...list.map((v) => h('div', { class: 'older-save' }, [
+        h('div', { class: 'grow' }, [h('b', {}, new Date(v.at).toLocaleString('en-US', { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })), h('small', {}, `${v.kind === 'version' ? 'Drive version' : 'Another save file'} · ${saveLine(v.summary)}`)]),
+        h('button', { class: 'btn primary sm', onclick: () => {
+          modal((c2) => [h('h2', {}, 'Use this save?'), h('p', {}, saveLine(v.summary)), h('p', { class: 'muted small' }, 'It replaces the progress on this device and in Google Drive. Your current progress is kept so you can undo.'), h('div', { class: 'row' }, [
+            h('button', { class: 'btn ghost', onclick: c2 }, 'Cancel'),
+            h('button', { class: 'btn primary', onclick: async () => { c2(); close(); try { await useSave(v.data); toast('Save restored ✓', 'ok'); setTimeout(() => location.reload(), 700); } catch (e) { toast(e.message, 'bad'); } } }, 'Use this save'),
+          ])]);
+        } }, 'Use this save'),
+      ])));
+    }
+    return [h('div', { class: 'older-modal' }, [h('h2', {}, 'Find an older save'), h('p', { class: 'muted small' }, 'Google Drive keeps earlier versions of your save for about 30 days. Pick the one you want back.'), body, h('div', { class: 'row' }, [h('button', { class: 'btn ghost', onclick: close }, 'Close')])])];
+  });
+  return m;
 }
 
 export function celebrateBirthday() {
@@ -134,7 +187,12 @@ export function accountCard() {
         h('button', { class: 'btn ghost sm', onclick: () => openProfile({ done: draw }) }, ['✎ ', p ? 'Edit profile' : 'Add profile']),
       ]),
       h('div', { class: `acct-status ${a.connected ? 'ok' : 'warn'}` }, a.syncing ? '☁️ Saving to Google Drive…' : a.connected ? `☁️ Auto-saving to Google Drive · last saved ${when}` : `⚠️ ${a.error || 'Not connected to Google Drive.'}`),
-      a.error && a.connected ? h('p', { class: 'muted small' }, a.error) : null,
+      a.conflict ? h('div', { class: 'acct-conflict' }, [
+        h('b', {}, 'Two different saves'),
+        h('small', {}, `This device: ${saveLine(a.conflict.local)}`),
+        h('small', {}, `Google Drive: ${saveLine(a.conflict.remote)}`),
+        h('button', { class: 'btn primary sm', onclick: async () => { const r = await syncNow({ choose: chooseSave }); if (r.status === 'download') { toast('Using your Google Drive save ✓', 'ok'); setTimeout(() => location.reload(), 600); } else if (r.status === 'upload') toast('Saved this device to Google Drive ✓', 'ok'); } }, 'Choose which to keep'),
+      ]) : a.error && a.connected ? h('p', { class: 'muted small' }, a.error) : null,
       h('div', { class: 'row', style: { justifyContent: 'flex-start', flexWrap: 'wrap' } }, [
         a.connected
           ? h('button', { class: 'btn primary sm', onclick: async () => { const r = await syncNow({ choose: chooseSave }); toast(r.status === 'error' ? r.error : 'Saved to Google Drive ✓', r.status === 'error' ? 'bad' : 'ok'); } }, 'Save now')
@@ -147,6 +205,10 @@ export function accountCard() {
             toast('No save found in your Drive. A new one will be made the next time it saves.', 'bad');
           } catch (e) { toast(e.message, 'bad'); }
         } }, 'Find my save') : null,
+        a.connected ? h('button', { class: 'btn ghost sm', onclick: () => openOlderSaves() }, 'Find an older save') : null,
+        a.connected && undoInfo() ? h('button', { class: 'btn ghost sm', title: `Before the last download: ${saveLine(undoInfo().summary)}`, onclick: async () => {
+          try { await undoLastSync(); toast('Undone: your previous progress is back ✓', 'ok'); setTimeout(() => location.reload(), 600); } catch (e) { toast(e.message, 'bad'); }
+        } }, 'Undo last download') : null,
         h('button', { class: 'btn ghost sm danger', onclick: () => { signOut(); toast('Signed out. Your progress stays on this device too.'); } }, 'Sign out'),
       ]),
       h('label', { class: 'signin-remember' }, [h('input', { type: 'checkbox', checked: a.remember, onchange: (e) => setRemember(e.target.checked) }), ' Remember this device for 30 days']),
