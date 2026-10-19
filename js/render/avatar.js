@@ -53,13 +53,14 @@ export function avatarSVG(a, { size = 100, uid = 'av' } = {}) {
     F: `url(#${g('hair')})`, hi: hairHi, dark: mixc(hairC, '#000000', 0.35), skinLine: shade, accent: cloth };
   const out = [];
   out.push(`<circle cx="50" cy="50" r="50" fill="${a.bg || '#312E81'}"/>`);
+  // Hair that falls behind you goes first: big curls and long styles sit behind the neck and clothes.
+  if (hair.back && !hat.hidesHair) out.push(hair.back(ctx));
   // Clothes (shoulders), neck
   out.push((L.clothes[a.clothes] || L.clothes['clothes-tee']).draw(ctx));
   out.push(`<path d="M41 66 L41 78 Q50 84 59 78 L59 66 Z" fill="${shade}"/>`);
   out.push((L.clothes[a.clothes] || L.clothes['clothes-tee']).collar ? (L.clothes[a.clothes] || L.clothes['clothes-tee']).collar(ctx) : '');
   // Hair behind the head (some head coverings hide the hair and ears)
   if (hat.back) out.push(hat.back(ctx));
-  if (hair.back && !hat.hidesHair) out.push(hair.back(ctx));
   // Ears (behind the head shape)
   const ears = hat.hidesEars ? {} : (L.ears[a.ears] || L.ears['ears-human']);
   if (ears.back) out.push(ears.back(ctx));
@@ -217,10 +218,8 @@ Object.assign(LOOKS.clothes, {
   'clothes-robe': { name: 'Starry robe', draw: (c) => shoulders(c, [[24, 88], [40, 94], [62, 90], [76, 86], [52, 86]].map(([x, y]) => `<circle cx="${x}" cy="${y}" r="1.2" fill="#FDE68A"/>`).join('')), collar: (c) => `<path d="M38 72 Q50 92 62 72" stroke="#FDE68A" stroke-width="2.4" fill="none"/>` },
   'clothes-overalls': { name: 'Overalls', draw: (c) => shoulders({ ...c, cloth: '#F8FAFC' }, `<path d="M30 84 H70 V100 H30 Z" fill="${c.cloth}"/><path d="M34 84 L32 74 M66 84 L68 74" stroke="${c.cloth}" stroke-width="4"/><circle cx="36" cy="88" r="1.6" fill="#FDE68A"/><circle cx="64" cy="88" r="1.6" fill="#FDE68A"/>`) },
   'clothes-armor': { name: 'Guardian armour', draw: (c) => shoulders({ ...c, cloth: '#94A3B8' }, `<path d="M14 84 Q22 72 36 72 L36 86 Q24 88 14 84 Z M86 84 Q78 72 64 72 L64 86 Q76 88 86 84 Z" fill="${c.cloth}"/><path d="M50 82 L54 88 L50 96 L46 88 Z" fill="#FDE68A"/>`) },
-  'clothes-kente': { name: 'Kente stripes', draw: (c) => shoulders({ ...c, cloth: '#FBBF24' }, `${[18, 30, 42, 54, 66, 78].map((x, i) => `<rect x="${x}" y="76" width="6" height="24" fill="${['#16A34A', '#DC2626', '#111827'][i % 3]}"/>`).join('')}<path d="M10 90 H90" stroke="#111827" stroke-width="2"/>`), collar: () => `<path d="M40 72 Q50 82 60 72" stroke="#111827" stroke-width="2.4" fill="none"/>` },
   'clothes-pinkribbon': { name: 'Pink ribbon tee', draw: (c) => shoulders({ ...c, cloth: '#F9A8D4' }, `<path d="M50 80 Q44 86 47 94 L50 89 L53 94 Q56 86 50 80 Z" fill="#DB2777"/>`), collar: () => `<path d="M40 72 Q50 82 60 72" stroke="#DB2777" stroke-width="2.4" fill="none"/>` },
   'clothes-flannel': { name: 'Fall flannel', draw: (c) => shoulders({ ...c, cloth: '#B91C1C' }, `${[16, 28, 40, 52, 64, 76].map((x) => `<rect x="${x}" y="72" width="5" height="28" fill="#7F1D1D" opacity=".55"/>`).join('')}<path d="M8 84 H92 M8 94 H92" stroke="#7F1D1D" stroke-width="3" opacity=".55"/>`), collar: () => `<path d="M40 70 L50 80 L44 84 Z M60 70 L50 80 L56 84 Z" fill="#7F1D1D"/>` },
   'clothes-spooky': { name: 'Pumpkin sweater', draw: (c) => shoulders({ ...c, cloth: '#1F2937' }, `<circle cx="50" cy="90" r="8" fill="#F97316"/><path d="M46 88 L48 86 L50 88 Z M52 88 L54 86 L54 88 Z M46 92 Q50 95 54 92" fill="#FDE047" stroke="#FDE047" stroke-width=".8"/>`), collar: () => `<path d="M40 72 Q50 82 60 72" stroke="#F97316" stroke-width="2.4" fill="none"/>` },
   'clothes-holiday': { name: 'Holiday sweater', draw: (c) => shoulders({ ...c, cloth: '#15803D' }, `<path d="M12 86 H88" stroke="#F8FAFC" stroke-width="3" stroke-dasharray="4 3"/><path d="M50 80 L45 90 H55 Z" fill="#F8FAFC"/><circle cx="50" cy="80" r="1.6" fill="#FDE68A"/>`), collar: () => `<path d="M38 72 Q50 80 62 72 L62 76 Q50 84 38 76 Z" fill="#DC2626"/>` },
-  'clothes-dashiki': { name: 'Dashiki', draw: (c) => shoulders(c, `<path d="M38 74 Q50 96 62 74" fill="#FDE68A"/><path d="M41 76 Q50 92 59 76" fill="${c.clothDark}"/><path d="M44 78 L50 88 L56 78" stroke="#FDE68A" stroke-width="1.4" fill="none"/>`) },
 });

@@ -84,6 +84,35 @@ const boxParts = (c) => `<path d="M50 21 V31 M42 22 L41 32 M58 22 L59 32 M35 26 
 const BEADS = ['#FBBF24', '#F472B6', '#38BDF8', '#F8FAFC', '#A78BFA'];
 const xsRange = (a, b, n) => Array.from({ length: n }, (_, i) => a + ((b - a) * i) / (n - 1));
 
+
+/** A springy coil from (x,y0) downward: tight S-loops, like a defined curl. */
+function spring(c, x, y0, y1, w = 2.6, amp = 2.2) {
+  let d = `M${f1(x)} ${f1(y0)}`;
+  const step = 2.6;
+  let side = 1;
+  for (let y = y0; y < y1; y += step, side = -side) d += ` q${f1(amp * side)} ${f1(step / 2)} 0 ${f1(step)}`;
+  return `<path d="${d}" stroke="${c.F}" stroke-width="${w}" fill="none" stroke-linecap="round" stroke-linejoin="round"/><path d="${d}" stroke="${c.hi}" stroke-width=".7" fill="none" opacity=".45" stroke-dasharray="1.2 2.4"/>`;
+}
+/** A fuller scalp cap (covers more of the head) for locs, twists and braids. */
+const fullCap = (c) => `<path d="M27 47 Q24 15 50 14 Q76 15 73 47 Q68 33 50 31.5 Q32 33 27 47 Z" fill="${c.F}"/>`;
+/** Scalp parting: rows of little squares, one per loc / twist / braid. */
+function parting(c, rows = 4) {
+  const out = [];
+  for (let r = 0; r < rows; r++) {
+    const y = 17 + r * 4.4;                 // rows from the crown towards the hairline
+    const half = 13 + r * 3.6;              // wider as the head widens
+    out.push(`<path d="M${f1(50 - half)} ${f1(y + 3.6 + r * 0.6)} Q50 ${f1(y)} ${f1(50 + half)} ${f1(y + 3.6 + r * 0.6)}" stroke="${c.skinLine}" stroke-width=".75" fill="none" opacity=".7"/>`);
+    const n = 3 + r;
+    for (let k = 0; k <= n; k++) {
+      const x = 50 - half + (2 * half * (k + (r % 2 ? 0.5 : 0))) / (n + 0.5);
+      if (x < 50 - half + 1 || x > 50 + half - 1) continue;
+      const yy = y + 3.6 + r * 0.6 - Math.cos(((x - 50) / half) * 1.2) * 3.4;
+      out.push(`<path d="M${f1(x)} ${f1(yy)} v4.2" stroke="${c.skinLine}" stroke-width=".75" opacity=".7"/>`);
+    }
+  }
+  return out.join('');
+}
+
 // ---- Styles ------------------------------------------------------------------------
 export const HAIR = {
   'hair-none': { span: [20, 40] },
@@ -98,7 +127,7 @@ export const HAIR = {
   'hair-fingerwaves': { span: [20, 46], front: (c) => `${cap(c)}<path d="M31 40 Q36 34 41 38 Q46 34 51 38 Q56 34 61 38 Q66 34 69 39 M33 32 Q38 27 43 31 Q48 27 53 31 Q58 27 63 31 Q67 28 68 32 M38 25 Q43 22 48 25 Q53 22 58 25" stroke="${c.hi}" stroke-width="1.6" fill="none" opacity=".75"/>${edges(c)}` },
   'hair-frohawk': { up: true, span: [4, 44], front: (c) => `${fade(c)}${cloud(c, 50, 18, 9, 13, 4.2)}<path d="M41 32 Q42 26 50 24 Q58 26 59 32" fill="${c.F}"/>` },
   'hair-spongetwists': { up: true, span: [10, 44], front: (c) => `${fade(c)}${cap(c, 'M33 34 Q34 22 50 21 Q66 22 67 34 Q62 30 50 30 Q38 30 33 34 Z')}${xsRange(36, 64, 8).map((x, i) => twist(c, x, 26 - (i % 2) * 3, 14 + (i % 3) * 2, 4.2, 1)).join('')}` },
-  'hair-starterlocs': { up: true, span: [10, 46], front: (c) => `${cap(c)}${xsRange(33, 67, 9).map((x, i) => loc(c, x, 24, 14 + (i % 3) * 3 + Math.abs(x - 50) * 0.5, 4.2, 1)).join('')}` },
+  'hair-starterlocs': { up: true, span: [8, 46], front: (c) => `${fullCap(c)}${parting(c, 4)}${xsRange(33, 67, 9).map((x, i) => loc(c, x, 24, 13 + (i % 3) * 3 + Math.abs(x - 50) * 0.45, 4.2, 1)).join('')}` },
   'hair-cornrows': { span: [21, 46], front: (c) => `${cap(c)}${rows(c, xsRange(35, 65, 6), 22, 44)}` },
   'hair-cornrowzig': { span: [21, 46], front: (c) => `${cap(c)}${rows(c, xsRange(36, 64, 5), 22, 44, .05)}<path d="M40 24 L44 29 L40 34 L44 39 M60 24 L56 29 L60 34 L56 39" stroke="${c.skinLine}" stroke-width="1" fill="none"/>` },
 
@@ -109,8 +138,8 @@ export const HAIR = {
   'hair-highpuff': { up: true, span: [0, 44], back: (c) => cloud(c, 50, 12, 15, 11, 4.2), front: (c) => `${sleek(c)}<path d="M44 22 Q50 19 56 22" stroke="${c.dark}" stroke-width="2.4" fill="none"/>${edges(c)}` },
   'hair-pineapple': { up: true, span: [0, 46], back: (c) => cloud(c, 50, 16, 13, 13, 4), front: (c) => `${sleek(c)}<path d="M31 40 q-3 5 0 10 q3 5 -1 9 M69 40 q3 5 0 10 q-3 5 1 9" stroke="${c.F}" stroke-width="1.6" fill="none"/>${edges(c)}` },
   'hair-twistout': { span: [6, 74], back: (c) => `${cloud(c, 50, 38, 28, 30, 5.5, false)}${xsRange(26, 74, 10).map((x, i) => `<path d="M${f1(x)} ${30 + (i % 2) * 6} q-3 6 0 12 q3 6 0 12" stroke="${c.hi}" stroke-width="1.1" fill="none" opacity=".55"/>`).join('')}`, front: (c) => `${cap(c)}${coils(c, 32, 68, 24, 31, 2.6, 'fill')}` },
-  'hair-curly': { span: [14, 46], front: (c) => `${cap(c)}${coils(c, 30, 70, 20, 34, 3.4, 'fill')}${coils(c, 30, 70, 20, 34, 3.4)}` },
-  'hair-coils': { span: [10, 62], back: (c) => `<ellipse cx="50" cy="38" rx="26" ry="24" fill="${c.F}"/>`, front: (c) => `${coils(c, 28, 72, 18, 46, 3.2, 'fill')}${coils(c, 28, 72, 18, 46, 3.2)}<path d="M30 40 Q34 28 50 28 Q66 28 70 40 Q64 33 50 33 Q36 33 30 40 Z" fill="${c.F}"/>` },
+  'hair-curly': { up: true, span: [8, 46], front: (c) => `${fade(c)}<path d="M31 40 Q30 22 36 16 Q40 10 46 12 Q50 7 55 11 Q61 9 64 15 Q70 20 69 40 Q64 30 50 29 Q36 30 31 40 Z" fill="${c.F}"/>${[34, 39, 44, 49, 54, 59, 64].map((x, i) => spring(c, x, 12 + (i % 2) * 2 + Math.abs(x - 50) * 0.18, 28 + (i % 2) * 2, 2.4, 1.8)).join('')}` },
+  'hair-coils': { span: [10, 66], back: (c) => `<path d="M24 44 Q20 14 50 12 Q80 14 76 44 L78 62 Q70 66 64 60 L62 46 L38 46 L36 60 Q30 66 22 62 Z" fill="${c.F}"/>${[24, 28, 32, 68, 72, 76].map((x, i) => spring(c, x, 36, 60 + (i % 3) * 3, 3, 2.2)).join('')}`, front: (c) => `${fullCap(c)}${[33, 38, 43, 48, 53, 58, 63, 68].map((x, i) => spring(c, x, 16 + Math.abs(x - 50) * 0.3, 30 + Math.abs(x - 50) * 0.35 + (i % 2) * 2, 2.8, 2)).join('')}` },
   'hair-curlybob': { span: [12, 70], back: (c) => `${cloud(c, 50, 46, 27, 22, 5.2)}`, front: (c) => `${cap(c)}${coils(c, 32, 68, 22, 33, 3.2, 'fill')}` },
   'hair-crochet': { span: [8, 92], back: (c) => `${cloud(c, 50, 50, 30, 38, 6, false)}${xsRange(22, 78, 11).map((x, i) => `<path d="M${f1(x)} ${46 + (i % 2) * 8} q-4 6 0 12 q4 6 0 12 q-4 6 0 12" stroke="${c.hi}" stroke-width="1.2" fill="none" opacity=".55"/>`).join('')}`, front: (c) => `${cap(c)}${coils(c, 32, 68, 22, 32, 3, 'fill')}` },
   'hair-halfup': { span: [4, 80], back: (c) => `${cloud(c, 50, 58, 27, 22, 5, false)}${coils(c, 26, 74, 48, 76, 3.2)}`, front: (c) => `${sleek(c)}${bun(c, 50, 14, 9)}${edges(c)}` },
@@ -127,11 +156,11 @@ export const HAIR = {
   'hair-bantu': { up: true, span: [8, 44], front: (c) => `${cap(c)}${[[36, 22], [50, 15], [64, 22], [42, 28], [58, 28]].map(([x, y]) => `<circle cx="${x}" cy="${y}" r="5.6" fill="${c.F}"/><path d="M${x - 3.4} ${y} Q${x} ${y - 4.4} ${x + 3.4} ${y} Q${x} ${y + 2} ${x - 1.6} ${y - 0.6}" stroke="${c.hi}" stroke-width="1" fill="none" opacity=".75"/>`).join('')}` },
 
   // Twists & locs
-  'hair-twists': { span: [20, 70], back: (c) => [28, 33, 67, 72].map((x) => twist(c, x, 36, 66, 5, 2)).join(''), front: (c) => `${cap(c)}${xsRange(36, 64, 5).map((x) => `<path d="M${x} 22 Q${x + 2} 27 ${x} 32" stroke="${c.hi}" stroke-width="1.2" fill="none" opacity=".6"/>`).join('')}` },
-  'hair-passion': { span: [18, 96], back: (c) => xsRange(25, 75, 10).filter((x) => x < 37 || x > 63).map((x, i) => `${twist(c, x, 40, 92, 5.4, 3 * (i % 2 ? 1 : -1))}<path d="M${x} 50 q-2 4 1 8 M${x} 70 q2 4 -1 8" stroke="${c.hi}" stroke-width=".8" fill="none" opacity=".5"/>`).join(''), front: (c) => `${cap(c)}${edges(c)}` },
-  'hair-locs': { span: [20, 92], back: (c) => [23, 27, 31, 69, 73, 77].map((x) => loc(c, x, 36, 88, 5)).join(''), front: (c) => `${cap(c)}${[34, 40, 46, 54, 60, 66].map((x) => loc(c, x, hairY(x) - 8, hairY(x) - 1, 4.4, .3)).join('')}${[31, 69].map((x) => loc(c, x, 38, 76, 4.6, x < 50 ? -1.5 : 1.5)).join('')}` },
-  'hair-longlocs': { span: [20, 100], back: (c) => [21, 24.5, 28, 31.5, 68.5, 72, 75.5, 79].map((x, i) => loc(c, x, 36, 100, 4.6, (i % 2 ? 2.5 : -2.5))).join(''), front: (c) => `${cap(c)}${[30, 34, 66, 70].map((x) => loc(c, x, 36, 92, 4.4, x < 50 ? -2 : 2)).join('')}` },
-  'hair-butterfly': { span: [20, 96], back: (c) => xsRange(25, 75, 10).filter((x) => x < 38 || x > 62).map((x) => `${loc(c, x, 36, 90, 5.6, 2)}${[50, 64, 78].map((y) => `<path d="M${x - 3} ${y} q3 -3 6 0" stroke="${c.F}" stroke-width="2.2" fill="none"/>`).join('')}`).join(''), front: (c) => `${cap(c)}${edges(c)}` },
+  'hair-twists': { span: [14, 70], back: (c) => [26, 31, 69, 74].map((x) => twist(c, x, 36, 66, 5, 2)).join(''), front: (c) => `${fullCap(c)}${parting(c, 4)}${xsRange(36, 64, 5).map((x) => `<path d="M${x} 22 Q${x + 2} 27 ${x} 32" stroke="${c.hi}" stroke-width="1.2" fill="none" opacity=".6"/>`).join('')}` },
+  'hair-passion': { span: [18, 96], back: (c) => xsRange(25, 75, 10).filter((x) => x < 37 || x > 63).map((x, i) => `${twist(c, x, 40, 92, 5.4, 3 * (i % 2 ? 1 : -1))}<path d="M${x} 50 q-2 4 1 8 M${x} 70 q2 4 -1 8" stroke="${c.hi}" stroke-width=".8" fill="none" opacity=".5"/>`).join(''), front: (c) => `${fullCap(c)}${parting(c, 4)}${edges(c)}` },
+  'hair-locs': { span: [14, 92], back: (c) => [22, 26, 30, 70, 74, 78].map((x) => loc(c, x, 36, 88, 5)).join(''), front: (c) => `${fullCap(c)}${parting(c, 4)}${[31, 69].map((x) => loc(c, x, 38, 76, 4.6, x < 50 ? -1.5 : 1.5)).join('')}` },
+  'hair-longlocs': { span: [14, 100], back: (c) => [20, 23.5, 27, 30.5, 69.5, 73, 76.5, 80].map((x, i) => loc(c, x, 36, 100, 4.6, (i % 2 ? 2.5 : -2.5))).join(''), front: (c) => `${fullCap(c)}${parting(c, 4)}${[30, 34, 66, 70].map((x) => loc(c, x, 38, 92, 4.4, x < 50 ? -2 : 2)).join('')}` },
+  'hair-butterfly': { span: [14, 96], back: (c) => [22, 26, 30, 70, 74, 78].map((x) => `${loc(c, x, 36, 90, 5.6, 2)}${[50, 64, 78].map((y) => `<path d="M${x - 3} ${y} q3 -3 6 0" stroke="${c.F}" stroke-width="2.2" fill="none"/>`).join('')}`).join(''), front: (c) => `${fullCap(c)}${parting(c, 4)}${[31, 69].map((x) => `${loc(c, x, 38, 80, 5, x < 50 ? -1.5 : 1.5)}<path d="M${x - 3} 56 q3 -3 6 0 M${x - 3} 70 q3 -3 6 0" stroke="${c.F}" stroke-width="2" fill="none"/>`).join('')}${edges(c)}` },
   'hair-freeform': { span: [6, 60], back: (c) => xsRange(24, 76, 12).map((x, i) => loc(c, x, 30, 30 + 20 + (i % 3) * 6, 4.6, (i % 2 ? 4 : -4))).join(''), front: (c) => `${cap(c)}${xsRange(32, 68, 8).map((x, i) => loc(c, x, 26, 10 + (i % 3) * 4, 4.2, (i % 2 ? 3 : -3))).join('')}` },
   'hair-locknot': { up: true, span: [0, 44], front: (c) => `${fade(c)}${cap(c, 'M33 36 Q34 22 50 21 Q66 22 67 36 Q62 30 50 30 Q38 30 33 36 Z')}${xsRange(38, 62, 5).map((x) => loc(c, x, 26, 12, 4, 0)).join('')}${bun(c, 50, 10, 7, false)}${xsRange(42, 58, 4).map((x, i) => loc(c, x, 6, 0 - (i % 2) * 2, 3.4, (i % 2 ? 4 : -4))).join('')}` },
   'hair-locpony': { span: [0, 70], back: (c) => xsRange(42, 58, 5).map((x, i) => loc(c, x, 14, 60 + (i % 2) * 6, 4, (i % 2 ? 3 : -3))).join(''), front: (c) => `${sleek(c)}${xsRange(38, 62, 5).map((x) => `<path d="M${x} 30 Q${x + (50 - x) * .4} 22 50 16" stroke="${c.hi}" stroke-width="1" fill="none" opacity=".6"/>`).join('')}<rect x="44" y="12" width="12" height="5" rx="2.5" fill="${c.accent}"/>` },

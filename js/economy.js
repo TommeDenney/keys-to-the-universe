@@ -57,8 +57,21 @@ function applyMigrations(w) {
     if (!w.equipped.amb || w.equipped.amb === 'amb-none') w.equipped.amb = 'amb-choir';
     saveState();
   }
+  // 'outfits-neutral': culture-specific outfits were retired; refund and swap to a hoodie.
+  if (!w.migrations.includes('outfits-neutral')) {
+    w.migrations.push('outfits-neutral');
+    if (w.owned.includes('clothes-kente')) {
+      const back = (w.paid && w.paid['clothes-kente']) || REFUNDS['clothes-kente'];
+      w.owned = w.owned.filter((x) => x !== 'clothes-kente');
+      w.balance += back;
+      setTimeout(() => burst(back, 'Refund: Kente stripes retired'), 1800);
+    }
+    const st = getState();
+    if (st.avatar && ['clothes-kente', 'clothes-dashiki'].includes(st.avatar.clothes)) st.avatar.clothes = 'clothes-hoodie';
+    saveState();
+  }
 }
-const REFUNDS = { 'amb-choir': 1500 };
+const REFUNDS = { 'amb-choir': 1500, 'clothes-kente': 1200 };
 
 const subs = new Set();
 export function onWallet(fn) {
