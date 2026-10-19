@@ -530,6 +530,7 @@ export class Player {
   listen() {
     if (this.demo) { this.stopDemo(); return; }
     if (!settings.get('musicVolumeSet')) { this.showVolume(() => this.listen()); return; }
+    track('listens');
     audio.ensure();
     this.pause();
     this.demo = { prevMode: this.mode, prevBeat: this.beat, prevScroll: this.sheet.scroll, prevStates: new Map(this.sheet.state) };
@@ -671,6 +672,9 @@ export class Player {
     const notesHit = this.mode === 'wait' ? this.hits : this.grades.perfect + this.grades.good + this.grades.ok;
     if (notesHit) track('notes', notesHit);
     if (this.mode === 'timed' && stars >= 2) track('timed');
+    if (this.mode === 'timed' && this.grades.perfect) track('perfect', this.grades.perfect);
+    if (this.hands === 'both' && stars >= 1) track('both');
+    if (this.mode === 'timed' && stars >= 1 && total && this.grades.miss === 0) track('flawless');
     if (stars === 3) track('threeStar');
     if (this.cfg.onFinish) this.cfg.onFinish(result);
     this.showResult(result);

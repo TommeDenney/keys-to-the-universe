@@ -2,7 +2,7 @@
 // a compact card for the Learn tab, and the side-quest launcher.
 
 import { h, icon, modal, toast } from '../ui.js';
-import { current, PERIODS, nextReset } from '../challenges.js';
+import { current, PERIODS, nextReset, track } from '../challenges.js';
 import { QUESTS } from '../data/quests.js';
 import { SYMBOL, owns, spend, questDone, completeQuest, walletPill, balance } from '../economy.js';
 import { getState, saveState } from '../store.js';
@@ -72,7 +72,7 @@ export function openQuest(q) {
               title: `${q.name}: ${song.title}`, subtitle: `Side quest · need ${q.need}★`,
               onFinish: (r) => {
                 if (r.stars >= q.need) {
-                  if (completeQuest(q.id, q.reward)) toast(`Side quest complete! +${q.reward} ${SYMBOL}`, 'ok');
+                  if (completeQuest(q.id, q.reward)) { toast(`Side quest complete! +${q.reward} ${SYMBOL}`, 'ok'); track('quests'); }
                 } else toast(`Side quest: you need ${q.need}★. Try again!`, 'bad');
               },
             });
