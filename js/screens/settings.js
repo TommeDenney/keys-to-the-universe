@@ -160,8 +160,12 @@ export function renderSettings(root) {
         h('div', { class: 'row' }, [h('button', { class: 'btn ghost', onclick: close }, 'Cancel'), h('button', { class: 'btn primary danger', onclick: () => { progress.reset(); close(); toast('Progress reset'); } }, 'Reset')]),
       ]) }, 'Reset')),
     ]),
+    h('a', { class: 'about-link', href: '#/about' }, [
+      h('span', { class: 'about-link-icon' }, icon('info')),
+      h('span', { class: 'grow' }, [h('b', {}, 'About, credits & licences'), h('small', {}, 'Privacy, disclosures, the MIT licence, and credits for every piece of music and sound.')]),
+      icon('chevron'),
+    ]),
     h('section', { class: 'about' }, [
-      h('p', {}, 'Ivory is a free, open-source piano practice app. Piano sound: Salamander Grand Piano by Alexander Holm (CC BY 3.0). Built-in songs are public-domain melodies with simplified arrangements written for this app.'),
       h('p', {}, 'Computer keyboard: A W S E D F T G Y H U J K play C to C (Z / X change octave).'),
     ]),
   );

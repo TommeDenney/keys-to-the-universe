@@ -2,7 +2,7 @@
 
 Ivory is a free, open-source piano course that runs in your browser. It listens to your piano through the microphone (or a MIDI / Bluetooth piano), scrolls the sheet music as you play, and turns practice into a journey through a universe of galaxies, planets and boss battles.
 
-No account, no ads, no payments. Everything stays on your device.
+No account, no ads, no payments. Everything stays on your device. Made for all ages (parental discretion advised).
 
 **Open it:** https://tommedenney.github.io/ivory-piano/
 

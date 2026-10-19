@@ -22,6 +22,7 @@ import { equipped, onWallet } from './economy.js';
 import { initAchievements, checkAchievements } from './achievements.js';
 import { SHOP } from './data/shop.js';
 import { renderBadges } from './screens/badges.js';
+import { renderAbout } from './screens/about.js';
 import { renderChallenges } from './screens/challenges.js';
 import { touch as touchChallenges } from './challenges.js';
 import { loadConstellations } from './constellations.js';
@@ -81,6 +82,13 @@ async function route() {
     main.replaceChildren();
     main.scrollTop = 0;
     cleanup = renderInventory(main);
+    return;
+  }
+  if (name === 'about') {
+    setActiveTab('settings');
+    main.replaceChildren();
+    main.scrollTop = 0;
+    cleanup = renderAbout(main) || null;
     return;
   }
   if (name === 'badges') {
