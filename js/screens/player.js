@@ -12,7 +12,7 @@ import { Keyboard, rangeFor } from '../render/keyboard.js';
 import { sliceSong, buildEvents, handsLabel } from '../music/song.js';
 import { spellMidi, noteName } from '../music/theory.js';
 import { openCalibration } from './calibrate.js';
-import { track } from '../challenges.js';
+import { track, gradeOf } from '../challenges.js';
 import { hold as holdBg, release as releaseBg } from '../audio/bgmusic.js';
 import { applySound, SOUNDS, appVoice } from '../sound.js';
 
@@ -674,6 +674,14 @@ export class Player {
     if (this.mode === 'timed' && stars >= 2) track('timed');
     if (this.mode === 'timed' && this.grades.perfect) track('perfect', this.grades.perfect);
     if (this.hands === 'both' && stars >= 1) track('both');
+    const sid = this.cfg.song && this.cfg.song.id;
+    if (sid && stars >= 1) {
+      track(`song:${sid}`);
+      track(`key:${this.slice.keyFifths || 0}`);
+      if (this.mode === 'timed' && stars >= 2) track(`timedsong:${sid}`);
+      if (this.mode === 'timed' && stars === 3) track(`mastersong:${sid}`);
+      if (gradeOf(sid) && stars >= 2) track(`grade:${gradeOf(sid)}`);
+    }
     if (this.mode === 'timed' && stars >= 1 && total && this.grades.miss === 0) track('flawless');
     if (stars === 3) track('threeStar');
     if (this.cfg.onFinish) this.cfg.onFinish(result);

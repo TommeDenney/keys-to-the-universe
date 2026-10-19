@@ -275,6 +275,7 @@ export async function openLesson(id, onClose) {
     const prev = progress.completeLesson(lesson.id, stars);
     rewardLesson(prev, stars, false);
     track('worlds');
+    track(`galaxy:${lesson.unit.id}`);
     track('stars', stars);
     rewardDaily(progress.streak);
     const list = allLessons();
