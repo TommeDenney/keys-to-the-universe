@@ -148,7 +148,7 @@ export function renderShop(root, { inventory = false } = {}) {
     return h('section', { class: 'vault-shop', id: 'shop-vault' }, [
       h('div', { class: 'eyebrow' }, '\u{1F5DD}\uFE0F Season Vault'),
       h('h2', {}, 'Missed a season?'),
-      h('p', { class: 'muted' }, 'A Season key unlocks every rare in a pack that has left the Shop, forever, any time of year. Keys cost far more than the pack did in season.'),
+      h('p', { class: 'muted' }, 'A Season key unlocks every rare in a pack that has left the Shop, forever, any time of year. A key costs double the pack\u2019s full price, plus 50,000.'),
       h('div', { class: 'vault-grid' }, packs.map((e) => {
         const items = SHOP.filter((it) => it.event === e.id);
         const missing = items.filter((it) => !owns(it.id));
