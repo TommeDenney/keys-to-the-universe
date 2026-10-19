@@ -7,6 +7,7 @@ import { input } from '../input/hub.js';
 import { audio } from '../audio/engine.js';
 import { noteName } from '../music/theory.js';
 import { NAV_KEYS } from '../nav.js';
+import { openCalibration } from './calibrate.js';
 
 function seg(key, opts, after) {
   return h('div', { class: 'seg' }, opts.map(([v, l]) => h('button', {
@@ -95,6 +96,14 @@ export function renderSettings(root) {
       h('div', { class: 'sub-card' }, [
         h('div', { class: 'sub-head' }, [h('b', {}, 'Microphone'), micBtn]),
         h('div', { class: 'mic-test' }, [meter, h('div', {}, [h('small', {}, 'Hearing'), heard])]),
+        h('div', { class: 'calib-row' }, [
+          h('div', { class: 'grow' }, [
+            h('b', {}, 'Calibrate pitch'),
+            h('span', {}, settings.get('micPitchOffset') ? `Correction: ${settings.get('micPitchOffset') > 0 ? '+' : ''}${settings.get('micPitchOffset')} semitones` : 'Wrong notes being detected? Play 5 keys to calibrate.'),
+          ]),
+          settings.get('micPitchOffset') ? h('button', { class: 'btn ghost sm', onclick: () => { settings.set('micPitchOffset', 0); mic.setPitchOffset(0); root.replaceChildren(); renderSettings(root); } }, 'Reset') : null,
+          h('button', { class: 'btn primary sm', onclick: () => openCalibration(() => { root.replaceChildren(); renderSettings(root); }) }, 'Calibrate'),
+        ]),
         h('label', { class: 'field' }, [h('span', {}, 'Sensitivity'), ...slider('micSensitivity', 0, 1, 0.05, (v) => (v < 0.35 ? 'Strict' : v > 0.65 ? 'Sensitive' : 'Normal'), (v) => mic.setSensitivity(v))]),
         h('label', { class: 'field' }, [h('span', {}, 'Timing compensation'), ...slider('micLatency', 0, 150, 5, (v) => `${v} ms`)]),
         h('p', { class: 'muted small' }, 'Tip: headphones for the app sound let the mic hear only your piano. Turn sensitivity down in a noisy room.'),

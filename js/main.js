@@ -26,6 +26,7 @@ app.append(main, tabbar);
 
 audio.setVolume(settings.get('volume'));
 mic.setSensitivity(settings.get('micSensitivity'));
+mic.setPitchOffset(settings.get('micPitchOffset'));
 onChange(() => audio.setVolume(settings.get('volume')));
 
 let cleanup = null;

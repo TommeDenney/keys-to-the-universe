@@ -180,6 +180,7 @@ export function initPianoNav() {
     if (type !== 'noteon' || !settings.get('pianoNav')) return;
     if (e.source === 'touch') return;
     if (songActive()) return;
+    if (document.querySelector('.calib')) return;
     if (e.source === 'mic' && e.strength < 14) return; // be conservative with the microphone
     const action = MAP[e.midi];
     if (action) act(action, e.midi);

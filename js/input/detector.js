@@ -103,10 +103,20 @@ export class PianoDetector {
     this.expected = new Set();
     this.pending = [];
     this.setSensitivity(0.5);
+    this.setPitchOffset(0);
+  }
+
+  /**
+   * Calibration: semitones by which this microphone hears notes off-pitch
+   * (piano tuning, or a device sample-rate mismatch). Key m is then looked
+   * for at the frequency of m + offset.
+   */
+  setPitchOffset(offset) {
+    this.offset = offset || 0;
     // Precompute harmonic bin ranges per note for both spectra.
     this.harm = [];
     for (let m = LO; m <= HI; m++) {
-      const f0 = 440 * Math.pow(2, (m - 69) / 12);
+      const f0 = 440 * Math.pow(2, (m - 69 + this.offset) / 12);
       const H = Math.max(3, Math.min(8, Math.floor(4500 / f0)));
       const long = m < SPLIT;
       const list = [];
@@ -117,6 +127,28 @@ export class PianoDetector {
       this.harm[m] = { long, list };
     }
   }
+  /**
+   * Where does the sound currently in the long spectrum actually sit?
+   * Returns harmonic-sum salience for fractional pitches lo..hi (uncalibrated).
+   */
+  pitchScan(lo, hi, step = 0.1) {
+    const out = [];
+    const spec = this.magL;
+    const at = (f) => {
+      const c = f / this.binL;
+      const k = Math.floor(c);
+      if (k < 1 || k + 1 >= spec.length) return 0;
+      return Math.max(spec[k], spec[k + 1]) * 0.5 + (spec[k] + (spec[k + 1] - spec[k]) * (c - k)) * 0.5;
+    };
+    for (let p = lo; p <= hi + 1e-9; p += step) {
+      const f0 = 440 * Math.pow(2, (p - 69) / 12);
+      let s = 0;
+      for (let h = 1; h <= 6; h++) s += at(f0 * h * (1 + 0.0004 * h * h)) / Math.sqrt(h);
+      out.push({ p, s });
+    }
+    return out;
+  }
+
 
   binRange(f, binHz, n) {
     const c = f / binHz;

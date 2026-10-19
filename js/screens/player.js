@@ -11,6 +11,7 @@ import { Sheet } from '../render/sheet.js';
 import { Keyboard, rangeFor } from '../render/keyboard.js';
 import { sliceSong, buildEvents, handsLabel } from '../music/song.js';
 import { spellMidi, noteName } from '../music/theory.js';
+import { openCalibration } from './calibrate.js';
 
 const PERFECT = 0.1;
 const GOOD = 0.2;
@@ -572,10 +573,14 @@ export class Player {
         h('li', {}, 'Put your iPad on the music stand, close to the piano.'),
         h('li', {}, 'Use headphones for the app sound so the mic only hears your piano.'),
         h('li', {}, 'Play each note firmly and clearly, especially chords.'),
+        h('li', {}, 'Wrong notes being detected (e.g. C heard as E)? Tap \u201cCalibrate pitch\u201d.'),
         h('li', {}, 'For the best accuracy, connect a MIDI piano (see Settings).'),
       ]),
       h('label', { class: 'field' }, [h('span', {}, 'Mic sensitivity'), sens]),
-      h('div', { class: 'row' }, [h('button', { class: 'btn primary', onclick: () => this.hideOverlay() }, 'Done')]),
+      h('div', { class: 'row' }, [
+        h('button', { class: 'btn ghost', onclick: () => openCalibration() }, 'Calibrate pitch'),
+        h('button', { class: 'btn primary', onclick: () => this.hideOverlay() }, 'Done'),
+      ]),
     ]));
   }
 

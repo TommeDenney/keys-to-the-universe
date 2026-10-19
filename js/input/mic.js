@@ -48,6 +48,7 @@ class Mic {
       this.buf = new Float32Array(this.analyser.fftSize);
       this.detector = new PianoDetector(ctx.sampleRate);
       this.detector.setSensitivity(this.sensitivity);
+      this.detector.setPitchOffset(this.pitchOffset || 0);
       this.detector.setExpected(this.expected);
       this.timer = setInterval(() => this.tick(), 16);
       this.state = 'on';
@@ -74,6 +75,11 @@ class Mic {
     if (this.detector) this.detector.setExpected(midis);
   }
 
+  setPitchOffset(o) {
+    this.pitchOffset = o;
+    if (this.detector) this.detector.setPitchOffset(o);
+  }
+
   setSensitivity(s) {
     this.sensitivity = s;
     if (this.detector) this.detector.setSensitivity(s);
@@ -92,6 +98,8 @@ class Mic {
     const { onsets, level, loudest } = this.detector.process(this.buf, t);
     this.level = level;
     this.loudest = loudest;
+    if (this.frameHook) this.frameHook(this.detector, level, t);
+    if (this.calibrating) return;
     const muted = t < this.muteUntil;
     for (const o of onsets) {
       if (muted) continue;

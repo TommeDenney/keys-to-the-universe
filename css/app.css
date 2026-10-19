@@ -535,3 +535,14 @@ input[type=range] { width: 100%; accent-color: var(--brand); height: 28px; }
   .learn-kb { height: 210px; }
   .song-grid { grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); }
 }
+.calib { text-align: center; }
+.calib h2 { margin-bottom: 6px; }
+.calib-kb { height: 120px; margin: 16px 0 12px; }
+.calib-dots { display: flex; justify-content: center; gap: 8px; margin: 6px 0; }
+.calib-dots i { width: 12px; height: 12px; border-radius: 50%; background: var(--bg-2); transition: background .3s, transform .3s var(--spring); }
+.calib-dots i.on { background: var(--good); transform: scale(1.25); }
+.calib-status { font-weight: 800; color: var(--brand); min-height: 24px; margin-top: 8px; }
+.calib-status small { color: var(--ink-3); font-weight: 700; }
+.calib-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 10px 0; }
+.calib-row b { display: block; }
+.calib-row span { font-size: 14px; color: var(--ink-2); }

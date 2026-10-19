@@ -5,7 +5,8 @@ const LS_KEY = 'ivory.v1';
 const DEFAULT_SETTINGS = {
   input: 'auto', // auto | mic | touch
   micSensitivity: 0.5,
-  micLatency: 40, // ms subtracted from mic onset times (timed mode judging)
+  micLatency: 40,
+  micPitchOffset: 0, // semitones, measured by calibration // ms subtracted from mic onset times (timed mode judging)
   midiLatency: 0,
   volume: 0.8,
   metronome: true,
