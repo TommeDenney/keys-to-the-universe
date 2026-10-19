@@ -841,7 +841,7 @@ body.in-universe .screen { color: #F4F3FA; }
 .guardian .body-label small { color: #FF8FA8; }
 .guardian.done .body-label small { color: #FFD58A; }
 .guardian .g-sub { display: block; color: #C9C6E6; font-weight: 700; font-size: 13px; }
-.guardian-ship { right: -10px; top: -10px; }
+.guardian-ship { right: auto; left: calc(50% + 60px); top: -6px; } /* beside the orb, not the screen edge */
 .node.boss .disc { width: 100px; height: 100px; background: radial-gradient(circle, #2A0A1F 50%, #F04461); color: #fff; box-shadow: 0 6px 0 #7A1530, 0 0 30px rgba(240,68,97,.45); }
 .node.boss.locked .disc { filter: saturate(.3) brightness(.8); }
 .node.boss.done .disc { background: radial-gradient(circle, #3A2A05 50%, #FFC43D); box-shadow: 0 6px 0 #A06A00, 0 0 30px rgba(255,196,61,.5); }
@@ -1343,7 +1343,7 @@ body[data-starc="rainbow"] .star.on, .starc-rainbow .star.on { animation: rainbo
 .uni-next-ship { position: relative; }
 .uni-next-ship .pet { position: absolute; left: -18px; bottom: -10px; width: 34px; height: 34px; }
 .uni-next-ship .pet-emoji { font-size: 24px; }
-.guardian-pet { right: -90px; }
+.guardian-pet { right: auto; left: calc(50% + 112px); top: 10px; }
 .pet-demo { width: 76px; height: 76px; animation: hover-ship 3s ease-in-out infinite; }
 .pet-demo .pet-emoji { font-size: 48px; }
 .pet-demo .pet-water .bowl { width: 66px; height: 62px; }
