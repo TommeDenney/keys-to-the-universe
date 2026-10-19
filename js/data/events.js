@@ -176,6 +176,14 @@ export const EVENT_ITEMS = [
   R('kb-tropical', 'summer', 'kb', 'Tropical', 1600, 'Sea-blue keys with coral sharps.', { w: ['#ECFEFF', '#A5F3FC'], border: '#06B6D4', lip: '#F97316', b: ['#F97316', '#C2410C'], bglow: '#67E8F9', label: '#0E7490' }),
   R('amb-waves', 'summer', 'amb', 'Beach Waves', 1100, 'Warm waves rolling onto the shore.', { noise: { lp: 900, gain: 0.11, lfo: 0.12, depth: 0.08 } }),
   R('star-summer', 'summer', 'starc', 'Sunburst', 1100, 'Hot, golden summer stars.', { color: '#FBBF24', shift: '#F97316', glow: ['#FDE68A'] }),
+  // ---- Explorer looks (profile picture) ----
+  ...[
+    ['hat-pinkbeanie', 'pink', 'hat', 'Pink Ribbon Beanie', 1000], ['clothes-pinkribbon', 'pink', 'clothes', 'Pink Ribbon Tee', 1000],
+    ['hat-leafcrown', 'fall', 'hat', 'Autumn Leaf Crown', 1200], ['clothes-flannel', 'fall', 'clothes', 'Fall Flannel', 1000],
+    ['hat-witch', 'halloween', 'hat', 'Witch Hat', 1400], ['hat-pumpkin', 'halloween', 'hat', 'Pumpkin Cap', 1200], ['clothes-spooky', 'halloween', 'clothes', 'Pumpkin Sweater', 1000],
+    ['hat-santa', 'christmas', 'hat', 'Santa Hat', 1200], ['clothes-holiday', 'christmas', 'clothes', 'Holiday Sweater', 1000],
+    ['hat-earmuffs', 'winter', 'hat', 'Fluffy Earmuffs', 1000],
+  ].map(([id, event, part, name, price]) => ({ id, event, cat: 'avatar', part, name, price, desc: `${name} for your explorer. A seasonal rare.`, rare: true })),
 ];
 
 // ---- Dates ------------------------------------------------------------------------

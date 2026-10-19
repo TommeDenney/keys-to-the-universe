@@ -3,6 +3,7 @@
 import { h, icon, modal, toast } from '../ui.js';
 import { hasPersonalPack, personalName, validPersonalPack, installPersonalPack, removePersonalPack } from '../personal.js';
 import { accountCard } from './account.js';
+import { avatarBadge } from './avatar.js';
 import { settings, progress, makeBackup, restoreBackup, lastBackup, storageStatus, protectStorage } from '../store.js';
 import { mic } from '../input/mic.js';
 import { input } from '../input/hub.js';
@@ -95,7 +96,7 @@ export function renderSettings(root) {
 
   const acctCard = accountCard();
   page.append(
-    h('header', { class: 'top' }, [h('div', {}, [h('div', { class: 'eyebrow' }, 'Preferences'), h('h1', {}, 'Settings')])]),
+    h('header', { class: 'top' }, [avatarBadge(), h('div', { class: 'grow' }, [h('div', { class: 'eyebrow' }, 'Preferences'), h('h1', {}, 'Settings')])]),
     h('section', { class: 'card' }, [
       h('h3', {}, [icon('piano'), 'How you play']),
       rowItem('Input', 'Auto uses a MIDI piano when connected, otherwise the microphone.', seg('input', [['auto', 'Auto'], ['mic', 'Microphone'], ['touch', 'On-screen only']])),

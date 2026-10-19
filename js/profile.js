@@ -4,6 +4,7 @@
 import { getState, saveState } from './store.js';
 import { earn } from './economy.js';
 import { account } from './cloud.js';
+import { DEFAULT_AVATAR } from './data/avatar.js';
 
 export const BIRTHDAY_GIFT = 10000;
 export const LEVELS = [['new', 'Brand new to piano'], ['little', 'I know a little'], ['some', 'I’ve played for a while'], ['lots', 'I play a lot']];
@@ -67,4 +68,13 @@ export function claimBirthday(now = new Date()) {
   saveState();
   earn(BIRTHDAY_GIFT, 'Happy birthday!');
   return true;
+}
+
+// ---- Explorer look (profile picture) ------------------------------------------------
+export const avatar = () => ({ ...DEFAULT_AVATAR, ...(getState().avatar || {}) });
+export function setAvatar(changes) {
+  const st = getState();
+  st.avatar = { ...avatar(), ...changes };
+  saveState();
+  document.dispatchEvent(new CustomEvent('ivory:avatar'));
 }

@@ -2,6 +2,7 @@
 
 import { REWARD_ITEMS, PETS } from './rewards.js';
 import { EVENT_ITEMS } from './events.js';
+import { AVATAR_ITEMS } from './avatar.js';
 
 export const SHOP = [
   // Spaceships (your marker on the Learn map)
@@ -79,7 +80,7 @@ export const SHOP = [
   { id: 'sheet-blueprint', cat: 'sheet', name: 'Blueprint', price: 200, desc: 'Engineer\u2019s blue with white ink.' },
 ];
 
-SHOP.push(...REWARD_ITEMS, ...PETS, ...EVENT_ITEMS);
+SHOP.push(...REWARD_ITEMS, ...PETS, ...EVENT_ITEMS, ...AVATAR_ITEMS.filter((it) => it.price > 0 || it.req));
 
 // Prices are listed above in "base" units and scaled here, so the Shop is a real
 // grind: everyday items ×6 (about 600–5,400 ✦), seasonal rares ×5 (5,000–25,000 ✦).
@@ -87,6 +88,7 @@ const nice = (x) => (x >= 1000 ? Math.round(x / 50) * 50 : Math.round(x / 10) * 
 for (const it of SHOP) if (it.price > 0) it.price = nice(it.price * (it.rare ? 5 : 6));
 
 export const CATEGORIES = [
+  { id: 'avatar', name: 'Explorer looks', blurb: 'Hair, eyes, ears, skins, clothes and hats for your profile picture. All the basics are free in the explorer editor (tap your picture).' },
   { id: 'pet', name: 'Pet shop', blurb: 'A companion who travels with your ship. Water friends live in a fish bowl; space creatures are found on the planets of each galaxy.' },
   { id: 'ship', name: 'Spaceships', blurb: 'Your ship on the Learn map.' },
   { id: 'fx', name: 'Completion effects', blurb: 'What happens to a world when you complete it.' },

@@ -26,6 +26,7 @@ import { petHTML } from '../render/pets.js';
 import { rewardLook } from '../data/rewards.js';
 import { diveInto, surfaceInto, takeReturn, flyShip } from '../transitions.js';
 import { guardianArt } from '../render/guardians.js';
+import { avatarBadge } from './avatar.js';
 
 // Moons currently on screen, animated by the cosmos loop (3D-ish orbits that pass behind their planet).
 let ORBITS = [];
@@ -167,7 +168,8 @@ export function renderUniverse(root) {
   document.body.classList.add('in-universe');
 
   page.append(h('header', { class: 'top uni-top' }, [
-    h('div', {}, [h('div', { class: 'eyebrow' }, 'Learn piano among the stars'), h('h1', { class: 'brand' }, ['Keys to the Universe', h('span', { class: 'dot' })])]),
+    avatarBadge(),
+    h('div', { class: 'grow' }, [h('div', { class: 'eyebrow' }, 'Learn piano among the stars'), h('h1', { class: 'brand' }, ['Keys to the Universe', h('span', { class: 'dot' })])]),
     h('div', { class: 'pills' }, [
       h('div', { class: 'pill flame', title: 'Day streak' }, [icon('flame'), h('b', {}, String(progress.streak))]),
       h('div', { class: 'pill stars-pill', title: 'Stars' }, [icon('star'), h('b', {}, String(progress.totalStars))]),

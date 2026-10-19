@@ -23,6 +23,7 @@ import { initAchievements, checkAchievements } from './achievements.js';
 import { SHOP } from './data/shop.js';
 import { renderBadges } from './screens/badges.js';
 import { renderAbout } from './screens/about.js';
+import { renderAvatar } from './screens/avatar.js';
 import { startAccount, startAutoSave, syncNow, account } from './cloud.js';
 import { maybeOfferSignIn, openProfile, chooseSave, celebrateBirthday } from './screens/account.js';
 import { profile, claimBirthday } from './profile.js';
@@ -85,6 +86,13 @@ async function route() {
     main.replaceChildren();
     main.scrollTop = 0;
     cleanup = renderInventory(main);
+    return;
+  }
+  if (name === 'avatar') {
+    setActiveTab('learn');
+    main.replaceChildren();
+    main.scrollTop = 0;
+    cleanup = renderAvatar(main) || null;
     return;
   }
   if (name === 'about') {

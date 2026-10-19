@@ -7,6 +7,7 @@ import { QUESTS } from '../data/quests.js';
 import { installCard, fullscreenButton } from './install.js';
 import { walletPill } from '../economy.js';
 import { challengesCard } from './challenges.js';
+import { avatarBadge } from './avatar.js';
 
 /** Index of the furthest lesson ever completed (so content added later never re-locks your progress). */
 function furthestDone(list) {
@@ -78,7 +79,8 @@ export function renderLearn(root) {
   const next = nextLesson();
 
   const header = h('header', { class: 'top' }, [
-    h('div', {}, [h('div', { class: 'eyebrow' }, greeting()), h('h1', { class: 'brand' }, ['Keys to the Universe', h('span', { class: 'dot' })])]),
+    avatarBadge(),
+    h('div', { class: 'grow' }, [h('div', { class: 'eyebrow' }, greeting()), h('h1', { class: 'brand' }, ['Keys to the Universe', h('span', { class: 'dot' })])]),
     h('div', { class: 'pills' }, [
       h('div', { class: 'pill flame', title: 'Day streak' }, [icon('flame'), h('b', {}, String(progress.streak))]),
       h('div', { class: 'pill stars-pill', title: 'Stars' }, [icon('star'), h('b', {}, String(progress.totalStars))]),

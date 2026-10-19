@@ -12,6 +12,8 @@ import { reqProgress, reqText, badges } from '../achievements.js';
 import { rewardLook } from '../data/rewards.js';
 import { petHTML } from '../render/pets.js';
 import { fxRing } from './universe.js';
+import { avatarSVG } from '../render/avatar.js';
+import { avatar, setAvatar } from '../profile.js';
 import { specialBosses } from './specialboss.js';
 import { personalItemName } from '../personal.js';
 import { EVENTS, SEASON, eventItemAvailable, featuredEvent, shopSale, eventOf, today, leavesText } from '../data/events.js';
@@ -142,11 +144,11 @@ export function renderShop(root, { inventory = false } = {}) {
   }
 
   function card(item) {
-    const have = owns(item.id);
+    const have = owns(item.id) || (item.cat === 'avatar' && !item.price && !item.req && !item.event);
     // Black Friday: everything not yet owned is on sale.
     const sale = !have && item.price > 0 ? shopSale() : 0;
     const it = sale ? { ...item, price: Math.round(item.price * (1 - sale)), was: item.price } : item;
-    const on = equipped(it.cat) === it.id;
+    const on = it.cat === 'avatar' ? avatar()[it.part] === it.id : equipped(it.cat) === it.id;
     const afford = balance() >= it.price;
     const preview = h('div', { class: `shop-preview prev-${it.cat}` });
     fillPreview(it, preview);
@@ -157,7 +159,7 @@ export function renderShop(root, { inventory = false } = {}) {
       const buyBtn = rp.met
         ? h('button', { class: `btn ${afford ? 'primary' : 'ghost'} sm`, onclick: () => {
           if (!buy(it)) { toast(`You need ${it.price - balance()} more ${SYMBOL}. Keep playing!`, 'bad'); return; }
-          equip(it.cat, it.id); applyCosmetics(); toast(`${it.name} unlocked and equipped!`, 'ok'); draw();
+          (it.cat === 'avatar' ? setAvatar({ [it.part]: it.id }) : equip(it.cat, it.id)); applyCosmetics(); toast(`${it.name} unlocked and equipped!`, 'ok'); draw();
         } }, [h('span', { class: 'sd' }, SYMBOL), String(it.price)])
         : h('button', { class: 'btn ghost sm', disabled: true }, [icon('lock'), h('span', { class: 'sd' }, SYMBOL), String(it.price)]);
       return h('div', { class: `shop-item achv ${rp.met ? 'met' : 'locked'}`, 'data-item': it.id }, [preview, h('div', { class: 'shop-meta' }, [tag, h('b', {}, displayName(it)), h('span', {}, it.desc), req]), h('div', { class: 'shop-buy' }, [buyBtn])]);
@@ -170,12 +172,12 @@ export function renderShop(root, { inventory = false } = {}) {
     const btn = on
       ? h('button', { class: 'btn ghost sm', disabled: true }, [icon('check'), 'Equipped'])
       : have
-        ? h('button', { class: 'btn primary sm', onclick: () => { equip(it.cat, it.id); applyCosmetics(); toast(`${it.name} equipped`, 'ok'); draw(); } }, 'Equip')
+        ? h('button', { class: 'btn primary sm', onclick: () => { (it.cat === 'avatar' ? setAvatar({ [it.part]: it.id }) : equip(it.cat, it.id)); applyCosmetics(); toast(`${it.name} equipped`, 'ok'); draw(); } }, 'Equip')
         : h('button', {
           class: `btn ${afford ? 'primary' : 'ghost'} sm`,
           onclick: () => {
             if (!buy(it)) { toast(`You need ${it.price - balance()} more ${SYMBOL}. Keep playing!`, 'bad'); return; }
-            equip(it.cat, it.id);
+            if (it.cat === 'avatar') setAvatar({ [it.part]: it.id }); else equip(it.cat, it.id);
             applyCosmetics();
             toast(`${it.name} unlocked and equipped!`, 'ok');
             draw();
@@ -199,6 +201,8 @@ export function renderShop(root, { inventory = false } = {}) {
   function fillPreview(it, el) {
     if (it.cat === 'ship') {
       el.innerHTML = `<div class="ship-demo">${shipSVG(it.id)}</div>`;
+    } else if (it.cat === 'avatar') {
+      el.append(h('div', { class: 'av-shop-demo', html: avatarSVG({ ...avatar(), [it.part]: it.id }, { size: 84, uid: `sh-${it.id}` }) }));
     } else if (it.cat === 'pet') {
       el.append(h('div', { class: 'pet-demo', html: petHTML(it.id) || '<span class="pet-none">Solo</span>' }));
     } else if (it.cat === 'fx') {
