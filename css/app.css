@@ -1576,3 +1576,36 @@ s.was { opacity: .6; margin-right: 4px; font-weight: 700; }
 .acct-status { padding: 8px 12px; border-radius: 12px; font-weight: 700; font-size: 14px; margin-bottom: 10px; }
 .acct-status.ok { background: #E3F8EE; color: #0B7F4B; }
 .acct-status.warn { background: #FEF3C7; color: #92400E; }
+
+/* Drawn land pets + cosmic pets */
+.pet-drawn svg { width: 100%; height: 100%; overflow: visible; filter: drop-shadow(0 2px 3px rgba(0,0,0,.3)); }
+.pet-drawn .critter { animation: critter-bob 2.2s ease-in-out infinite; transform-origin: 50% 90%; }
+@keyframes critter-bob { 50% { transform: translateY(-2px) scaleY(1.02); } }
+.pet-drawn .wing { animation: wing-flap 1s ease-in-out infinite; transform-origin: 32px 34px; }
+.pet-demo .pet-drawn { width: 76px; height: 76px; }
+.bh-disk2 { transform-origin: 32px 34px; animation: bh-wobble 3s linear infinite; }
+@keyframes bh-wobble { 0% { transform: rotate(-8deg); } 50% { transform: rotate(8deg); } 100% { transform: rotate(-8deg); } }
+.sp-blackhole .bh-disk2 ellipse:first-child { stroke-dasharray: 18 6; animation: dash-spin 2s linear infinite; }
+@keyframes dash-spin { to { stroke-dashoffset: -48; } }
+.ast-orbit { transform-origin: 32px 32px; animation: spin 4s linear infinite; }
+.star-body { transform-origin: 32px 32px; animation: star-twinkle 2.4s ease-in-out infinite; }
+.star-halo { animation: twinkle 1.6s ease-in-out infinite alternate; }
+@keyframes star-twinkle { 50% { transform: scale(1.06) rotate(4deg); } }
+.neb-puff { transform-origin: 32px 34px; animation: neb-breathe 4s ease-in-out infinite; }
+@keyframes neb-breathe { 50% { transform: scale(1.05); } }
+.pulsar-beams { transform-origin: 32px 32px; animation: spin 1.6s linear infinite; }
+.sp-moonlet .zz { animation: zz 2.6s ease-in-out infinite; }
+@keyframes zz { 0% { opacity: 0; transform: translate(0, 4px); } 50% { opacity: .9; } 100% { opacity: 0; transform: translate(4px, -6px); } }
+/* The Big Bang loops: a point flashes, bursts outward, a galaxy swirls, then it all starts again. */
+.sp-bigbang * { transform-origin: 32px 32px; }
+.bb-core { animation: bb-core 4s ease-in-out infinite; }
+.bb-face { animation: bb-face 4s ease-in-out infinite; }
+.bb-burst { animation: bb-burst 4s ease-out infinite; }
+.bb-wave { animation: bb-wave 4s ease-out infinite; }
+.bb-galaxy { animation: bb-galaxy 4s linear infinite; }
+@keyframes bb-core { 0% { transform: scale(.2); opacity: 1; } 12% { transform: scale(1.6); } 30% { transform: scale(1); } 85% { transform: scale(1); opacity: 1; } 100% { transform: scale(.2); opacity: .6; } }
+@keyframes bb-face { 0%, 25% { opacity: 0; } 35%, 85% { opacity: 1; } 100% { opacity: 0; } }
+@keyframes bb-burst { 0%, 8% { transform: scale(.05) rotate(0deg); opacity: 0; } 14% { opacity: 1; } 70% { transform: scale(1.15) rotate(40deg); opacity: .9; } 100% { transform: scale(1.3) rotate(60deg); opacity: 0; } }
+@keyframes bb-wave { 0%, 10% { transform: scale(.05); opacity: 0; } 18% { opacity: 1; } 60% { transform: scale(1.1); opacity: 0; } 100% { opacity: 0; } }
+@keyframes bb-galaxy { 0%, 30% { transform: rotate(0deg) scale(.4); opacity: 0; } 45% { opacity: .9; } 90% { transform: rotate(300deg) scale(1.2); opacity: .6; } 100% { opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .pet *, .sp-bigbang * { animation: none !important; } }

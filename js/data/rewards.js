@@ -132,24 +132,24 @@ const P = (id, name, type, price, look, desc, req) => ({ id, cat: 'pet', name, t
 export const PETS = [
   P('pet-none', 'No pet', 'none', 0, null, 'Travel solo.'),
   // Land, air and everything in between
-  P('pet-puppy', 'Puppy', 'land', 150, '\u{1F436}', 'A loyal puppy who wags along on every flight.'),
-  P('pet-kitten', 'Kitten', 'land', 150, '\u{1F431}', 'Naps on the piano. Wakes up for the good bits.'),
-  P('pet-bunny', 'Bunny', 'land', 170, '\u{1F430}', 'Hops in time with your rhythm.'),
-  P('pet-fox', 'Fox', 'land', 220, '\u{1F98A}', 'Clever and quick, like your fingers.'),
-  P('pet-panda', 'Panda', 'land', 240, '\u{1F43C}', 'Very chill. Loves slow songs.'),
-  P('pet-koala', 'Koala', 'land', 220, '\u{1F428}', 'Clings to your ship for dear life.'),
-  P('pet-owl', 'Owl', 'land', 200, '\u{1F989}', 'A wise night-practice buddy.'),
-  P('pet-parrot', 'Parrot', 'land', 220, '\u{1F99C}', 'Sings back whatever you play. Badly.'),
-  P('pet-frog', 'Frog', 'land', 160, '\u{1F438}', 'Ribbit means encore.'),
-  P('pet-turtle', 'Turtle', 'land', 180, '\u{1F422}', 'Slow and steady wins the song.'),
-  P('pet-bee', 'Bumblebee', 'land', 160, '\u{1F41D}', 'Buzzes in perfect pitch.'),
-  P('pet-hedgehog', 'Hedgehog', 'land', 200, '\u{1F994}', 'Small, spiky and very proud of you.'),
-  P('pet-sloth', 'Sloth', 'land', 200, '\u{1F9A5}', 'For players who take things at their own pace.', { kind: 'days', goal: 10 }),
-  P('pet-penguin', 'Penguin', 'land', 220, '\u{1F427}', 'Dressed for the concert hall.', { kind: 'dailyDone', goal: 5 }),
-  P('pet-lion', 'Lion Cub', 'land', 350, '\u{1F981}', 'Brave enough to face any Guardian.', { kind: 'guardians', goal: 4 }),
-  P('pet-unicorn', 'Unicorn', 'land', 500, '\u{1F984}', 'Rare and magical, like a flawless run.', { kind: 'life', stat: 'flawless', goal: 10 }),
-  P('pet-trex', 'Tiny T-Rex', 'land', 450, '\u{1F996}', 'Short arms. Still practises every day.', { kind: 'life', stat: 'notes', goal: 25000 }),
-  P('pet-dragon', 'Dragon', 'land', 900, '\u{1F409}', 'Only follows those who beat the Grand Maestro.', { kind: 'boss', id: 'boss-g10' }),
+  P('pet-puppy', 'Puppy', 'land', 150, { fur: '#D9A066', belly: '#FFF1DC', accent: '#8B5A2B', ears: 'floppy', tail: 'thin', marks: 'patch' }, 'A loyal puppy who wags along on every flight.'),
+  P('pet-kitten', 'Kitten', 'land', 150, { fur: '#A8A29E', belly: '#F5F5F4', accent: '#57534E', ears: 'pointy', tail: 'thin', marks: 'tabby', whiskers: true, inner: '#FBCFE8', snout: true }, 'Naps on the piano. Wakes up for the good bits.'),
+  P('pet-bunny', 'Bunny', 'land', 170, { fur: '#F3F4F6', belly: '#FFFFFF', accent: '#D1D5DB', ears: 'long', tail: 'puff', nose: '#F472B6' }, 'Hops in time with your rhythm.'),
+  P('pet-fox', 'Fox', 'land', 220, { fur: '#F97316', belly: '#FFF7ED', accent: '#7C2D12', ears: 'big', tail: 'fluffy', tailTip: '#FFF7ED', inner: '#7C2D12', paws: '#7C2D12' }, 'Clever and quick, like your fingers.'),
+  P('pet-panda', 'Panda', 'land', 240, { fur: '#FAFAFA', belly: '#FFFFFF', accent: '#1F2937', ears: 'round', earColor: '#1F2937', inner: '#374151', marks: 'panda', paws: '#1F2937' }, 'Very chill. Loves slow songs.'),
+  P('pet-koala', 'Koala', 'land', 220, { fur: '#9CA3AF', belly: '#E5E7EB', accent: '#4B5563', ears: 'fluffy', inner: '#F3F4F6', bigNose: true, snoutColor: '#9CA3AF' }, 'Clings to your ship for dear life.'),
+  P('pet-owl', 'Owl', 'land', 200, { base: 'bird', fur: '#A16207', belly: '#FEF3C7', accent: '#78350F', ears: 'tufts', eyeRings: true, beakColor: '#F59E0B' }, 'A wise night-practice buddy.'),
+  P('pet-parrot', 'Parrot', 'land', 220, { base: 'bird', fur: '#22C55E', belly: '#FDE047', accent: '#DC2626', beak: 'hook', beakColor: '#1F2937', tuftTop: true }, 'Sings back whatever you play. Badly.'),
+  P('pet-frog', 'Frog', 'land', 160, { base: 'frog', fur: '#4ADE80', belly: '#DCFCE7' }, 'Ribbit means encore.'),
+  P('pet-turtle', 'Turtle', 'land', 180, { base: 'turtle', fur: '#86EFAC', accent: '#15803D', accent2: '#A16207' }, 'Slow and steady wins the song.'),
+  P('pet-bee', 'Bumblebee', 'land', 160, { base: 'insect', fur: '#FACC15', accent: '#1F2937', head: '#1F2937', marks: 'stripes', wings: 'insect' }, 'Buzzes in perfect pitch.'),
+  P('pet-hedgehog', 'Hedgehog', 'land', 200, { fur: '#D6B48C', belly: '#FFF7ED', accent: '#78350F', spines: true, ears: 'round', inner: '#FBCFE8', bigNose: false }, 'Small, spiky and very proud of you.'),
+  P('pet-sloth', 'Sloth', 'land', 200, { fur: '#A78B6D', belly: '#E7D8C4', accent: '#5B4636', marks: 'mask', maskColor: '#E7D8C4', sleepy: true, snout: false }, 'For players who take things at their own pace.', { kind: 'days', goal: 10 }),
+  P('pet-penguin', 'Penguin', 'land', 220, { base: 'bird', fur: '#1F2937', belly: '#FFFFFF', accent: '#111827', beakColor: '#F59E0B', feet: '#F59E0B', marks: 'mask', maskColor: '#FFFFFF' }, 'Dressed for the concert hall.', { kind: 'dailyDone', goal: 5 }),
+  P('pet-lion', 'Lion Cub', 'land', 350, { fur: '#FBBF24', belly: '#FEF3C7', accent: '#B45309', mane: '#C2410C', ears: 'round', inner: '#FDE68A', tail: 'thin' }, 'Brave enough to face any Guardian.', { kind: 'guardians', goal: 4 }),
+  P('pet-unicorn', 'Unicorn', 'land', 500, { fur: '#FFFFFF', belly: '#FDF4FF', accent: '#E9D5FF', ears: 'pointy', inner: '#FBCFE8', horn: '#FBBF24', mane2: '#F472B6', mane3: '#60A5FA', tail: 'fluffy', tailTip: '#A78BFA', snoutColor: '#FDF4FF', nose: '#F9A8D4', glow: '#E9D5FF' }, 'Rare and magical, like a flawless run.', { kind: 'life', stat: 'flawless', goal: 10 }),
+  P('pet-trex', 'Tiny T-Rex', 'land', 450, { base: 'dino', fur: '#4ADE80', belly: '#D9F99D', accent: '#15803D', tail: 'dino', spikes: true, teeth: true, snoutColor: '#86EFAC' }, 'Short arms. Still practises every day.', { kind: 'life', stat: 'notes', goal: 25000 }),
+  P('pet-dragon', 'Dragon', 'land', 900, { base: 'dino', fur: '#8B5CF6', belly: '#DDD6FE', accent: '#5B21B6', wings: 'dragon', horns: '#FDE68A', tail: 'dino', spikes: true, snoutColor: '#A78BFA', glow: '#A78BFA' }, 'Only follows those who beat the Grand Maestro.', { kind: 'boss', id: 'boss-g10' }),
   // Water friends live in a fish bowl
   P('pet-goldfish', 'Goldfish', 'water', 100, '\u{1F41F}', 'A classic. Lives in a bowl on your dashboard.'),
   P('pet-tropical', 'Tropical Fish', 'water', 150, '\u{1F420}', 'Bright stripes for a bright player.'),
@@ -188,5 +188,16 @@ const SPACE = [
 SPACE.forEach(([unit, name, look, desc], i) => {
   PETS.push(P(`pet-sp${unit}`, name, 'space', 250 + i * 20, look, desc, { kind: 'galaxyWorlds', unit, goal: 3 }));
 });
+
+// Cosmic pets: little pieces of the universe that follow you around.
+PETS.push(
+  P('pet-blackhole', 'Baby Black Hole', 'space', 1200, { shape: 'blackhole', body: '#F97316', belly: '#FDE68A', glow: '#F97316', eyes: 2 }, 'Tiny, hungry and very cuddly. Don’t let it near your socks.', { kind: 'guardians', goal: 6 }),
+  P('pet-asteroid', 'Asteroid Buddy', 'space', 600, { shape: 'asteroid', body: '#78716C', belly: '#D6D3D1', glow: '#A8A29E', eyes: 2 }, 'A lumpy little rock with its own pebble moon.', { kind: 'rogues', goal: 1 }),
+  P('pet-newstar', 'Newborn Star', 'space', 900, { shape: 'star', body: '#FDE68A', belly: '#FFFBEB', glow: '#FBBF24', eyes: 2 }, 'Just switched on. Twinkles when you play well.', { kind: 'threeStar', goal: 10 }),
+  P('pet-nebula', 'Nebula Puff', 'space', 800, { shape: 'nebula', body: '#A78BFA', belly: '#F472B6', glow: '#C084FC', eyes: 2 }, 'A soft cloud of stardust that hums.', { kind: 'days', goal: 20 }),
+  P('pet-pulsar', 'Pulsar Pup', 'space', 1000, { shape: 'pulsar', body: '#93C5FD', belly: '#E0F2FE', glow: '#38BDF8', eyes: 2 }, 'Spins and beeps exactly on the beat.', { kind: 'life', stat: 'perfect', goal: 2000 }),
+  P('pet-moonlet', 'Moonlet', 'space', 700, { shape: 'moonlet', body: '#E2E8F0', belly: '#94A3B8', glow: '#CBD5E1', eyes: 2 }, 'A sleepy little moon. Always napping.', { kind: 'planets', goal: 15 }),
+  P('pet-bigbang', 'Mini Big Bang', 'space', 4000, { shape: 'bigbang', body: '#FDE68A', belly: '#A78BFA', glow: '#FDE68A', eyes: 2 }, 'Super rare. A whole tiny universe, being born over and over.', { kind: 'badges', goal: 50 }),
+);
 
 export const rewardLook = (id) => (REWARD_ITEMS.find((x) => x.id === id) || PETS.find((x) => x.id === id) || EVENT_ITEMS.find((x) => x.id === id) || {}).look || null;

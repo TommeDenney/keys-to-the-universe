@@ -1,9 +1,10 @@
-// Pets: companions that travel next to your ship. Land animals are emoji,
-// water friends sit in a little fish bowl, and space creatures are drawn here
-// from a few parameters (js/data/rewards.js).
+// Pets: companions that travel next to your ship. Land animals are drawn from
+// recipes (js/render/critters.js), water friends sit in a little fish bowl, and
+// space creatures are drawn here from a few parameters (js/data/rewards.js).
 
 import { PETS } from '../data/rewards.js';
 import { EVENT_ITEMS } from '../data/events.js';
+import { critterSVG } from './critters.js';
 
 export const petById = (id) => PETS.find((p) => p.id === id) || EVENT_ITEMS.find((p) => p.id === id && p.cat === 'pet') || null;
 
@@ -11,7 +12,7 @@ export const petById = (id) => PETS.find((p) => p.id === id) || EVENT_ITEMS.find
 export function petHTML(id) {
   const p = petById(id);
   if (!p || p.type === 'none') return '';
-  if (p.type === 'land') return `<span class="pet pet-land"><span class="pet-emoji">${p.look}</span></span>`;
+  if (p.type === 'land') return typeof p.look === 'string' ? `<span class="pet pet-land"><span class="pet-emoji">${p.look}</span></span>` : `<span class="pet pet-land pet-drawn">${critterSVG(p.id, p.look)}</span>`;
   if (p.type === 'water') return `<span class="pet pet-water"><span class="bowl"><i class="water"></i><i class="bubble b1"></i><i class="bubble b2"></i><span class="pet-emoji">${p.look}</span></span></span>`;
   return `<span class="pet pet-space">${creatureSVG(p.id, p.look)}</span>`;
 }
@@ -38,6 +39,42 @@ function creatureSVG(id, L) {
   }[L.ears] || `<path d="M32 14 L32 6" stroke="${L.body}" stroke-width="2"/><circle cx="32" cy="5" r="2.5" fill="${L.glow}" class="glow"/>`;
   let body;
   switch (L.shape) {
+    case 'blackhole': // a baby black hole: spinning disk, dark heart, two curious eyes
+      return `<svg viewBox="0 0 64 64" aria-hidden="true" class="sp-blackhole" style="--glow:${L.glow}">
+        <g class="bh-disk2"><ellipse cx="32" cy="34" rx="29" ry="9" fill="none" stroke="${L.body}" stroke-width="5" opacity=".9"/><ellipse cx="32" cy="34" rx="22" ry="6" fill="none" stroke="${L.belly}" stroke-width="2.5"/></g>
+        <circle cx="32" cy="32" r="14" fill="#05030F"/><circle cx="32" cy="32" r="15.5" fill="none" stroke="${L.belly}" stroke-width="1.6" opacity=".9"/>
+        <path d="M3 34 A29 9 0 0 0 61 34" fill="none" stroke="${L.body}" stroke-width="5"/>
+        <ellipse cx="27" cy="31" rx="2.6" ry="3" fill="#fff"/><ellipse cx="37" cy="31" rx="2.6" ry="3" fill="#fff"/><path d="M29 37 Q32 39 35 37" stroke="#fff" stroke-width="1.4" fill="none"/></svg>`;
+    case 'asteroid': // a rocky little buddy with its own pebble moon
+      return `<svg viewBox="0 0 64 64" aria-hidden="true" class="sp-asteroid" style="--glow:${L.glow}">
+        <path d="M14 30 C12 18 24 10 34 12 C46 10 54 20 52 32 C54 44 44 52 32 52 C20 54 12 42 14 30 Z" fill="${L.body}"/>
+        <circle cx="22" cy="22" r="4" fill="${L.belly}" opacity=".5"/><circle cx="44" cy="40" r="5" fill="${L.belly}" opacity=".45"/><circle cx="40" cy="20" r="2.5" fill="${L.belly}" opacity=".5"/>
+        ${eyes(31, 8, 3)}${mouth(38)}<g class="ast-orbit"><circle cx="58" cy="32" r="3" fill="${L.belly}"/></g></svg>`;
+    case 'star': // a newborn star: soft points that twinkle
+      return `<svg viewBox="0 0 64 64" aria-hidden="true" class="sp-star" style="--glow:${L.glow}">${defs}
+        <circle cx="32" cy="32" r="24" fill="${L.glow}" opacity=".18" class="star-halo"/>
+        <path d="M32 4 L39 23 L59 24 L43 36 L49 56 L32 44 L15 56 L21 36 L5 24 L25 23 Z" fill="${fill}" stroke="${L.body}" stroke-width="3" stroke-linejoin="round" class="star-body"/>
+        ${eyes(31, 6, 2.6)}${cheeks(36)}${mouth(37)}</svg>`;
+    case 'nebula': // a puff of nebula with sparkles inside
+      return `<svg viewBox="0 0 64 64" aria-hidden="true" class="sp-nebula" style="--glow:${L.glow}">
+        <g class="neb-puff"><circle cx="22" cy="34" r="13" fill="${L.body}" opacity=".85"/><circle cx="36" cy="26" r="15" fill="${L.belly}" opacity=".85"/><circle cx="44" cy="38" r="12" fill="${L.body}" opacity=".85"/><circle cx="32" cy="40" r="13" fill="${L.belly}" opacity=".7"/></g>
+        <circle cx="18" cy="26" r="1.2" fill="#fff" class="glow"/><circle cx="48" cy="28" r="1" fill="#fff" class="glow"/><circle cx="40" cy="48" r="1.2" fill="#fff" class="glow"/>
+        ${eyes(34, 7, 2.8)}${mouth(40)}</svg>`;
+    case 'pulsar': // a tiny spinning pulsar with two light beams
+      return `<svg viewBox="0 0 64 64" aria-hidden="true" class="sp-pulsar" style="--glow:${L.glow}">${defs}
+        <g class="pulsar-beams"><path d="M32 32 L26 0 L38 0 Z M32 32 L26 64 L38 64 Z" fill="${L.belly}" opacity=".55"/></g>
+        <circle cx="32" cy="32" r="13" fill="${fill}"/>${eyes(31, 5, 2.4)}${mouth(36)}</svg>`;
+    case 'moonlet': // a sleepy little moon
+      return `<svg viewBox="0 0 64 64" aria-hidden="true" class="sp-moonlet" style="--glow:${L.glow}">${defs}
+        <circle cx="32" cy="32" r="20" fill="${fill}"/><circle cx="22" cy="24" r="4" fill="${L.belly}" opacity=".6"/><circle cx="42" cy="42" r="5" fill="${L.belly}" opacity=".5"/><circle cx="43" cy="24" r="2.5" fill="${L.belly}" opacity=".6"/>
+        <path d="M23 32 Q27 35 31 32 M33 32 Q37 35 41 32" stroke="#1E1B3A" stroke-width="1.8" fill="none" stroke-linecap="round"/>${cheeks(37)}<text x="48" y="16" font-size="9" fill="#fff" opacity=".8" class="zz">z</text></svg>`;
+    case 'bigbang': // super rare: a whole universe being born, over and over
+      return `<svg viewBox="0 0 64 64" aria-hidden="true" class="sp-bigbang" style="--glow:${L.glow}">
+        <g class="bb-wave"><circle cx="32" cy="32" r="26" fill="none" stroke="${L.body}" stroke-width="2"/><circle cx="32" cy="32" r="18" fill="none" stroke="${L.belly}" stroke-width="1.5"/></g>
+        <g class="bb-burst">${[0, 30, 60, 90, 120, 150, 180, 210, 240, 270, 300, 330].map((a, i) => `<circle cx="${32 + 22 * Math.cos(a * Math.PI / 180)}" cy="${32 + 22 * Math.sin(a * Math.PI / 180)}" r="${1.2 + (i % 3) * 0.6}" fill="${['#FDE68A', '#F472B6', '#60A5FA', '#A78BFA'][i % 4]}"/>`).join('')}</g>
+        <g class="bb-galaxy"><path d="M32 32 m-12 0 a12 5 0 1 0 24 0 a12 5 0 1 0 -24 0" fill="none" stroke="${L.belly}" stroke-width="1.2" opacity=".8"/></g>
+        <circle cx="32" cy="32" r="6" fill="#fff" class="bb-core"/>
+        <g class="bb-face"><circle cx="30" cy="31" r="1" fill="#1E1B3A"/><circle cx="34" cy="31" r="1" fill="#1E1B3A"/><path d="M30.5 33.5 Q32 34.6 33.5 33.5" stroke="#1E1B3A" stroke-width=".8" fill="none"/></g></svg>`;
     case 'squid':
       body = `${[14, 22, 30, 38, 46].map((x, i) => `<path d="M${x} 40 q${i % 2 ? 3 : -3} 8 0 14 q${i % 2 ? -3 : 3} 4 ${i % 2 ? 2 : -2} 6" stroke="${L.body}" stroke-width="4.5" fill="none" stroke-linecap="round" class="tent t${i}"/>`).join('')}
         <path d="M12 40 C10 20 20 8 32 8 C44 8 54 20 52 40 Z" fill="${fill}"/>${eyes(26, 9)}${mouth(34)}`;
