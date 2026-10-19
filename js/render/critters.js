@@ -23,6 +23,9 @@ export function critterSVG(id, L) {
   const add = (s) => parts.push(s);
   const base = L.base || 'mammal';
 
+  if (base === 'pom') return pomSVG(defs, F, L, fur, belly, acc);
+  if (base === 'chibi') return chibiSVG(id, L);
+
   // ---- behind the body: tails, wings, shells, manes --------------------------------
   const tail = {
     thin: `<path d="M44 50 Q56 48 54 36" stroke="${fur}" stroke-width="4" fill="none" stroke-linecap="round"/>`,
@@ -123,3 +126,93 @@ function eyes(cy, spread, r, col = EYE) {
 const smile = (y, col = EYE) => `<path d="M29 ${y} Q32 ${y + 3} 35 ${y}" stroke="${col}" stroke-width="1.6" fill="none" stroke-linecap="round"/>`;
 const cheeks = (y, dx) => `<ellipse cx="${32 - dx}" cy="${y}" rx="3" ry="2" fill="#FB7185" opacity=".4"/><ellipse cx="${32 + dx}" cy="${y}" rx="3" ry="2" fill="#FB7185" opacity=".4"/>`;
 const wrap = (defs, parts, L) => `<svg viewBox="-4 -6 72 72" aria-hidden="true" class="critter"${L.glow ? ` style="--glow:${L.glow}"` : ''}>${defs}${parts.join('')}</svg>`;
+
+// ---- Fluffy dogs (Pomeranians, pom-poodles…) ---------------------------------------
+// A cloud of fur: a scalloped ruff around the face, a plume tail over the back,
+// and big two-highlight eyes. Look: fur, belly (chest/cheeks), muzzle, ears
+// ('pointy' | 'floppy'), shaggy (bangs + beard), blaze (forehead stripe), tongue.
+const puffs = (cx, cy, r, n, pr, col, start = 0) => [...Array(n)].map((_, i) => { const a = start + (i / n) * Math.PI * 2; return `<circle cx="${(cx + r * Math.cos(a)).toFixed(1)}" cy="${(cy + r * Math.sin(a)).toFixed(1)}" r="${pr}" fill="${col}"/>`; }).join('');
+function bigEyes(cy, spread, r, col = EYE) {
+  return [32 - spread, 32 + spread].map((x) => `<ellipse cx="${x}" cy="${cy}" rx="${r}" ry="${r * 1.2}" fill="${col}"/><circle cx="${x - r * 0.35}" cy="${cy - r * 0.42}" r="${r * 0.42}" fill="#fff"/><circle cx="${x + r * 0.35}" cy="${cy + r * 0.4}" r="${r * 0.18}" fill="#fff" opacity=".9"/>`).join('');
+}
+function pomSVG(defs, F, L, fur, belly, acc) {
+  const p = [];
+  const muzzle = L.muzzle || belly;
+  const dark = L.dark || acc;
+  // Plume tail curled over the back
+  p.push(`<g>${puffs(48, 36, 6, 7, 5.5, fur)}<circle cx="48" cy="36" r="6" fill="${fur}"/>${L.tailTip ? puffs(50, 33, 3, 5, 3, L.tailTip) : ''}</g>`);
+  // Fluffy body + chest ruff
+  p.push(`${puffs(32, 48, 11, 10, 5, fur)}<ellipse cx="32" cy="48" rx="12" ry="10" fill="${F}"/>`);
+  p.push(`${puffs(32, 44, 5, 6, 4.2, belly, 0.3)}`);
+  p.push(`<ellipse cx="25" cy="57" rx="4.5" ry="3" fill="${L.paws || fur}"/><ellipse cx="39" cy="57" rx="4.5" ry="3" fill="${L.paws || fur}"/>`);
+  // Ears
+  if (L.ears === 'floppy') p.push(`${puffs(14, 26, 4, 6, 4.4, L.earColor || dark)}${puffs(50, 26, 4, 6, 4.4, L.earColor || dark)}`);
+  else p.push(`<path d="M16 17 L18.5 1 L29 11 Z M48 17 L45.5 1 L35 11 Z" fill="${L.earColor || fur}"/><path d="M19.5 13 L20.5 5.5 L25.5 10.5 Z M44.5 13 L43.5 5.5 L38.5 10.5 Z" fill="${L.inner || '#F9C5A8'}"/>${puffs(18.5, 3, 1.4, 4, 1.8, L.earColor || fur)}${puffs(45.5, 3, 1.4, 4, 1.8, L.earColor || fur)}`);
+  // Head: a ruff of fur puffs, then the face (pointy ears poke up through the ruff)
+  const earsSVG = p.pop();
+  p.push(`${puffs(32, 26, 16.5, 16, 4.6, L.ruff || fur)}`);
+  p.push(earsSVG);
+  p.push(`<circle cx="32" cy="26" r="16.5" fill="${F}"/>`);
+  if (L.cheeks) p.push(`<ellipse cx="22" cy="31" rx="6" ry="5" fill="${L.cheeks}" opacity=".9"/><ellipse cx="42" cy="31" rx="6" ry="5" fill="${L.cheeks}" opacity=".9"/>`);
+  if (L.blaze) p.push(`<path d="M30 9 Q32 7 34 9 L33.5 27 Q32 28 30.5 27 Z" fill="${L.blaze}"/>`);
+  if (L.shaggy) p.push(`${puffs(32, 12, 7, 7, 3.4, L.bangs || fur, Math.PI * 0.9)}`); // bangs over the brow
+  // Muzzle (a beard on shaggy dogs)
+  if (L.shaggy) p.push(`${puffs(32, 35, 4.5, 8, 3.6, muzzle)}<ellipse cx="32" cy="34" rx="7" ry="5.5" fill="${muzzle}"/>`);
+  else p.push(`<ellipse cx="32" cy="34" rx="6.5" ry="5" fill="${muzzle}"/>`);
+  p.push(bigEyes(26, 7.2, 3.3));
+  if (L.brows) p.push(`<path d="M22 20 q3 -2 5 0 M37 20 q2 -2 5 0" stroke="${L.brows}" stroke-width="1.6" fill="none" stroke-linecap="round"/>`);
+  p.push(`<ellipse cx="32" cy="31.6" rx="2.7" ry="2" fill="${L.nose || EYE}"/><circle cx="31.2" cy="31" r=".7" fill="#fff" opacity=".7"/>`);
+  p.push(L.tongue
+    ? `<path d="M29 35 Q32 37.5 35 35" stroke="${EYE}" stroke-width="1.2" fill="none" stroke-linecap="round"/><path d="M30.6 36 Q32 41 33.4 36 Z" fill="#F472B6"/>`
+    : `<path d="M29 35 Q30.5 36.6 32 35 Q33.5 36.6 35 35" stroke="${EYE}" stroke-width="1.2" fill="none" stroke-linecap="round"/>`);
+  p.push(cheeks(31.5, 12));
+  if (L.bow) p.push(`<path d="M40 12 l-5 -3 v6 Z M40 12 l5 -3 v6 Z" fill="${L.bow}"/><circle cx="40" cy="12" r="1.6" fill="${L.bow}"/>`);
+  return wrap(defs, p, L);
+}
+
+// ---- Chibi people ------------------------------------------------------------------
+// A tiny person: a big round head, huge shiny eyes, rosy cheeks and a small body.
+// Look: skin, hair, hairStyle ('braids' | 'puff' | 'bob'), iris, top, crown?, lips.
+function chibiSVG(id, L) {
+  const gid = `ch${id.replace(/\W/g, '')}`;
+  const skin = L.skin || '#8D5524';
+  const hair = L.hair || '#1B1210';
+  const top = L.top || '#DC2626';
+  const iris = L.iris || '#5B3416';
+  const shine = lighten(skin, 0.18);
+  const defs = `<defs><radialGradient id="${gid}" cx=".4" cy=".32" r=".8"><stop offset="0" stop-color="${shine}"/><stop offset=".6" stop-color="${skin}"/><stop offset="1" stop-color="${skin}"/></radialGradient></defs>`;
+  const S = `url(#${gid})`;
+  const p = [];
+  const braid = (x, y0, len, sway) => { let d = ''; for (let k = 0; k < len; k += 3.2) d += `<ellipse cx="${(x + Math.sin(k / 6) * sway).toFixed(1)}" cy="${(y0 + k).toFixed(1)}" rx="1.9" ry="2.1" fill="${hair}"/>`; return d; };
+  if (L.hairStyle === 'braids') {
+    // Long braids fall behind the shoulders on both sides
+    for (const [x, len, sw] of [[12, 40, 1], [15, 44, -1], [18, 40, 1], [46, 40, -1], [49, 44, 1], [52, 40, -1]]) p.push(braid(x, 22, len, sw));
+  }
+  // Body
+  p.push(`<path d="M20 64 Q20 48 32 47 Q44 48 44 64 Z" fill="${top}"/><path d="M27 48 Q32 52 37 48" stroke="${lighten(top, 0.25)}" stroke-width="1.4" fill="none"/>`);
+  p.push(`<ellipse cx="19" cy="57" rx="3.4" ry="5" fill="${top}" transform="rotate(14 19 57)"/><ellipse cx="45" cy="57" rx="3.4" ry="5" fill="${top}" transform="rotate(-14 45 57)"/><circle cx="18" cy="61.5" r="2.6" fill="${S}"/><circle cx="46" cy="61.5" r="2.6" fill="${S}"/>`);
+  p.push(`<rect x="29" y="42" width="6" height="6" rx="2" fill="${skin}"/>`);
+  // Head
+  p.push(`<ellipse cx="12.5" cy="28" rx="3" ry="3.8" fill="${skin}"/><ellipse cx="51.5" cy="28" rx="3" ry="3.8" fill="${skin}"/>`);
+  p.push(`<ellipse cx="32" cy="26" rx="20" ry="19" fill="${S}"/>`);
+  // Hair on top (with a middle part for braids)
+  if (L.hairStyle === 'braids') {
+    p.push(`<path d="M12 27 Q11 6 32 5 Q53 6 52 27 Q50 15 44 13 Q38 11 33 12 L32 9 L31 12 Q26 11 20 13 Q14 16 12 27 Z" fill="${hair}"/>`);
+    p.push(`<path d="M32 6 V12" stroke="${lighten(skin, 0.1)}" stroke-width="1" opacity=".8"/>`);
+    p.push([16, 21, 26, 38, 43, 48].map((x) => `<path d="M${x} ${x < 32 ? 15 : 15} q1 -4 ${x < 32 ? 3 : -3} -6" stroke="${lighten(hair, 0.18)}" stroke-width=".8" fill="none" opacity=".6"/>`).join(''));
+  } else if (L.hairStyle === 'puff') {
+    p.push(`${puffs(32, 8, 9, 10, 6, hair)}<circle cx="32" cy="8" r="10" fill="${hair}"/><path d="M12 26 Q12 10 32 11 Q52 10 52 26 Q48 17 32 16 Q16 17 12 26 Z" fill="${hair}"/>`);
+  } else {
+    p.push(`<path d="M11 32 Q8 6 32 5 Q56 6 53 32 Q50 18 32 16 Q14 18 11 32 Z" fill="${hair}"/>`);
+  }
+  if (L.crown) p.push(`<path d="M22 9 L24 3 L28 7 L32 1 L36 7 L40 3 L42 9 Q32 6 22 9 Z" fill="#FBBF24" stroke="#B45309" stroke-width=".6"/><circle cx="32" cy="3.5" r="1.2" fill="#F472B6"/><circle cx="24" cy="5" r=".9" fill="#60A5FA"/><circle cx="40" cy="5" r=".9" fill="#60A5FA"/>`);
+  // Face: huge shiny eyes with lashes, blush and a happy little smile
+  for (const x of [24, 40]) {
+    p.push(`<ellipse cx="${x}" cy="29" rx="4.6" ry="5.6" fill="#fff"/><ellipse cx="${x}" cy="29.6" rx="3.9" ry="4.9" fill="${iris}"/><ellipse cx="${x}" cy="30.4" rx="2.2" ry="2.8" fill="#1E1B3A"/>`);
+    p.push(`<circle cx="${x - 1.6}" cy="27.2" r="1.5" fill="#fff"/><circle cx="${x + 1.5}" cy="31.8" r=".7" fill="#fff"/>`);
+    p.push(`<path d="M${x - 5} 25.2 Q${x} 22.2 ${x + 5} 25.2" stroke="#1E1B3A" stroke-width="1.6" fill="none" stroke-linecap="round"/><path d="M${x + (x < 32 ? -5 : 5)} 25.2 l${x < 32 ? -1.6 : 1.6} -1.4" stroke="#1E1B3A" stroke-width="1.1" stroke-linecap="round"/>`);
+  }
+  p.push(`<ellipse cx="17.5" cy="35" rx="3.4" ry="2" fill="#FB7185" opacity=".45"/><ellipse cx="46.5" cy="35" rx="3.4" ry="2" fill="#FB7185" opacity=".45"/>`);
+  p.push(`<path d="M28.5 36 Q32 40 35.5 36 Q32 37.4 28.5 36 Z" fill="${L.lips || '#7F1D1D'}"/>`);
+  return wrap(defs, p, L);
+}

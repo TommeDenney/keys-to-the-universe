@@ -1,7 +1,7 @@
 // Personal packs: private content that lives only on your device, never in the
 // app's code. A pack (.ivorypack.json, type "ivory-personal") can rename
-// galaxies, add your own songs, and add special bosses with their own art and
-// exclusive Shop rewards. It's saved with your progress (and in backups).
+// galaxies, add your own songs, add special bosses with their own art and
+// exclusive Shop rewards, and add your own pets (drawn from a look, see critters.js). It's saved with your progress (and in backups).
 
 import { getState, saveState } from './store.js';
 
@@ -20,6 +20,8 @@ export const personalSongDefs = () => (pack() && Array.isArray(pack().songs) ? p
 export const personalBosses = () => (pack() && Array.isArray(pack().bosses) ? pack().bosses : []);
 /** Boss portrait art (an SVG string) by key. */
 export const personalArt = (key) => (pack() && pack().art && pack().art[key]) || '';
+/** Pets from the pack: [{ id, name, desc, look }] (look uses the critter recipes, e.g. base 'chibi'). */
+export const personalPets = () => (pack() && Array.isArray(pack().pets) ? pack().pets.filter((p) => p && /^pet-[\w-]+$/.test(p.id) && p.look) : []);
 /** Name overrides for exclusive Shop items. */
 export const personalItemName = (id) => (pack() && pack().items && pack().items[id] && pack().items[id].name) || null;
 

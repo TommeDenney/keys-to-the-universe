@@ -33,10 +33,12 @@ import { renderChallenges } from './screens/challenges.js';
 import { touch as touchChallenges } from './challenges.js';
 import { loadConstellations } from './constellations.js';
 import { mountMusicBar } from './screens/musicbar.js';
+import { registerPackPets } from './packpets.js';
 import { state as bgState, stopTabAmbient } from './audio/bgmusic.js';
 
 applyTheme();
 document.body.dataset.tabpos = settings.get('tabBar') || 'bottom';
+registerPackPets();
 applyCosmetics();
 touchChallenges();
 
