@@ -8,6 +8,7 @@ import { parseMidiFile } from '../music/midifile.js';
 import { finalizeSong } from '../music/song.js';
 import { library } from '../store.js';
 import { registerPieces } from './shop.js';
+import { quizLesson } from './quizzes.js';
 
 let pieces = [];
 const loaded = new Map(); // id → Song
@@ -123,7 +124,7 @@ export function loadCatalog() {
       const id = `g${i + 1}`;
       COURSE.push({
         id, title: g.title, subtitle: g.subtitle, color: g.color, graded: true,
-        lessons: [...list.slice(0, -1).map(pieceLesson), bossLesson(id, boss)],
+        lessons: [...list.slice(0, -1).map(pieceLesson), ...(quizLesson(id) ? [quizLesson(id)] : []), bossLesson(id, boss)],
       });
     });
   })();

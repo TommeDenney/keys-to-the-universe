@@ -25,7 +25,9 @@ function bonusStars(unitIndex) {
 /** Stars earned in a galaxy vs. what's needed (80%) to open the next one. */
 export function galaxyStars(unit) {
   const ui = COURSE.indexOf(unit);
-  const max = unit.lessons.length * 3; // planets, moons and the boss: 3 stars each
+  // Planets, moons and the boss: 3 stars each. A Knowledge Check counts once taken,
+  // so adding one never locks a galaxy you'd already earned your way past.
+  const max = unit.lessons.filter((l) => !l.quiz || progress.lesson(l.id)).length * 3;
   const earned = unit.lessons.reduce((a, l) => a + ((progress.lesson(l.id) || {}).stars || 0), 0);
   const bonus = bonusStars(ui);
   return { earned, bonus, total: Math.min(max, earned + bonus), max, needed: Math.ceil(max * 0.8) };

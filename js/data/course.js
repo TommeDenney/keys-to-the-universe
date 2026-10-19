@@ -392,6 +392,8 @@ export const COURSE = [
   },
 ];
 
+import { quizLesson } from './quizzes.js';
+
 // Boss battles: the last world of each galaxy. Pass (75%+, with the beat) to move on.
 const BOSSES = {
   u1: ['boss-u1', 'The Keeper of Middle C'],
@@ -407,6 +409,8 @@ const BOSSES = {
 for (const unit of COURSE) {
   const b = BOSSES[unit.id];
   if (!b || unit.lessons.some((l) => l.boss)) continue;
+  const quiz = quizLesson(unit.id); // the Knowledge Check comes just before the Guardian
+  if (quiz) unit.lessons.push(quiz);
   unit.lessons.push({ id: `boss-${unit.id}`, title: b[0] === 'fur-elise' ? 'Final Exam: F\u00fcr Elise' : 'Boss Battle', icon: '\u2694', song: b[0], boss: true, guardian: b[1], steps: [{ t: 'boss', song: b[0] }] });
 }
 

@@ -144,7 +144,7 @@ function buildSystems(unit) {
   const planets = [];
   for (const l of unit.lessons) {
     if (l.boss) continue;
-    const practiceOnly = !l.steps.some((s) => s.t === 'learn');
+    const practiceOnly = !l.quiz && !l.steps.some((s) => s.t === 'learn');
     const host = planets[planets.length - 1];
     if (practiceOnly && host && host.moons.length < 3) host.moons.push(l);
     else planets.push({ lesson: l, moons: [] });
@@ -354,11 +354,12 @@ function planetEl(p, gal, index, next) {
   const celebrate = rec && just && just.id === l.id && Date.now() - just.at < 120000;
   const el = h('div', {
     'data-lesson': l.id,
-    class: `planet ${rec ? 'done' : ''} ${open ? '' : 'locked'} ${isNext ? 'current' : ''} ${fx} ${!rec && fx === 'fx-restore' ? 'corrupt' : ''} ${celebrate ? 'celebrate' : ''}`,
+    class: `planet ${l.quiz ? 'quiz-world' : ''} ${rec ? 'done' : ''} ${open ? '' : 'locked'} ${isNext ? 'current' : ''} ${fx} ${!rec && fx === 'fx-restore' ? 'corrupt' : ''} ${celebrate ? 'celebrate' : ''}`,
     style: { '--off': `${side * (60 + (hash(l.id) % 4) * 28)}px`, '--size': `${size}px`, '--base': look.base, '--lift': `${look.lift}px`, '--bob': `${5 + (hash(l.id) % 5)}s` },
   });
   const orb = worldOrb(open ? 'a' : 'div', { class: 'orb', href: open ? `#/lesson/${l.id}` : null, 'aria-label': `${bodyName(l.id)}: ${l.title}` }, l.id, look, look.kind);
   if (!open) orb.append(h('span', { class: 'lock' }, icon('lock')));
+  else if (l.quiz && !rec) orb.append(h('span', { class: 'quiz-badge' }, '?'));
   if (rec && fx === 'fx-check') orb.append(h('span', { class: 'flag' }, icon('check')));
   if (!rec && fx === 'fx-restore') orb.append(h('i', { class: 'corruption' }));
   if (celebrate) setTimeout(() => progress.clearJustCompleted(), 4000);
@@ -395,7 +396,7 @@ function planetEl(p, gal, index, next) {
   if (isNext) body.append(h('div', { class: 'ship', html: shipSVG() }), petEl());
   el.append(body);
   el.append(h('div', { class: 'body-label' }, [
-    h('small', {}, `Planet ${bodyName(l.id)}`),
+    h('small', {}, l.quiz ? `Space Academy ${bodyName(l.id)}` : `Planet ${bodyName(l.id)}`),
     h('b', {}, l.title),
     rec ? h('span', { class: 'mini-stars', html: starsHTML(rec.stars) }) : null,
   ]));

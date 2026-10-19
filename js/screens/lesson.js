@@ -64,7 +64,7 @@ export function learnVisual(st, visual) {
     visual.append(cv);
     requestAnimationFrame(() => {
       const sh = new Sheet(cv, { static: true, clef: st.clef === 'bass' ? 'bass' : 'treble' });
-      sh.setSong(song, { showNames: true });
+      sh.setSong(song, { showNames: st.names !== false });
       sh.scroll = 0;
       sh.draw(0);
       out.ro = new ResizeObserver(() => { sh.resize(); sh.scroll = 0; sh.draw(0); });
@@ -121,6 +121,7 @@ export async function openLesson(id, onClose) {
   let player = null;
   let kb = null;
   let ro = null;
+  let quizOff = null; // a Knowledge Check question listening to your piano
 
   const bar = h('div', { class: 'ls-steps' }, steps.map(() => h('i')));
   const body = h('div', { class: 'ls-body' });
@@ -139,6 +140,7 @@ export async function openLesson(id, onClose) {
     if (player) { player.destroy(); player = null; }
     if (kb) { kb.destroy(); kb = null; }
     if (ro) { ro.disconnect(); ro = null; }
+    if (quizOff) { quizOff(); quizOff = null; }
   }
 
   let finished = false; // completed this world in this visit (the map flies you onward)
@@ -169,6 +171,7 @@ export async function openLesson(id, onClose) {
     const st = steps[i];
     if (st.t === 'learn') showLearn(st);
     else if (st.t === 'boss') showBoss(st);
+    else if (st.t === 'quiz') showQuiz(st);
     else showPlay(st);
   }
 
@@ -210,6 +213,125 @@ export async function openLesson(id, onClose) {
       onFinish: (r) => { results[i] = r.stars; },
       actions: (r) => [{ label: r.stars > 0 ? 'Continue' : 'Skip for now', primary: r.stars > 0, fn: next }],
     });
+  }
+
+  // Knowledge Check: a few questions about this galaxy. 60% passes (1 star),
+  // 75% earns 2 stars and 90% earns 3.
+  function showQuiz(st) {
+    const shuffle = (a) => { a = [...a]; for (let k = a.length - 1; k > 0; k--) { const j = Math.floor(Math.random() * (k + 1)); [a[k], a[j]] = [a[j], a[k]]; } return a; };
+    const qs = shuffle(st.questions).map((q) => (q.c ? { ...q, opts: shuffle(q.c.map((t, k) => ({ t, right: k === 0 }))) } : q));
+    let qi = 0;
+    let right = 0;
+    input.activate();
+
+    const ask = () => {
+      teardown();
+      body.replaceChildren();
+      updateBar();
+      if (qi >= qs.length) return result();
+      const q = qs[qi];
+      const vis = h('div', { class: 'learn-visual quiz-visual' });
+      const why = h('div', { class: 'quiz-why' });
+      const nextBtn = h('button', { class: 'btn primary big quiz-next', onclick: () => { qi++; ask(); } }, [qi === qs.length - 1 ? 'See my score' : 'Next question', icon('chevron')]);
+      let answered = false;
+      const answer = (ok) => {
+        if (answered) return;
+        answered = true;
+        if (ok) right++;
+        audio.chime(ok ? 'good' : 'bad');
+        why.className = `quiz-why show ${ok ? 'ok' : 'no'}`;
+        why.replaceChildren(h('b', {}, ok ? 'Correct! ' : 'Not quite. '), q.why || '');
+        nextBtn.classList.add('show');
+        nextBtn.focus();
+      };
+      let controls;
+      if (q.c) {
+        controls = h('div', { class: 'quiz-choices' }, q.opts.map((o) => {
+          const b = h('button', { class: 'quiz-choice', onclick: () => {
+            if (answered) return;
+            b.classList.add(o.right ? 'right' : 'wrong');
+            controls.querySelector('[data-right]').classList.add('right');
+            answer(o.right);
+          } }, o.t);
+          if (o.right) b.dataset.right = '1';
+          return b;
+        }));
+      } else {
+        // Play it: on your piano (MIDI or mic) or the keys below. Chords: all notes within a moment.
+        const need = new Set(q.any ? q.play.map((m) => m % 12) : q.play);
+        const [lo, hi] = q.range || [48, 84];
+        const kbEl = h('div', { class: 'learn-kb' });
+        const status = h('p', { class: 'quiz-status muted' }, q.play.length > 1 ? 'Press all the notes together.' : 'Play it on your piano, or tap the key.');
+        controls = h('div', { class: 'quiz-play' }, [status, kbEl]);
+        requestAnimationFrame(() => { kb = new Keyboard(kbEl, { lo, hi, labels: 'c', onKey: (m, down) => input.touch(m, down) }); });
+        const held = new Map();
+        let misses = 0;
+        quizOff = input.on((type, e) => {
+          if (type !== 'noteon' || answered) return;
+          const k = q.any ? e.midi % 12 : e.midi;
+          if (!need.has(k)) {
+            if (kb) kb.flash(e.midi, 'bad', 400);
+            misses++;
+            if (misses >= 3) {
+              if (kb) kb.setHints(new Map(q.play.map((m) => [m, { hand: 'R' }])));
+              answer(false);
+            } else status.textContent = `Not that one. Try again (${3 - misses} ${3 - misses === 1 ? 'try' : 'tries'} left).`;
+            return;
+          }
+          if (kb) kb.flash(e.midi, 'good', 400);
+          const now = performance.now();
+          held.set(k, now);
+          if ([...need].every((x) => held.has(x) && now - held.get(x) < 1500)) answer(true);
+          else if (need.size > 1) status.textContent = 'Keep going: press the rest of the chord.';
+        });
+      }
+      body.append(h('div', { class: 'ls-center' }, h('div', { class: 'card learn-card quiz-card pop' }, [
+        h('div', { class: 'quiz-head' }, [
+          h('div', { class: 'eyebrow' }, `Knowledge Check \u00b7 ${lesson.unit.title}`),
+          h('div', { class: 'quiz-count' }, `${qi + 1} / ${qs.length}`),
+        ]),
+        h('div', { class: 'quiz-dots' }, qs.map((_, k) => h('i', { class: k < qi ? 'done' : k === qi ? 'cur' : '' }))),
+        h('h2', {}, q.q),
+        q.staff ? vis : null,
+        controls,
+        why,
+        h('div', { class: 'row end' }, [nextBtn]),
+      ])));
+      if (q.staff) {
+        const v = learnVisual({ staff: q.staff, clef: q.clef, key: q.key, names: false }, vis);
+        ro = { disconnect: () => v.ro && v.ro.disconnect() };
+      }
+    };
+
+    const result = () => {
+      const score = right / qs.length;
+      const stars = score >= 0.9 ? 3 : score >= 0.75 ? 2 : score >= 0.6 ? 1 : 0;
+      const pct = Math.round(score * 100);
+      if (stars) {
+        results[i] = stars;
+        body.append(h('div', { class: 'ls-center' }, h('div', { class: 'card result-card quiz-result pop' }, [
+          h('div', { class: 'eyebrow' }, 'Knowledge Check passed'),
+          h('div', { class: 'quiz-score' }, [h('b', {}, `${right}/${qs.length}`), h('span', {}, `${pct}%`)]),
+          h('div', { class: 'stars-big', html: starsHTML(stars, 3, true) }),
+          h('p', { class: 'muted' }, stars === 3 ? 'Brilliant! You really know this galaxy.' : stars === 2 ? 'Great job! Score 90% or more for 3 stars.' : 'You passed! Score 75% or more for 2 stars.'),
+          h('div', { class: 'row' }, [
+            h('button', { class: 'btn ghost', onclick: () => showQuiz(st) }, [icon('restart'), 'Try again']),
+            h('button', { class: 'btn primary', onclick: next }, ['Continue', icon('chevron')]),
+          ]),
+        ])));
+        return;
+      }
+      body.append(h('div', { class: 'ls-center' }, h('div', { class: 'card result-card quiz-result pop' }, [
+        h('div', { class: 'eyebrow' }, 'Almost there'),
+        h('div', { class: 'quiz-score low' }, [h('b', {}, `${right}/${qs.length}`), h('span', {}, `${pct}%`)]),
+        h('p', {}, 'You need 60% to pass. Every answer is in the Handbook: look over this galaxy’s notes, then try again.'),
+        h('div', { class: 'row' }, [
+          h('button', { class: 'btn ghost', onclick: () => { close(); location.hash = '#/handbook'; } }, [icon('book'), 'Open the Handbook']),
+          h('button', { class: 'btn primary', onclick: () => showQuiz(st) }, [icon('restart'), 'Try again']),
+        ]),
+      ])));
+    };
+    ask();
   }
 
   function showBoss(st) {

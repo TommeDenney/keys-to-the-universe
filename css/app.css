@@ -1852,3 +1852,35 @@ p.unlock-cond { font-size: 15px; color: var(--ink-2); margin: 4px 0; }
 .cover.has-snip .price-tag { position: relative; top: auto; bottom: auto; right: auto; flex: none; margin-left: auto; z-index: 1; }
 .cover.has-snip .price-tag { order: 2; }
 .cover.has-snip .tag { flex: none; }
+
+/* Knowledge Check */
+.quiz-card { max-width: 720px; width: 100%; }
+.quiz-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.quiz-count { font-weight: 900; color: var(--ink-3); }
+.quiz-dots { display: flex; gap: 6px; margin: 10px 0 4px; }
+.quiz-dots i { flex: 1; height: 6px; border-radius: 99px; background: var(--line, #E5E3F0); }
+.quiz-dots i.done { background: var(--c, var(--brand)); opacity: .55; }
+.quiz-dots i.cur { background: var(--c, var(--brand)); }
+.quiz-card h2 { margin: 14px 0 12px; }
+.quiz-visual .mini-staff { height: 230px; max-width: 460px; margin: 0 auto; display: block; }
+.quiz-choices { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin: 8px 0; }
+@media (max-width: 560px) { .quiz-choices { grid-template-columns: 1fr; } }
+.quiz-choice { appearance: none; border: 2px solid var(--line, #E5E3F0); background: var(--surface, #fff); color: var(--ink); font: inherit; font-weight: 800; font-size: 16px; text-align: left; padding: 14px 16px; border-radius: 14px; cursor: pointer; transition: transform .2s var(--spring), border-color .2s, background .2s; }
+.quiz-choice:hover { border-color: var(--c, var(--brand)); }
+.quiz-choice:active { transform: scale(.97); }
+.quiz-choice.right { border-color: #16A34A; background: #DCFCE7; color: #14532D; }
+.quiz-choice.wrong { border-color: #DC2626; background: #FEE2E2; color: #7F1D1D; animation: shake .35s; }
+.quiz-play .learn-kb { margin-top: 6px; }
+.quiz-why { display: none; margin: 12px 0 4px; padding: 12px 14px; border-radius: 12px; font-weight: 600; }
+.quiz-why.show { display: block; animation: rise .3s var(--ease) both; }
+.quiz-why.ok { background: #DCFCE7; color: #14532D; }
+.quiz-why.no { background: #FEF3C7; color: #78350F; }
+.quiz-next { visibility: hidden; }
+.quiz-next.show { visibility: visible; }
+.quiz-score { display: flex; align-items: baseline; justify-content: center; gap: 10px; margin: 8px 0; }
+.quiz-score b { font-size: 46px; font-weight: 900; }
+.quiz-score span { font-size: 20px; font-weight: 800; color: var(--ink-3); }
+.quiz-score.low b { color: #B45309; }
+/* Space Academy worlds on the map */
+.planet.quiz-world .orb { box-shadow: 0 0 0 3px rgba(255,255,255,.55), 0 0 26px rgba(196,181,253,.7); }
+.quiz-badge { position: absolute; inset: 0; display: grid; place-items: center; font-size: calc(var(--size, 80px) * .42); font-weight: 900; color: #fff; text-shadow: 0 2px 10px rgba(0,0,0,.6); z-index: 3; pointer-events: none; }
