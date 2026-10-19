@@ -1,4 +1,5 @@
 import { rewardLook } from '../data/rewards.js';
+import { avatarSVG as pilotAvatar } from './avatar.js';
 // Spaceship designs (SVG). The `.flame` / `.glow` parts animate via CSS.
 
 const SHIPS = {
@@ -71,9 +72,35 @@ const SHIPS = {
     <defs><linearGradient id="gold" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#FDE68A"/><stop offset=".5" stop-color="#F59E0B"/><stop offset="1" stop-color="#B45309"/></linearGradient></defs>`,
 };
 
-export function shipSVG(id = 'ship-classic') {
+/**
+ * A ship. With `pilot` (an avatar) your explorer shows in the ship's window, each
+ * ship with its own seat: behind the cockpit glass, in the saucer's dome, riding the
+ * whale, inside the bubble, sitting in the sleigh...
+ */
+export function shipSVG(id = 'ship-classic', { pilot = null, uid = 'p' } = {}) {
   const look = !SHIPS[id] && rewardLook(id);
-  return `<svg viewBox="0 0 64 64" aria-hidden="true"><g class="ship-body">${look ? buildShip(id, look) : SHIPS[id] || SHIPS['ship-classic']}</g></svg>`;
+  const seat = pilot ? seatFor(id, look) : null;
+  const body = look ? buildShip(id, look) : SHIPS[id] || SHIPS['ship-classic'];
+  return `<svg viewBox="0 0 64 64" aria-hidden="true"><g class="ship-body">${body}${seat ? pilotWindow(pilot, seat, `${uid}${id.replace(/\W/g, '')}`) : ''}</g></svg>`;
+}
+
+// Where the pilot sits on each ship: centre and radius of the window (64×64 art).
+const SEATS = {
+  'ship-classic': [32, 22, 6], 'ship-ufo': [32, 24, 7.5], 'ship-comet': [32, 30, 9], 'ship-piano': [32, 16, 5],
+  'ship-fighter': [32, 29, 5], 'ship-seed': [32, 20, 5.5], 'ship-whale': [36, 13, 6, 'ride'], 'ship-guitar': [32, 40, 5],
+  'ship-bubble': [32, 33, 10], 'ship-gold': [32, 22, 6],
+};
+const SHAPE_SEATS = { rocket: [32, 30, 5.5], bird: [32, 19, 4.6], baton: [32, 10, 4.4], manta: [32, 18, 4.6], orb: [32, 22, 4.8], sail: [32, 39, 5.4, 'ride'], arrow: [32, 26, 4.2], glider: [32, 18, 4.4], train: [32, 26, 5], sleigh: [35, 23, 6, 'ride'] };
+function seatFor(id, look) {
+  if (SEATS[id]) return SEATS[id];
+  return look ? SHAPE_SEATS[look.shape] || SHAPE_SEATS.rocket : SEATS['ship-classic'];
+}
+function pilotWindow(pilot, [cx, cy, r, mode], uid) {
+  const inner = pilotAvatar(pilot, uid).replace(/^<svg viewBox="0 0 100 100" width="\d+" height="\d+"/, `<svg x="${cx - r}" y="${cy - r}" width="${r * 2}" height="${r * 2}" viewBox="0 0 100 100"`);
+  // Riding in the open (whale, sail, sleigh): no glass. Otherwise a glass pane with a shine.
+  return mode === 'ride'
+    ? `${inner}<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="rgba(255,255,255,.7)" stroke-width=".6"/>`
+    : `${inner}<circle cx="${cx}" cy="${cy}" r="${r}" fill="rgba(186,230,253,.18)" stroke="#1E1B3A" stroke-width="1.4"/><path d="M${cx - r * 0.6} ${cy - r * 0.2} Q${cx - r * 0.5} ${cy - r * 0.7} ${cx} ${cy - r * 0.75}" stroke="#fff" stroke-width=".9" fill="none" opacity=".75"/>`;
 }
 
 // ---- Achievement ships, drawn from a few parameters (js/data/rewards.js) ---------------

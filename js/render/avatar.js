@@ -72,7 +72,7 @@ export function avatarSVG(a, { size = 100, uid = 'av' } = {}) {
   out.push((L.eyes[a.eyes] || L.eyes['eyes-round']).draw(ctx));
   out.push(`<ellipse cx="37" cy="54" rx="4" ry="2.4" fill="${blush}" opacity=".55"/><ellipse cx="63" cy="54" rx="4" ry="2.4" fill="${blush}" opacity=".55"/>`);
   out.push(`<path d="M48.5 51.5 Q50 53.5 51.5 51.5" stroke="${shade}" stroke-width="1.4" fill="none" stroke-linecap="round"/>`);
-  out.push(`<path d="M44 58 Q50 62.5 56 58" stroke="${lip}" stroke-width="2.2" fill="none" stroke-linecap="round"/>`);
+  out.push((L.expr[a.expr] || L.expr['expr-smile']).draw(ctx));
   out.push((L.facial[a.facial] || L.facial['facial-none']).draw(ctx));
   out.push((L.glasses[a.glasses] || L.glasses['glasses-none']).draw(ctx));
   // Hair in front, then hats
@@ -123,6 +123,27 @@ export const LOOKS = {
     'facial-curlystache': { draw: (c) => `<path d="M50 56 Q44 53 40 56 Q37 58 38 54 M50 56 Q56 53 60 56 Q63 58 62 54" stroke="${c.hairC}" stroke-width="2.4" fill="none" stroke-linecap="round"/>` },
   },
   clothes: {},
+  // Facial expressions: the mouth (and sometimes a wink, brows or cheeks).
+  expr: {
+    'expr-smile': { draw: (c) => `<path d="M44 58 Q50 62.5 56 58" stroke="${c.lip}" stroke-width="2.2" fill="none" stroke-linecap="round"/>` },
+    'expr-grin': { draw: (c) => `<path d="M42 57 Q50 66 58 57 Z" fill="#3B0D0D"/><path d="M43.4 57.6 Q50 60 56.6 57.6 L56 59 Q50 61 44 59 Z" fill="#fff"/><path d="M42 57 Q50 66 58 57" stroke="${c.lip}" stroke-width="1.6" fill="none"/>` },
+    'expr-laugh': { draw: (c) => `<path d="M42 56 Q50 69 58 56 Z" fill="#3B0D0D"/><ellipse cx="50" cy="62.5" rx="4" ry="2" fill="#F87171"/><path d="M42 56 H58" stroke="#fff" stroke-width="1.8"/>` },
+    'expr-calm': { draw: (c) => `<path d="M45 59 Q50 60.5 55 59" stroke="${c.lip}" stroke-width="2.2" fill="none" stroke-linecap="round"/>` },
+    'expr-smirk': { draw: (c) => `<path d="M45 59.5 Q51 61 56 57" stroke="${c.lip}" stroke-width="2.2" fill="none" stroke-linecap="round"/>` },
+    'expr-surprised': { draw: () => `<ellipse cx="50" cy="60" rx="3.2" ry="4" fill="#3B0D0D"/>` },
+    'expr-tongue': { draw: (c) => `<path d="M43 57.5 Q50 63 57 57.5" stroke="${c.lip}" stroke-width="2.2" fill="none" stroke-linecap="round"/><path d="M48 60 Q50 66 53 60 Z" fill="#F472B6"/>` },
+    'expr-wink': { draw: (c) => `<path d="M44 58 Q50 63 56 58" stroke="${c.lip}" stroke-width="2.2" fill="none" stroke-linecap="round"/><ellipse cx="59" cy="45" rx="4.6" ry="5" fill="${c.SK}"/><path d="M55.5 45.5 Q59 43 62.5 45.5" stroke="#1E1B3A" stroke-width="2" fill="none" stroke-linecap="round"/>` },
+    'expr-shy': { draw: (c) => `<path d="M46.5 59 Q50 61 53.5 59" stroke="${c.lip}" stroke-width="2" fill="none" stroke-linecap="round"/><ellipse cx="37" cy="54" rx="5" ry="3" fill="${c.blush}" opacity=".7"/><ellipse cx="63" cy="54" rx="5" ry="3" fill="${c.blush}" opacity=".7"/>` },
+    'expr-determined': { draw: (c) => `<path d="M45 59.5 H55" stroke="${c.lip}" stroke-width="2.4" stroke-linecap="round"/><path d="M37 37 L45 39.5 M63 37 L55 39.5" stroke="${c.hairC}" stroke-width="2.4" stroke-linecap="round"/>` },
+    'expr-singing': { draw: (c) => `<ellipse cx="50" cy="60" rx="4.4" ry="3.6" fill="#3B0D0D"/><path d="M62 54 l4 -6 v6" stroke="#FDE68A" stroke-width="1.6" fill="none"/><circle cx="61.5" cy="54.5" r="1.6" fill="#FDE68A"/>` },
+    // Seasonal
+    'expr-fangs': { draw: (c) => `<path d="M43 57.5 Q50 62 57 57.5" stroke="${c.lip}" stroke-width="2.2" fill="none" stroke-linecap="round"/><path d="M45.5 58.6 L46.6 62.4 L47.8 59.2 Z M52.2 59.2 L53.4 62.4 L54.5 58.6 Z" fill="#fff"/>` },
+    'expr-jackolantern': { draw: () => `<path d="M41 56 L44 59 L47 56.5 L50 59.5 L53 56.5 L56 59 L59 56 Q55 64 50 64 Q45 64 41 56 Z" fill="#F97316" stroke="#7C2D12" stroke-width=".8"/>` },
+    'expr-jolly': { draw: (c) => `<path d="M42 57 Q50 66 58 57 Z" fill="#3B0D0D"/><path d="M43.4 57.6 Q50 60 56.6 57.6 L56 59 Q50 61 44 59 Z" fill="#fff"/><circle cx="36" cy="54" r="4.4" fill="#F43F5E" opacity=".45"/><circle cx="64" cy="54" r="4.4" fill="#F43F5E" opacity=".45"/>` },
+    'expr-cozy': { draw: (c) => `<path d="M45 58.5 Q50 61.5 55 58.5" stroke="${c.lip}" stroke-width="2.2" fill="none" stroke-linecap="round"/><path d="M60 62 q2 -3 0 -6 q-2 -3 0 -6" stroke="#E2E8F0" stroke-width="1.2" fill="none" opacity=".75"/>` },
+    'expr-kiss': { draw: () => `<path d="M48 58 Q50 56 52 58 Q50 60.5 48 58 Z M48 60 Q50 62 52 60 Q50 63.5 48 60 Z" fill="#DB2777"/><path d="M60 52 C57 49 58 46 60 48 C62 46 63 49 60 52 Z" fill="#F472B6"/>` },
+    'expr-starstruck': { draw: (c) => `<path d="M43 57 Q50 65 57 57 Z" fill="#3B0D0D"/><path d="M38 40 l1 2.4 2.6.3 -2 1.7.6 2.6 -2.2-1.4 -2.2 1.4.6-2.6 -2-1.7 2.6-.3 Z M62 40 l1 2.4 2.6.3 -2 1.7.6 2.6 -2.2-1.4 -2.2 1.4.6-2.6 -2-1.7 2.6-.3 Z" fill="#FDE68A"/>` },
+  },
   glasses: {
     'glasses-none': { draw: () => '' },
     'glasses-round': { draw: () => `<circle cx="41" cy="45" r="6" fill="#fff" fill-opacity=".12" stroke="#1F2937" stroke-width="1.6"/><circle cx="59" cy="45" r="6" fill="#fff" fill-opacity=".12" stroke="#1F2937" stroke-width="1.6"/><path d="M47 45 H53 M35 44 L30 43 M65 44 L70 43" stroke="#1F2937" stroke-width="1.4"/>` },

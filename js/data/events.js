@@ -178,11 +178,11 @@ export const EVENT_ITEMS = [
   R('star-summer', 'summer', 'starc', 'Sunburst', 1100, 'Hot, golden summer stars.', { color: '#FBBF24', shift: '#F97316', glow: ['#FDE68A'] }),
   // ---- Explorer looks (profile picture) ----
   ...[
-    ['hat-pinkbeanie', 'pink', 'hat', 'Pink Ribbon Beanie', 1000], ['clothes-pinkribbon', 'pink', 'clothes', 'Pink Ribbon Tee', 1000],
-    ['hat-leafcrown', 'fall', 'hat', 'Autumn Leaf Crown', 1200], ['clothes-flannel', 'fall', 'clothes', 'Fall Flannel', 1000],
-    ['hat-witch', 'halloween', 'hat', 'Witch Hat', 1400], ['hat-pumpkin', 'halloween', 'hat', 'Pumpkin Cap', 1200], ['clothes-spooky', 'halloween', 'clothes', 'Pumpkin Sweater', 1000],
-    ['hat-santa', 'christmas', 'hat', 'Santa Hat', 1200], ['clothes-holiday', 'christmas', 'clothes', 'Holiday Sweater', 1000],
-    ['hat-earmuffs', 'winter', 'hat', 'Fluffy Earmuffs', 1000],
+    ['hat-pinkbeanie', 'pink', 'hat', 'Pink Ribbon Beanie', 1000], ['expr-kiss', 'pink', 'expr', 'Blown Kiss', 1000], ['clothes-pinkribbon', 'pink', 'clothes', 'Pink Ribbon Tee', 1000],
+    ['hat-leafcrown', 'fall', 'hat', 'Autumn Leaf Crown', 1200], ['expr-cozy', 'fall', 'expr', 'Cozy Cocoa Smile', 1000], ['clothes-flannel', 'fall', 'clothes', 'Fall Flannel', 1000],
+    ['hat-witch', 'halloween', 'hat', 'Witch Hat', 1400], ['expr-fangs', 'halloween', 'expr', 'Vampire Fangs', 1000], ['expr-jackolantern', 'halloween', 'expr', 'Jack-o\u2019-Lantern Grin', 1000], ['hat-pumpkin', 'halloween', 'hat', 'Pumpkin Cap', 1200], ['clothes-spooky', 'halloween', 'clothes', 'Pumpkin Sweater', 1000],
+    ['hat-santa', 'christmas', 'hat', 'Santa Hat', 1200], ['expr-jolly', 'christmas', 'expr', 'Jolly Cheeks', 1000], ['clothes-holiday', 'christmas', 'clothes', 'Holiday Sweater', 1000],
+    ['hat-earmuffs', 'winter', 'hat', 'Fluffy Earmuffs', 1000], ['expr-starstruck', 'newyear', 'expr', 'Starstruck', 1000],
   ].map(([id, event, part, name, price]) => ({ id, event, cat: 'avatar', part, name, price, desc: `${name} for your explorer. A seasonal rare.`, rare: true })),
 ];
 

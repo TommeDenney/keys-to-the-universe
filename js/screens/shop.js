@@ -102,13 +102,13 @@ export function renderShop(root, { inventory = false } = {}) {
           earnRow('Rogue-planet side quests', 'big rewards'),
         ]),
       ]),
-      ...CATEGORIES.map((c) => h('section', { class: 'shop-cat' }, [
+      ...CATEGORIES.map((c) => (c.id === 'avatar' ? avatarSections(c) : h('section', { class: 'shop-cat' }, [
         h('h2', {}, c.name),
         h('p', { class: 'muted' }, c.blurb),
         h('div', { class: 'shop-grid' }, SHOP.filter((it) => it.cat === c.id && !it.req && !it.event && (!it.exclusive || owns(it.id) || offered(it.id))).map(card)),
         SHOP.some((it) => it.cat === c.id && it.req) ? h('h3', { class: 'achv-head' }, [h('span', {}, '\u{1F3C6}'), ' Achievement rewards ', h('small', { class: 'muted' }, 'Earn the right, then buy with Stardust')]) : null,
         h('div', { class: 'shop-grid' }, SHOP.filter((it) => it.cat === c.id && it.req).map(card)),
-      ])),
+      ]))),
     ].filter(Boolean));
   };
 
@@ -137,6 +137,31 @@ export function renderShop(root, { inventory = false } = {}) {
         ]);
       }),
     ]);
+  }
+
+  /** Explorer looks, split into Skin, Hair, Outfits and Face sections. */
+  function avatarSections(c) {
+    const groups = [['Skin', ['skin']], ['Hair', ['hair']], ['Outfits', ['clothes', 'hat', 'glasses']], ['Face', ['expr', 'eyes', 'ears', 'facial']]];
+    const items = SHOP.filter((it) => it.cat === 'avatar' && !it.event);
+    return h('section', { class: 'shop-cat' }, [
+      h('h2', {}, c.name), h('p', { class: 'muted' }, c.blurb),
+      ...groups.map(([name, parts]) => {
+        const list = items.filter((it) => parts.includes(it.part));
+        if (!list.length) return null;
+        return h('div', { class: 'av-shop-group' }, [h('h3', { class: 'achv-head' }, [name, h('small', { class: 'muted' }, `  ${list.length} looks`)]), h('div', { class: 'shop-grid' }, list.map(card))]);
+      }),
+    ]);
+  }
+
+  /** Arrived from the explorer editor? Scroll to that item and make it glow. */
+  function focusRequested() {
+    let id = null;
+    try { id = sessionStorage.getItem('ivory.shopFocus'); sessionStorage.removeItem('ivory.shopFocus'); } catch { /* storage blocked */ }
+    if (!id) return;
+    setTimeout(() => {
+      const c = page.querySelector(`[data-item="${CSS.escape(id)}"]`);
+      if (c) { c.scrollIntoView({ block: 'center', behavior: 'smooth' }); c.classList.add('flash'); }
+    }, 350);
   }
 
   function earnRow(what, amt) {
@@ -200,7 +225,7 @@ export function renderShop(root, { inventory = false } = {}) {
 
   function fillPreview(it, el) {
     if (it.cat === 'ship') {
-      el.innerHTML = `<div class="ship-demo">${shipSVG(it.id)}</div>`;
+      el.innerHTML = `<div class="ship-demo">${shipSVG(it.id, { pilot: avatar(), uid: `s${it.id}` })}</div>`;
     } else if (it.cat === 'avatar') {
       el.append(h('div', { class: 'av-shop-demo', html: avatarSVG({ ...avatar(), [it.part]: it.id }, { size: 84, uid: `sh-${it.id}` }) }));
     } else if (it.cat === 'pet') {
@@ -246,5 +271,6 @@ export function renderShop(root, { inventory = false } = {}) {
   }
 
   draw();
+  focusRequested();
   return () => { kbs.forEach((k) => k.destroy()); stopTabAmbient(); clearTimeout(previewT); };
 }

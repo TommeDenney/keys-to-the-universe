@@ -79,19 +79,31 @@ export function starsHTML(n, max = 3, animate = false) {
   return out;
 }
 
+/**
+ * Notifications: small glowing "transmissions" that slide down from the top.
+ * kind: '' (info), 'ok' (good news), 'bad' (a problem). A leading emoji in the
+ * message becomes the icon. Tap to dismiss; at most three are shown at once.
+ */
+const TOAST_ICONS = { ok: '✦', bad: '⚠️', '': '\u{1F6F0}️' };
 export function toast(msg, kind = '') {
   let host = document.querySelector('.toast-host');
   if (!host) {
-    host = h('div', { class: 'toast-host' });
+    host = h('div', { class: 'toast-host', role: 'status', 'aria-live': 'polite' });
     document.body.appendChild(host);
   }
-  const t = h('div', { class: `toast ${kind}` }, msg);
+  let text = String(msg);
+  let ico = TOAST_ICONS[kind] ?? TOAST_ICONS[''];
+  const lead = text.match(/^(\p{Extended_Pictographic}(?:️|‍\p{Extended_Pictographic})*|[✦✨⏳☁])️?\s*/u);
+  if (lead) { ico = lead[1]; text = text.slice(lead[0].length); }
+  const ms = Math.min(6000, 2600 + text.length * 25);
+  const bar = h('i');
+  const t = h('div', { class: `toast ${kind}`, onclick: () => hide() }, [h('span', { class: 'toast-ico' }, ico), h('span', { class: 'toast-msg' }, text), h('span', { class: 'toast-time' }, bar)]);
   host.appendChild(t);
-  requestAnimationFrame(() => t.classList.add('show'));
-  setTimeout(() => {
-    t.classList.remove('show');
-    setTimeout(() => t.remove(), 400);
-  }, 3200);
+  while (host.children.length > 3) host.firstElementChild.remove();
+  requestAnimationFrame(() => { t.classList.add('show'); bar.style.transitionDuration = `${ms}ms`; bar.style.transform = 'scaleX(0)'; });
+  let gone = false;
+  const hide = () => { if (gone) return; gone = true; t.classList.remove('show'); t.classList.add('hide'); setTimeout(() => t.remove(), 400); };
+  setTimeout(hide, ms);
 }
 
 export function modal(content, { onClose } = {}) {

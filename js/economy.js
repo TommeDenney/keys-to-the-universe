@@ -95,13 +95,13 @@ export const backpay = () => {
   return b;
 };
 
-export function earn(amount, reason) {
+export function earn(amount, reason, { quiet = false } = {}) {
   if (!amount) return;
   const w = wallet();
   w.balance += amount;
   w.earned += amount;
   changed();
-  burst(amount, reason);
+  if (!quiet) burst(amount, reason);
 }
 
 export function spend(amount) {

@@ -27,6 +27,9 @@ import { rewardLook } from '../data/rewards.js';
 import { diveInto, surfaceInto, takeReturn, flyShip } from '../transitions.js';
 import { guardianArt } from '../render/guardians.js';
 import { avatarBadge } from './avatar.js';
+import { avatar } from '../profile.js';
+import { galaxyEmblem, GALAXY_KINDS } from '../render/galaxyart.js';
+import { giftReady, openDailyGift } from '../dailygift.js';
 
 // Moons currently on screen, animated by the cosmos loop (3D-ish orbits that pass behind their planet).
 let ORBITS = [];
@@ -174,7 +177,9 @@ export function renderUniverse(root) {
       h('div', { class: 'pill flame', title: 'Day streak' }, [icon('flame'), h('b', {}, String(progress.streak))]),
       h('div', { class: 'pill stars-pill', title: 'Stars' }, [icon('star'), h('b', {}, String(progress.totalStars))]),
       walletPill(),
+      giftReady() ? h('button', { class: 'pill gift-pill', title: 'Your daily gift is ready', onclick: (e) => openDailyGift(() => e.target.closest('.gift-pill')?.remove()) }, [h('span', {}, '\u{1F381}'), h('b', {}, 'Gift')]) : null,
       h('a', { class: 'pill hb-pill', href: '#/handbook', title: 'Handbook: every lesson explanation' }, [icon('book'), h('b', {}, 'Handbook')]),
+      h('a', { class: 'pill inv-pill', href: '#/arcade', title: 'Arcade: Endless, Boss Rush, Battle and mini games' }, [h('span', { class: 'inv-ico' }, '\u{1F579}\uFE0F'), h('b', {}, 'Arcade')]),
       h('a', { class: 'pill inv-pill', href: '#/inventory', title: 'Inventory: everything you own' }, [h('span', { class: 'inv-ico' }, '\u{1F392}'), h('b', {}, 'Inventory')]),
       fullscreenButton(),
     ]),
@@ -221,7 +226,7 @@ export function renderUniverse(root) {
     // Personal constellations (imported privately on this device) shine in their galaxy.
     for (const c of constellationsFor(unit.id)) sec.append(constellationEl(c, () => { root.replaceChildren(); renderUniverse(root); }));
     sec.append(h('div', { class: 'galaxy-head' }, [
-      h('div', { class: 'galaxy-emblem' }, [h('i'), h('i')]),
+      h('div', { class: 'galaxy-emblem', html: galaxyEmblem(GALAXY_KINDS[gi % GALAXY_KINDS.length], gal.neb) }),
       h('div', { class: 'grow' }, [
         h('div', { class: 'eyebrow' }, `Galaxy ${gi + 1}`),
         uDone === unit.lessons.length
@@ -273,7 +278,7 @@ export function renderUniverse(root) {
   });
 
   // Draw the travel routes once laid out (and on resize).
-  const drawRoutes = () => page.querySelectorAll('.bodies').forEach(drawRoute);
+  const drawRoutes = () => { page.querySelectorAll('.bodies').forEach(drawRoute); bakeMoonLight(page); };
   // Tapping a world dives into it.
   page.addEventListener('click', (e) => {
     const a = e.target.closest('a[href^="#/lesson/"]');
@@ -318,7 +323,8 @@ export function renderUniverse(root) {
 
   const cosmos = new Cosmos(canvas, root, sections);
   // Stars and Stardust follow you down the map once the header scrolls away.
-  const hud = h('div', { class: 'uni-hud', 'aria-hidden': 'true' }, [
+  const hud = h('div', { class: 'uni-hud' }, [
+    avatarBadge(40),
     h('div', { class: 'pill stars-pill', title: 'Stars' }, [icon('star'), h('b', {}, String(progress.totalStars))]),
     walletPill(),
   ]);
@@ -506,6 +512,65 @@ function guardianEl(l, gal, next) {
 }
 
 /** Move every moon along its orbit (called from the cosmos animation loop). */
+// ---- Moon phases, baked once from where the stars are ---------------------------
+// The planets don't move relative to their stars on the map, so lighting is worked
+// out once per layout: every nearby star (direction from the actual map positions,
+// strength falling off with distance, binaries counting double) lights each moon,
+// tinted with that star's colour. Each moon gets a table of shades for 48 points
+// around its orbit; animation just picks one.
+const TAU = Math.PI * 2;
+const PHASE_STEPS = 48;
+const STAR_LIGHT = {
+  yellow: ['#FFE8A3', 1], redgiant: ['#FF9A6B', 1.2], bluegiant: ['#9CC8FF', 1.4], whitedwarf: ['#F1F5FF', 0.8], orange: ['#FFC27A', 1],
+  binary: ['#FFE0A0', 1.6], pulsar: ['#B9E6FF', 0.9], magenta: ['#F5A3FF', 1], proto: ['#FFB38A', 0.8], emerald: ['#9CF5C4', 1],
+  aqua: ['#8AF0FF', 1], prism: ['#E9D5FF', 1.1], void: ['#A78BFA', 0.6], rosegold: ['#FFC9C2', 1],
+};
+const rgbOf = (hx) => [1, 3, 5].map((i) => parseInt(hx.slice(i, i + 2), 16)).join(',');
+
+function bakeMoonLight(page) {
+  const centre = (el) => { const r = el.getBoundingClientRect(); return [r.left + r.width / 2, r.top + r.height / 2]; };
+  const suns = [...page.querySelectorAll('.sun')].map((el) => {
+    const type = ([...el.classList].find((c) => c.startsWith('sun-')) || 'sun-yellow').slice(4);
+    const [tint, power] = STAR_LIGHT[type] || STAR_LIGHT.yellow;
+    return { pos: centre(el), tint: rgbOf(tint), power };
+  });
+  for (const o of ORBITS) {
+    const body = o.el.parentElement;
+    if (!body || !o.el.isConnected) continue;
+    const [px, py] = centre(body);
+    // The stars that light this moon: the strongest few, by distance.
+    const lights = suns.map((s) => {
+      const dx = s.pos[0] - px; const dy = s.pos[1] - py;
+      const d = Math.hypot(dx, dy);
+      return { ang: Math.atan2(dy, dx), w: s.power / (1 + (d / 420) ** 2), tint: s.tint };
+    }).filter((l) => l.w > 0.06).sort((a, b) => b.w - a.w).slice(0, 3);
+    if (!lights.length) { o.shades = null; continue; }
+    if (!o.shadeEl) { o.shadeEl = document.createElement('i'); o.shadeEl.className = 'moon-shade'; o.el.appendChild(o.shadeEl); }
+    const total = lights.reduce((s, l) => s + l.w, 0);
+    const bright = Math.min(1, total);
+    const key = lights[0];
+    o.shades = Array.from({ length: PHASE_STEPS }, (_, k) => {
+      const th = (k / PHASE_STEPS) * TAU;
+      // Where the moon sits around the planet on screen (same maths as the orbit).
+      const x = Math.cos(th) * o.r; const y = Math.sin(th) * o.r * o.k;
+      const mx = x * Math.cos(o.tilt) - y * Math.sin(o.tilt);
+      const my = x * Math.sin(o.tilt) + y * Math.cos(o.tilt);
+      const phi = Math.atan2(my, mx);
+      // Lit fraction: full when the moon is on the far side from a star, new when between.
+      let lit = 0;
+      for (const l of lights) lit += (l.w / total) * (1 - Math.cos(phi - l.ang)) / 2;
+      // Half-hidden behind the planet's own shadow? Keep a little of the night side.
+      const off = (1 - lit) * 1.15; // how far the lit disc slides towards the star
+      const cx = 50 + Math.cos(key.ang) * off * 50;
+      const cy = 50 + Math.sin(key.ang) * off * 50;
+      const night = Math.min(0.9, 0.72 + 0.18 * (1 - bright)); // farther from the stars = darker nights
+      // The lit disc (same size as the moon) slides towards the star; the rest is night.
+      return `radial-gradient(54% 54% at ${cx.toFixed(1)}% ${cy.toFixed(1)}%, rgba(${key.tint},${(0.28 * bright).toFixed(2)}) 0, rgba(${key.tint},0) 90%, rgba(6,6,24,${night.toFixed(2)}) 100%)`;
+    });
+    o.si = -1;
+  }
+}
+
 function updateOrbits(t) {
   for (const o of ORBITS) {
     const th = o.phase + (o.dir * Math.PI * 2 * t) / o.period;
@@ -516,6 +581,10 @@ function updateOrbits(t) {
     const front = Math.sin(th) > 0;
     const sc = 0.82 + 0.18 * (0.5 + 0.5 * Math.sin(th)); // a touch bigger when closer
     o.el.style.transform = `translate(-50%, -50%) translate(${xr.toFixed(1)}px, ${yr.toFixed(1)}px) scale(${sc.toFixed(3)})`;
+    if (o.shades) { // moon phase: precomputed, just pick the step for this point in the orbit
+      const step = Math.round((((th % TAU) + TAU) % TAU) / TAU * PHASE_STEPS) % PHASE_STEPS;
+      if (step !== o.si) { o.si = step; o.shadeEl.style.background = o.shades[step]; }
+    }
     if (o.front !== front) {
       o.front = front;
       o.el.style.zIndex = front ? '4' : '0';
@@ -677,8 +746,9 @@ export function fxRing(L) {
   return out;
 }
 
+let shipN = 0;
 function shipSVG() {
-  return skinSVG(equipped('ship'));
+  return skinSVG(equipped('ship'), { pilot: avatar(), uid: `sh${shipN++}` });
 }
 
 function oldShipSVG() {

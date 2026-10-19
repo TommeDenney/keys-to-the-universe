@@ -45,20 +45,18 @@ export function renderAvatar(root) {
     if (ev && !mine && !eventItemAvailable(it)) return null; // unreleased or gone seasonal rares stay hidden
     const rp = it.req && !mine ? reqProgress(it.req) : null;
     const thumb = h('span', { class: 'av-thumb', html: avatarSVG({ ...avatar(), [it.part]: it.id }, { size: 78, uid: `avt${uidN++}` }) });
-    const tag = mine ? null : ev ? h('span', { class: 'av-tag rare', style: { '--ev': ev.tint } }, `${ev.emoji} ${it.price.toLocaleString('en-US')} ${SYMBOL}`)
-      : rp && !rp.met ? h('span', { class: 'av-tag lock' }, ['\u{1F512} ', reqText(it.req)])
-      : h('span', { class: 'av-tag' }, `${it.price.toLocaleString('en-US')} ${SYMBOL}`);
+    // Not yours yet: a slightly darker preview that says how to get it.
+    const tag = mine ? null : rp && !rp.met ? h('span', { class: 'av-tag lock' }, ['\u{1F512} ', reqText(it.req)])
+      : h('span', { class: `av-tag ${ev ? 'rare' : ''}`, style: ev ? { '--ev': ev.tint } : {} }, `${ev ? `${ev.emoji} ` : '\u{1F6CD}\uFE0F '}Buy in the Shop \u00b7 ${it.price.toLocaleString('en-US')} ${SYMBOL}`);
     return h('button', {
       class: `av-opt ${on ? 'on' : ''} ${mine ? '' : 'locked'}`,
       title: it.name,
       onclick: () => {
         if (mine) { setAvatar({ [it.part]: it.id }); drawAll(); return; }
-        if (rp && !rp.met) { toast(`Unlock it first: ${reqText(it.req)}`, 'bad'); return; }
-        if (!confirm(`Buy ${it.name} for ${it.price.toLocaleString('en-US')} ${SYMBOL}?`)) return;
-        if (!buy(it)) { toast(`You need ${(it.price - balance()).toLocaleString('en-US')} more ${SYMBOL}.`, 'bad'); return; }
-        setAvatar({ [it.part]: it.id });
-        toast(`${it.name} unlocked!`, 'ok');
-        drawAll();
+        if (rp && !rp.met) { toast(`\u{1F512} ${it.name}: ${reqText(it.req)} to unlock it, then buy it in the Shop.`); return; }
+        // Take them to it in the Shop.
+        try { sessionStorage.setItem('ivory.shopFocus', it.id); } catch { /* storage blocked */ }
+        location.hash = '#/shop';
       },
     }, [thumb, h('small', {}, it.name), tag]);
   }

@@ -3,13 +3,21 @@
 // short recipe of parts (ears, markings, wings, tail...). 64×64 viewBox.
 
 const EYE = '#1E1B3A';
+/** Mix a colour towards a warm cream (keeps the hue, never greys it out). */
+function lighten(hx, k) {
+  const [r, g, b] = [1, 3, 5].map((i) => parseInt(hx.slice(i, i + 2), 16));
+  const to = [255, 247, 232];
+  return `#${[r, g, b].map((v, i) => Math.round(v + (to[i] - v) * k).toString(16).padStart(2, '0')).join('')}`;
+}
 
 export function critterSVG(id, L) {
   const gid = `k${id.replace(/\W/g, '')}`;
   const fur = L.fur || '#C8A27A';
   const belly = L.belly || '#FFF4E6';
   const acc = L.accent || '#8B5A2B';
-  const defs = `<defs><radialGradient id="${gid}" cx=".38" cy=".3" r=".85"><stop offset="0" stop-color="#fff" stop-opacity=".45"/><stop offset=".4" stop-color="${fur}"/><stop offset="1" stop-color="${fur}"/></radialGradient></defs>`;
+  // Shine: a lighter, warmer shade of the fur itself (white looks grey and ashy on warm colours).
+  const shine = lighten(fur, 0.32);
+  const defs = `<defs><radialGradient id="${gid}" cx=".38" cy=".3" r=".75"><stop offset="0" stop-color="${shine}"/><stop offset=".55" stop-color="${fur}"/><stop offset="1" stop-color="${fur}"/></radialGradient></defs>`;
   const F = `url(#${gid})`;
   const parts = [];
   const add = (s) => parts.push(s);

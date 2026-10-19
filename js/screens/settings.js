@@ -229,6 +229,9 @@ function backupRow() {
     try {
       const data = JSON.parse(await f.text());
       await restoreBackup(data);
+      // Signed in? The restored progress goes straight to Google Drive too.
+      const cloud = await import('../cloud.js');
+      if (cloud.account() && cloud.account().connected) { const r = await cloud.syncNow(); if (r.status === 'upload') toast('Restored progress saved to Google Drive \u2601\uFE0F', 'ok'); }
       toast('Progress restored \u2713', 'ok');
       setTimeout(() => location.reload(), 600);
     } catch (err) {

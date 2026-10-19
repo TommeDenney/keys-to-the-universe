@@ -7,7 +7,7 @@ import { LOOKS } from '../render/avatar.js';
 
 export const PARTS = [
   { id: 'skin', name: 'Skin' }, { id: 'hair', name: 'Hair' }, { id: 'eyes', name: 'Eyes' }, { id: 'ears', name: 'Ears' },
-  { id: 'facial', name: 'Facial hair' }, { id: 'glasses', name: 'Glasses' }, { id: 'clothes', name: 'Clothes' }, { id: 'hat', name: 'Hats & coverings' },
+  { id: 'expr', name: 'Expressions' }, { id: 'facial', name: 'Facial hair' }, { id: 'glasses', name: 'Glasses' }, { id: 'clothes', name: 'Clothes' }, { id: 'hat', name: 'Hats & coverings' },
 ];
 
 const HAIR_NAMES = [
@@ -48,6 +48,9 @@ export const AVATAR_ITEMS = [
   ...free('ears', [['ears-human', 'Ears'], ['ears-none', 'Hidden']]),
   A('ears-elf', 'ears', 'Pointed ears', 120), A('ears-cat', 'ears', 'Cat ears', 150), A('ears-bunny', 'ears', 'Bunny ears', 150), A('ears-bear', 'ears', 'Bear ears', 120), A('ears-antennae', 'ears', 'Antennae', 180), A('ears-fins', 'ears', 'Fins', 180), A('ears-robot', 'ears', 'Robot ears', 250, { kind: 'life', stat: 'flawless', goal: 5 }),
   ...free('facial', [['facial-none', 'None'], ['facial-stubble', 'Stubble'], ['facial-mustache', 'Mustache'], ['facial-goatee', 'Goatee'], ['facial-beard', 'Beard'], ['facial-fullbeard', 'Full beard'], ['facial-sideburns', 'Sideburns'], ['facial-curlystache', 'Curly mustache']]),
+  ...free('expr', [['expr-smile', 'Smile'], ['expr-grin', 'Big grin'], ['expr-calm', 'Calm'], ['expr-laugh', 'Laughing']]),
+  A('expr-smirk', 'expr', 'Smirk', 80), A('expr-surprised', 'expr', 'Surprised', 80), A('expr-tongue', 'expr', 'Silly tongue', 100), A('expr-wink', 'expr', 'Wink', 120),
+  A('expr-shy', 'expr', 'Shy', 100), A('expr-determined', 'expr', 'Determined', 150, { kind: 'guardians', goal: 5 }), A('expr-singing', 'expr', 'Singing along', 150, { kind: 'life', stat: 'mastered', goal: 3 }),
   ...free('glasses', [['glasses-none', 'None'], ['glasses-round', 'Round glasses'], ['glasses-square', 'Square glasses']]),
   A('glasses-cateye', 'glasses', 'Cat-eye glasses', 120), A('glasses-shades', 'glasses', 'Sunglasses', 150), A('glasses-heart', 'glasses', 'Heart shades', 150),
   ...free('clothes', [['clothes-tee', 'T-shirt'], ['clothes-hoodie', 'Hoodie'], ['clothes-sweater', 'Cozy sweater'], ['clothes-collar', 'Collared shirt'], ['clothes-dashiki', 'Dashiki']]),
@@ -56,7 +59,7 @@ export const AVATAR_ITEMS = [
   A('hat-headphones', 'hat', 'Headphones', 150), A('hat-flowers', 'hat', 'Flower crown', 150), A('hat-party', 'hat', 'Party hat', 120), A('hat-helmet', 'hat', 'Space helmet', 300, { kind: 'planets', goal: 25 }), A('hat-crown', 'hat', 'Royal crown', 600, { kind: 'boss', id: 'boss-g10' }),
 ];
 
-export const DEFAULT_AVATAR = { skin: 'skin-umber', hair: 'hair-afro', hairColor: '#1B1210', hlMode: 'off', hlColor: '#C68642', hlLen: 40, eyes: 'eyes-round', ears: 'ears-human', facial: 'facial-none', glasses: 'glasses-none', clothes: 'clothes-hoodie', clothesColor: '#6D28D9', hat: 'hat-none', bg: '#312E81' };
+export const DEFAULT_AVATAR = { skin: 'skin-umber', hair: 'hair-afro', hairColor: '#1B1210', hlMode: 'off', hlColor: '#C68642', hlLen: 40, expr: 'expr-smile', eyes: 'eyes-round', ears: 'ears-human', facial: 'facial-none', glasses: 'glasses-none', clothes: 'clothes-hoodie', clothesColor: '#6D28D9', hat: 'hat-none', bg: '#312E81' };
 export const HIGHLIGHT_COLORS = ['#C68642', '#E0A96D', '#F2C57C', '#F5E6B3', '#A23B2A', '#C0502E', '#7B1E3A', '#B45309', '#D9D9D9', '#F1F5F9', '#F472B6', '#A78BFA', '#38BDF8', '#34D399'];
 export const HAIR_COLORS = ['#0E0A09', '#1B1210', '#2B1A12', '#3B2416', '#55331F', '#6E4428', '#8A5A33', '#B07A45', '#D9A86C', '#E8C98A', '#A23B2A', '#C0502E', '#9CA3AF', '#F1F5F9', '#7C3AED', '#2563EB', '#DB2777', '#059669', '#F59E0B'];
 export const CLOTHES_COLORS = ['#6D28D9', '#2563EB', '#0891B2', '#059669', '#65A30D', '#CA8A04', '#EA580C', '#DC2626', '#DB2777', '#7C2D12', '#111827', '#475569', '#E2E8F0', '#F5E6CC'];

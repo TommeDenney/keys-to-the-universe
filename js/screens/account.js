@@ -20,11 +20,15 @@ function googleButton(label = 'Sign in with Google', remember) {
 export function maybeOfferSignIn() {
   if (!cloudConfigured() || account()) return;
   const st = getState();
-  if (st.settings && st.settings.signInOffered) return;
-  st.settings.signInOffered = true;
+  // Ask again about once a week (existing players too), until you sign in or say "don't ask".
+  if (st.settings.signInNever) return;
+  if (st.settings.signInOfferedAt && Date.now() - st.settings.signInOfferedAt < 7 * 864e5) return;
+  st.settings.signInOfferedAt = Date.now();
   saveState();
   openSignIn();
 }
+
+const hasLocalProgress = () => { const s = getState(); return Object.keys(s.lessons || {}).length > 0 || ((s.wallet && s.wallet.earned) || 0) > 0; };
 
 export function openSignIn() {
   let remember = true;
@@ -34,7 +38,11 @@ export function openSignIn() {
     h('p', {}, 'Sign in with Google to keep your progress, Stardust and collection safe in your own Google Drive, and pick up where you left off on any device. No password for this app: Google signs you in.'),
     googleButton('Sign in with Google', () => remember),
     h('label', { class: 'signin-remember' }, [h('input', { type: 'checkbox', checked: true, onchange: (e) => { remember = e.target.checked; } }), ' Remember this device for 30 days']),
-    h('button', { class: 'btn ghost', onclick: close }, 'Continue as a guest'),
+    hasLocalProgress() ? h('p', { class: 'signin-note' }, '\u2728 Your progress on this device comes with you: it\u2019s saved to your Drive when you sign in.') : null,
+    h('div', { class: 'row' }, [
+      h('button', { class: 'btn ghost', onclick: close }, 'Continue as a guest'),
+      h('button', { class: 'btn ghost sm', onclick: () => { getState().settings.signInNever = true; saveState(); close(); } }, 'Don\u2019t ask again'),
+    ]),
     h('p', { class: 'muted small' }, 'Playing as a guest saves on this device only. Under 13? Ask a parent or guardian to help you sign in. Your saves go to a "Keys to the Universe" folder in your Drive; the app can only see files it creates there.'),
   ])]);
 }

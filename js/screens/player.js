@@ -153,10 +153,10 @@ export class Player {
 
   reset() {
     this.stopAudio();
-    this.energy = 0.6;
+    this.energy = this.cfg.energy ?? 0.6; // arcade runs carry energy from section to section
     this.knockedOut = false;
     const ebar = this.el && this.el.querySelector('.energy i');
-    if (ebar) ebar.style.transform = 'scaleX(0.6)';
+    if (ebar) ebar.style.transform = `scaleX(${this.energy})`;
     this.sheet.state.clear();
     this.sheet.effects = [];
     this.hits = 0;
@@ -185,6 +185,7 @@ export class Player {
 
   showStart() {
     const c = this.cfg;
+    if (c.autoStart) { setTimeout(() => { if (!this.destroyed) this.begin(); }, 30); return; } // arcade: straight in
     if (c.exam) {
       this.showOverlay(h('div', { class: 'card start-card boss-card pop' }, [
         h('div', { class: 'boss-emblem' }, [h('i'), h('i'), h('span', {}, '\u2694')]),
@@ -424,6 +425,7 @@ export class Player {
       const grade = bestD <= PERFECT ? 'perfect' : bestD <= GOOD ? 'good' : 'ok';
       this.grades[grade]++;
       this.addEnergy(grade === 'perfect' ? 0.05 : grade === 'good' ? 0.035 : 0.02);
+      if (this.cfg.arcade && this.cfg.arcade.onHit) this.cfg.arcade.onHit(grade, best, early);
       this.hitNote(best);
       this.streak++;
       if (grade === 'perfect') this.sheet.popup(this.streak >= 10 ? `Perfect ×${this.streak}` : 'Perfect!', '#17B26A');
@@ -598,8 +600,9 @@ export class Player {
           if (!this.hitSet.has(n.id) && this.sheet.state.get(n.id) !== 'miss' && (this.beat - n.start) * this.spq > WINDOW) {
             this.sheet.state.set(n.id, 'miss');
             this.grades.miss++;
-            this.addEnergy(-0.1);
+            this.addEnergy(-(this.cfg.arcade && this.cfg.arcade.missCost != null ? this.cfg.arcade.missCost : 0.1));
             this.streak = 0;
+            if (this.cfg.arcade && this.cfg.arcade.onMiss) this.cfg.arcade.onMiss(n);
           }
         }
         this.setTimedTargets();
@@ -685,6 +688,7 @@ export class Player {
     if (this.mode === 'timed' && stars >= 1 && total && this.grades.miss === 0) track('flawless');
     if (stars === 3) track('threeStar');
     if (this.cfg.onFinish) this.cfg.onFinish(result);
+    if (this.cfg.arcade && this.cfg.arcade.noResult) return; // the arcade shows its own results
     this.showResult(result);
   }
 

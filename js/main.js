@@ -24,9 +24,11 @@ import { SHOP } from './data/shop.js';
 import { renderBadges } from './screens/badges.js';
 import { renderAbout } from './screens/about.js';
 import { renderAvatar } from './screens/avatar.js';
+import { renderArcade } from './screens/arcade.js';
 import { startAccount, startAutoSave, syncNow, account } from './cloud.js';
 import { maybeOfferSignIn, openProfile, chooseSave, celebrateBirthday } from './screens/account.js';
 import { profile, claimBirthday } from './profile.js';
+import { giftReady, openDailyGift } from './dailygift.js';
 import { renderChallenges } from './screens/challenges.js';
 import { touch as touchChallenges } from './challenges.js';
 import { loadConstellations } from './constellations.js';
@@ -86,6 +88,14 @@ async function route() {
     main.replaceChildren();
     main.scrollTop = 0;
     cleanup = renderInventory(main);
+    return;
+  }
+  if (name === 'arcade') {
+    setActiveTab('learn');
+    main.replaceChildren();
+    main.scrollTop = 0;
+    stopTabAmbient();
+    cleanup = renderArcade(main) || null;
     return;
   }
   if (name === 'avatar') {
@@ -162,7 +172,9 @@ Promise.all([loadCatalog(), loadConstellations(), accountReady]).then(async ([, 
   initAchievements({ toast, items: () => SHOP });
   onWallet(() => checkAchievements());
   checkAchievements();
-  await afterAccount(acct || {});
+  // The daily gift comes first, then anything account-related.
+  if (giftReady() && settings.get('onboarded')) openDailyGift(() => afterAccount(acct || {}));
+  else await afterAccount(acct || {});
 });
 
 async function afterAccount(acct) {
