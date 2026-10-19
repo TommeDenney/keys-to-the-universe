@@ -93,6 +93,15 @@ export function renderShop(root) {
         previewT = setTimeout(() => { stopAmbient(); b.classList.remove('on'); }, 12000);
       } }, [icon('ear'), it.id === 'amb-none' ? 'Silence' : 'Preview']);
       el.append(h('div', { class: `amb-art ${it.id}` }), b);
+    } else if (it.cat === 'starc') {
+      const d = h('div', { class: `star-demo starc-${it.id.slice(5)}`, html: '<span class="star on"><svg viewBox="0 0 24 24"><path d="M12 2.8l2.8 5.8 6.3.9-4.6 4.4 1.1 6.3L12 17.2l-5.6 3 1.1-6.3L2.9 9.5l6.3-.9z" fill="currentColor"/></svg></span>'.repeat(3) });
+      el.append(d);
+    } else if (it.cat === 'trail') {
+      const glyph = it.id === 'trail-notes' ? '\u266A \u266B \u2669 ' : it.id === 'trail-stars' ? '\u2726 ' : '';
+      el.innerHTML = `<svg viewBox="0 0 200 90" class="route ${it.id}" style="width:100%;height:100%"><path id="p-${it.id}" d="M10 70 C60 70 60 20 110 20 S170 70 190 30" class="route-glow"/><path d="M10 70 C60 70 60 20 110 20 S170 70 190 30" class="route-dash"/>${glyph ? `<text class="route-text"><textPath href="#p-${it.id}">${glyph.repeat(12)}</textPath></text>` : ''}</svg>`;
+    } else if (it.cat === 'sheet') {
+      const th = { 'sheet-classic': ['#fff', '#262340', '#B9B6CC'], 'sheet-parchment': ['#F6ECD6', '#3B2F25', '#C9B79A'], 'sheet-night': ['#17152E', '#ECEAF8', '#4C4874'], 'sheet-blueprint': ['#0F3D70', '#EAF3FF', '#5E8EC4'] }[it.id];
+      el.innerHTML = `<svg viewBox="0 0 200 90" style="width:100%;height:100%"><rect width="200" height="90" fill="${th[0]}"/>${[25, 35, 45, 55, 65].map((y) => `<line x1="10" x2="190" y1="${y}" y2="${y}" stroke="${th[2]}"/>`).join('')}${[[50, 50], [80, 40], [110, 45], [140, 30], [170, 55]].map(([x, y]) => `<ellipse cx="${x}" cy="${y}" rx="6" ry="4.5" fill="${th[1]}" transform="rotate(-20 ${x} ${y})"/><line x1="${x + 5.5}" x2="${x + 5.5}" y1="${y}" y2="${y - 28}" stroke="${th[1]}" stroke-width="1.6"/>`).join('')}</svg>`;
     } else if (it.cat === 'kb') {
       const k = h('div', { class: `kb-demo kbt-${it.id.slice(3)}` });
       el.append(k);

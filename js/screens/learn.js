@@ -2,7 +2,8 @@
 
 import { h, icon, starsHTML } from '../ui.js';
 import { COURSE, allLessons } from '../data/course.js';
-import { progress, settings } from '../store.js';
+import { progress, settings, getState } from '../store.js';
+import { QUESTS } from '../data/quests.js';
 import { installCard, fullscreenButton } from './install.js';
 import { walletPill } from '../economy.js';
 import { challengesCard } from './challenges.js';
@@ -14,11 +15,45 @@ function furthestDone(list) {
   return f;
 }
 
+/** Bonus stars from rogue planets (side quests) drifting after this galaxy. */
+function bonusStars(unitIndex) {
+  const quests = (getState().wallet && getState().wallet.quests) || {};
+  return QUESTS.filter((q) => q.after === unitIndex + 1 && quests[q.id]).length * 3;
+}
+
+/** Stars earned in a galaxy vs. what's needed (80%) to open the next one. */
+export function galaxyStars(unit) {
+  const ui = COURSE.indexOf(unit);
+  const max = unit.lessons.length * 3; // planets, moons and the boss: 3 stars each
+  const earned = unit.lessons.reduce((a, l) => a + ((progress.lesson(l.id) || {}).stars || 0), 0);
+  const bonus = bonusStars(ui);
+  return { earned, bonus, total: Math.min(max, earned + bonus), max, needed: Math.ceil(max * 0.8) };
+}
+
 export function lessonUnlocked(id) {
   if (settings.get('unlockAll')) return true;
   const list = allLessons();
   const i = list.findIndex((l) => l.id === id);
-  return i <= 0 || !!progress.lesson(list[i - 1].id) || i <= furthestDone(list);
+  if (i <= 0 || i <= furthestDone(list)) return true; // never re-lock progress you've made
+  if (!progress.lesson(list[i - 1].id)) return false;
+  // First world of a galaxy: the previous galaxy needs 80% of its stars.
+  const unit = list[i].unit;
+  if (unit.lessons[0].id === id) {
+    const prev = COURSE[COURSE.indexOf(COURSE.find((u) => u.id === unit.id)) - 1];
+    if (prev) { const g = galaxyStars(prev); if (g.total < g.needed) return false; }
+  }
+  return true;
+}
+
+/** If your next world is behind a star gate, say which galaxy needs more stars. */
+export function starGate() {
+  const list = allLessons();
+  const first = list.find((l) => !progress.lesson(l.id));
+  if (!first || lessonUnlocked(first.id) || first.unit.lessons[0].id !== first.id) return null;
+  const prev = COURSE[COURSE.indexOf(first.unit) - 1];
+  if (!prev) return null;
+  const g = galaxyStars(prev);
+  return g.total < g.needed ? { from: prev, to: first.unit, ...g, missing: g.needed - g.total } : null;
 }
 
 export function nextLesson() {

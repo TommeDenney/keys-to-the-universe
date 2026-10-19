@@ -7,6 +7,10 @@ export const SHOP = [
   { id: 'ship-comet', cat: 'ship', name: 'Comet Rider', price: 200, desc: 'Ride a blazing comet with a glowing tail.' },
   { id: 'ship-piano', cat: 'ship', name: 'Grand Piano Rocket', price: 300, desc: 'A rocket with keys down its side.' },
   { id: 'ship-fighter', cat: 'ship', name: 'Starfighter', price: 400, desc: 'Sleek wings and twin blue engines.' },
+  { id: 'ship-divine', cat: 'ship', name: 'Divine Seedship', price: 0, exclusive: 'Defeat Divinae, Ascended', desc: 'A living seed-pod ship wrapped in leaves and blossoms. Exclusive.' },
+  { id: 'ship-whale', cat: 'ship', name: 'Space Whale', price: 350, desc: 'A gentle whale swimming between the stars.' },
+  { id: 'ship-guitar', cat: 'ship', name: 'Galaxy Guitar', price: 450, desc: 'Fly a starry guitar. Endless possibilities.' },
+  { id: 'ship-bubble', cat: 'ship', name: 'Bubble Pod', price: 250, desc: 'A shimmering soap-bubble pod.' },
   { id: 'ship-gold', cat: 'ship', name: 'Golden Shuttle', price: 600, desc: 'For true champions. Shiny.' },
 
   // Learn-tab ambience (procedurally generated, soft attacks so the mic ignores it)
@@ -14,12 +18,16 @@ export const SHOP = [
   { id: 'amb-nebula', cat: 'amb', name: 'Nebula Drone', price: 120, desc: 'Slow, warm, drifting space pads.' },
   { id: 'amb-lofi', cat: 'amb', name: 'Lo-fi Orbit', price: 200, desc: 'Mellow electric-piano chords with gentle vinyl crackle.' },
   { id: 'amb-choir', cat: 'amb', name: 'Cosmic Choir', price: 250, desc: 'Airy voices from a faraway cathedral.' },
+  { id: 'amb-ocean', cat: 'amb', name: 'Ocean Waves', price: 150, desc: 'Slow waves washing on an alien shore.' },
+  { id: 'amb-dream', cat: 'amb', name: 'Dream Box', price: 220, desc: 'A sleepy music box floating in space.' },
   { id: 'amb-shimmer', cat: 'amb', name: 'Starfield Shimmer', price: 200, desc: 'High, glittering swells like starlight.' },
 
   // Planet completion effects
   { id: 'fx-check', cat: 'fx', name: 'Check Mark', price: 0, desc: 'A simple green check on completed worlds.' },
   { id: 'fx-supernova', cat: 'fx', name: 'Supernova', price: 250, desc: 'Completed worlds explode in a golden burst and glow forever after.' },
   { id: 'fx-heavenly', cat: 'fx', name: 'Heavenly', price: 300, desc: 'A halo, light rays and soft white clouds around every world you finish.' },
+  { id: 'fx-galaxy', cat: 'fx', name: 'Spiral Galaxy', price: 350, desc: 'Completed worlds spin up their own little galaxy arms.' },
+  { id: 'fx-notes', cat: 'fx', name: 'Orbiting Notes', price: 300, desc: 'Rings of music notes circle every world you finish.' },
   { id: 'fx-restore', cat: 'fx', name: 'Restoration', price: 400, desc: 'Unvisited worlds are corrupted. Complete them to heal them back to life.' },
   { id: 'fx-bloom', cat: 'fx', name: 'Divinae\u2019s Bloom', price: 0, exclusive: 'Defeat The Nature Goddess Divinae', desc: 'Completed worlds bloom with vines and flowers. Exclusive: earned, never bought.' },
 
@@ -29,6 +37,9 @@ export const SHOP = [
   { id: 'kb-wood', cat: 'kb', name: 'Upright Wood', price: 150, desc: 'Warm wood tones like an old upright.' },
   { id: 'kb-pastel', cat: 'kb', name: 'Pastel', price: 150, desc: 'Soft rainbow pastels.' },
   { id: 'kb-neon', cat: 'kb', name: 'Neon', price: 200, desc: 'Glowing synthwave outlines.' },
+  { id: 'kb-ocean', cat: 'kb', name: 'Ocean', price: 180, desc: 'Sea-glass whites and deep-sea sharps.' },
+  { id: 'kb-sunset', cat: 'kb', name: 'Sunset', price: 180, desc: 'Warm peach to violet, like dusk.' },
+  { id: 'kb-galaxy', cat: 'kb', name: 'Galaxy', price: 300, desc: 'Keys full of stars.' },
   { id: 'kb-glass', cat: 'kb', name: 'Glass', price: 250, desc: 'Frosted glass keys.' },
 
   // Key press effects
@@ -37,7 +48,32 @@ export const SHOP = [
   { id: 'press-ripple', cat: 'press', name: 'Ripple', price: 120, desc: 'Rings ripple out from your fingertips.' },
   { id: 'press-stars', cat: 'press', name: 'Starburst', price: 200, desc: 'Tiny stars burst upward.' },
   { id: 'press-rainbow', cat: 'press', name: 'Rainbow', price: 200, desc: 'Every key lights up in a different colour.' },
+  { id: 'press-hearts', cat: 'press', name: 'Hearts', price: 150, desc: 'Little hearts float up from each key.' },
+  { id: 'press-notes', cat: 'press', name: 'Music Notes', price: 180, desc: 'Notes fly up as you play.' },
+  { id: 'press-lightning', cat: 'press', name: 'Lightning', price: 280, desc: 'Crackling bolts on every key.' },
   { id: 'press-fire', cat: 'press', name: 'Flames', price: 250, desc: 'Flames lick up from each key.' },
+
+  // Completion star colours
+  { id: 'star-gold', cat: 'starc', name: 'Gold', price: 0, desc: 'Classic golden stars.' },
+  { id: 'star-silver', cat: 'starc', name: 'Silver', price: 100, desc: 'Cool, polished silver.' },
+  { id: 'star-rose', cat: 'starc', name: 'Rose Quartz', price: 150, desc: 'Soft pink crystal.' },
+  { id: 'star-emerald', cat: 'starc', name: 'Emerald', price: 150, desc: 'Deep green gems.' },
+  { id: 'star-sapphire', cat: 'starc', name: 'Sapphire', price: 150, desc: 'Brilliant blue.' },
+  { id: 'star-cosmic', cat: 'starc', name: 'Cosmic Violet', price: 250, desc: 'Glowing violet with a nebula sheen.' },
+  { id: 'star-rainbow', cat: 'starc', name: 'Rainbow', price: 350, desc: 'Stars that shimmer through every colour.' },
+
+  // Route trails (the path between planets on the Learn map)
+  { id: 'trail-dots', cat: 'trail', name: 'Dotted', price: 0, desc: 'A twinkling dotted route.' },
+  { id: 'trail-comet', cat: 'trail', name: 'Comet', price: 150, desc: 'A bright, glowing comet trail.' },
+  { id: 'trail-rainbow', cat: 'trail', name: 'Rainbow', price: 250, desc: 'A shifting rainbow road.' },
+  { id: 'trail-notes', cat: 'trail', name: 'Music Notes', price: 200, desc: 'Your route is written in notes.' },
+  { id: 'trail-stars', cat: 'trail', name: 'Stardust', price: 200, desc: 'A path of little stars.' },
+
+  // Sheet music themes (the paper in the player)
+  { id: 'sheet-classic', cat: 'sheet', name: 'Classic', price: 0, desc: 'Crisp white paper.' },
+  { id: 'sheet-parchment', cat: 'sheet', name: 'Parchment', price: 150, desc: 'Warm, old-world manuscript paper.' },
+  { id: 'sheet-night', cat: 'sheet', name: 'Night', price: 200, desc: 'Dark paper, light notes: easy on the eyes.' },
+  { id: 'sheet-blueprint', cat: 'sheet', name: 'Blueprint', price: 200, desc: 'Engineer\u2019s blue with white ink.' },
 ];
 
 export const CATEGORIES = [
@@ -46,6 +82,9 @@ export const CATEGORIES = [
   { id: 'amb', name: 'Ambience', blurb: 'Background sound on the Learn tab.' },
   { id: 'kb', name: 'Keyboard themes', blurb: 'The look of the on-screen keyboard.' },
   { id: 'press', name: 'Key presses', blurb: 'Effects when keys are played.' },
+  { id: 'starc', name: 'Star colours', blurb: 'The colour of the stars you earn.' },
+  { id: 'trail', name: 'Route trails', blurb: 'The path between planets on the Learn map.' },
+  { id: 'sheet', name: 'Sheet music themes', blurb: 'The paper your music is printed on.' },
 ];
 
 export const IMPORT_COST = 80;

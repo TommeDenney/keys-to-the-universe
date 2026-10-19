@@ -218,7 +218,7 @@ export const SONG_DEFS = [
   // ---- Boss battles: original test pieces, one per galaxy ----
   { id: 'boss-u1', title: 'Primera Trial', composer: 'Ivory test piece', level: 1, bpm: 84, pos: { R: 'C4' }, tags: ['Boss'], about: 'C, D and E with mixed rhythms. Keep the beat!',
     rh: 'C4 D4 E4 C4 | E4 D4 C4/2 | C4 C4 D4 D4 | E4/1 | E4 D4 C4 D4 | E4 E4 D4/2 | C4/8 D4/8 E4/8 D4/8 C4 E4 | C4/1 |' },
-  { id: 'boss-u2', title: 'Pentara Trial', composer: 'Ivory test piece', level: 2, bpm: 92, pos: { R: 'C4' }, tags: ['Boss'], about: 'All five fingers, eighth notes, a dotted rhythm and rests.',
+  { id: 'boss-u2', title: 'Divine Trial', composer: 'Ivory test piece', level: 2, bpm: 92, pos: { R: 'C4' }, tags: ['Boss'], about: 'All five fingers, eighth notes, a dotted rhythm and rests.',
     rh: 'C4 E4 G4/2 | F4 E4 D4 r | E4/4. F4/8 G4 E4 | D4/2 r/2 | G4 F4/8 E4/8 D4 C4 | E4/2. D4 | C4 D4 E4 F4 | G4/2 C4/2 |' },
   { id: 'boss-u3', title: 'Octavia Trial', composer: 'Ivory test piece', level: 2, bpm: 88, tags: ['Boss'], about: 'The whole octave: thumb under, A and B, and back down.',
     rh: 'C4@1 D4@2 E4@3 F4@1 | G4@2 A4@3 B4@4 C5@5 | C5@5 B4@4 A4@3 G4@2 | A4/2 G4/2 | E4@1 G4@2 A4@3 C5@5 | B4@4 A4@3 G4@2/2 | F4@1 A4@3 G4@2 E4@1 | C4@1/1 |' },

@@ -13,6 +13,7 @@ import { sliceSong, buildEvents, handsLabel } from '../music/song.js';
 import { spellMidi, noteName } from '../music/theory.js';
 import { openCalibration } from './calibrate.js';
 import { track } from '../challenges.js';
+import { hold as holdBg, release as releaseBg } from '../audio/bgmusic.js';
 import { applySound, SOUNDS, appVoice } from '../sound.js';
 
 const PERFECT = 0.1;
@@ -34,6 +35,7 @@ export class Player {
   constructor(container, cfg) {
     this.cfg = { hands: 'both', mode: 'wait', tempo: 1, ...cfg };
     Player.current = this;
+    holdBg();
     applySound(cfg.song && cfg.song.instrument);
     this.container = container;
     this.mode = this.cfg.mode;
@@ -787,7 +789,7 @@ export class Player {
     this.destroyed = true;
     // Practice time counts toward challenges (capped so an idle screen doesn't farm minutes).
     if (this.playStart) track('minutes', Math.min(30, (performance.now() - this.playStart) / 60000));
-    if (Player.current === this) Player.current = null;
+    if (Player.current === this) { Player.current = null; releaseBg(); }
     applySound();
     cancelAnimationFrame(this.raf);
     clearTimeout(this.chordTimer);

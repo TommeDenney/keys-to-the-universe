@@ -151,6 +151,7 @@ export function renderSettings(root) {
       h('h3', {}, [icon('star'), 'Progress']),
       rowItem('Unlock all lessons', 'Skip ahead if you already know the basics.', toggle('unlockAll')),
       backupRow(),
+      constellationRow(),
       rowItem('Reset progress', 'Clears stars, streak and lesson progress on this device.', h('button', { class: 'btn ghost danger', onclick: () => modal((close) => [
         h('h2', {}, 'Reset all progress?'), h('p', {}, 'This can’t be undone.'),
         h('div', { class: 'row' }, [h('button', { class: 'btn ghost', onclick: close }, 'Cancel'), h('button', { class: 'btn primary danger', onclick: () => { progress.reset(); close(); toast('Progress reset'); } }, 'Reset')]),
@@ -162,6 +163,32 @@ export function renderSettings(root) {
     ]),
   );
   return () => { cancelAnimationFrame(raf); unsub(); offMic(); };
+}
+
+function constellationRow() {
+  const status = h('span', { class: 'badge' }, '\u2026');
+  import('../constellations.js').then(async ({ loadConstellations }) => {
+    const list = await loadConstellations();
+    status.textContent = list.length ? `${list.length} constellations \u00b7 ${list.filter((c) => c.unlocked).length} unlocked` : 'None imported';
+    status.className = `badge ${list.length ? 'ok' : ''}`;
+  });
+  const fileIn = h('input', { type: 'file', class: 'hidden', onchange: async (e) => {
+    const f = e.target.files[0];
+    if (!f) return;
+    try {
+      const { importPack } = await import('../constellations.js');
+      const n = await importPack(f);
+      toast(`${n} constellations added to your universe \u2728`, 'ok');
+      status.textContent = `${n} constellations imported`;
+    } catch (err) {
+      toast(err.message || 'Couldn\u2019t read that pack.', 'bad');
+    }
+  } });
+  return h('div', { class: 'sub-card' }, [
+    h('div', { class: 'sub-head' }, [h('b', {}, 'Personal constellations'), status]),
+    h('p', { class: 'muted small' }, 'Import a private constellation pack (.ivorypack.json). Its pictures stay on this device only and appear as constellations in their galaxies.'),
+    h('div', { class: 'row', style: { justifyContent: 'flex-start' } }, [h('button', { class: 'btn ghost sm', onclick: () => fileIn.click() }, [icon('upload'), 'Import constellation pack']), fileIn]),
+  ]);
 }
 
 function backupRow() {

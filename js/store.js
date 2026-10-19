@@ -167,9 +167,10 @@ export async function storageStatus() {
 /** Everything worth keeping, as one JSON object (progress, settings, imported music). */
 export async function makeBackup() {
   const scores = await library.all();
+  const constellations = await constellationsDB.all();
   state.lastBackup = Date.now();
   save();
-  return { app: 'ivory', version: 1, createdAt: new Date().toISOString(), state: JSON.parse(JSON.stringify(state)), scores };
+  return { app: 'ivory', version: 1, createdAt: new Date().toISOString(), state: JSON.parse(JSON.stringify(state)), scores, constellations };
 }
 
 export async function restoreBackup(data) {
@@ -177,6 +178,7 @@ export async function restoreBackup(data) {
   for (const k of Object.keys(state)) delete state[k];
   Object.assign(state, { settings: {}, lessons: {}, songs: {}, streak: { day: null, count: 0 } }, data.state);
   for (const rec of data.scores || []) await library.put(rec);
+  for (const rec of data.constellations || []) await constellationsDB.put(rec);
   changed();
 }
 
@@ -188,8 +190,12 @@ let dbp = null;
 function db() {
   if (!dbp) {
     dbp = new Promise((ok, fail) => {
-      const req = indexedDB.open('ivory', 1);
-      req.onupgradeneeded = () => req.result.createObjectStore('scores', { keyPath: 'id' });
+      const req = indexedDB.open('ivory', 2);
+      req.onupgradeneeded = () => {
+        const d = req.result;
+        if (!d.objectStoreNames.contains('scores')) d.createObjectStore('scores', { keyPath: 'id' });
+        if (!d.objectStoreNames.contains('constellations')) d.createObjectStore('constellations', { keyPath: 'id' });
+      };
       req.onsuccess = () => ok(req.result);
       req.onerror = () => fail(req.error);
     });
@@ -197,16 +203,25 @@ function db() {
   return dbp;
 }
 
-async function tx(mode, fn) {
+async function tx(mode, fn, storeName = 'scores') {
   const d = await db();
   return new Promise((ok, fail) => {
-    const t = d.transaction('scores', mode);
-    const store = t.objectStore('scores');
+    const t = d.transaction(storeName, mode);
+    const store = t.objectStore(storeName);
     const r = fn(store);
     t.oncomplete = () => ok(r && r.result);
     t.onerror = () => fail(t.error);
   });
 }
+
+/** Personal constellations (private photos imported on this device only). */
+export const constellationsDB = {
+  async all() {
+    try { return (await tx('readonly', (s) => s.getAll(), 'constellations')) || []; } catch { return []; }
+  },
+  async put(rec) { return tx('readwrite', (s) => s.put(rec), 'constellations'); },
+  async remove(id) { return tx('readwrite', (s) => s.delete(id), 'constellations'); },
+};
 
 export const library = {
   async all() {

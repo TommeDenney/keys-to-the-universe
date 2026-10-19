@@ -22,7 +22,7 @@ export const REWARD = {
 function wallet() {
   const st = getState();
   if (!st.wallet) {
-    st.wallet = { balance: 0, earned: 0, owned: ['ship-classic', 'fx-check', 'kb-classic', 'press-glow', 'amb-none'], equipped: { ship: 'ship-classic', fx: 'fx-check', kb: 'kb-classic', press: 'press-glow', amb: 'amb-none' }, songs: [], daily: null, quests: {} };
+    st.wallet = { balance: 0, earned: 0, owned: ['ship-classic', 'fx-check', 'kb-classic', 'press-glow', 'amb-none', 'trail-dots', 'sheet-classic'], equipped: { ship: 'ship-classic', fx: 'fx-check', kb: 'kb-classic', press: 'press-glow', amb: 'amb-none', trail: 'trail-dots', sheet: 'sheet-classic' }, songs: [], daily: null, quests: {} };
     // Credit progress made before Stardust existed.
     let back = 0;
     for (const rec of Object.values(st.lessons || {})) back += REWARD.lessonBase + REWARD.lessonPerStar * (rec.stars || 0);
@@ -46,8 +46,9 @@ function changed() {
 }
 
 export const balance = () => wallet().balance;
-export const owns = (id) => wallet().owned.includes(id);
-export const equipped = (cat) => wallet().equipped[cat];
+const DEFAULTS = { ship: 'ship-classic', fx: 'fx-check', kb: 'kb-classic', press: 'press-glow', amb: 'amb-none', trail: 'trail-dots', sheet: 'sheet-classic', starc: 'star-gold' };
+export const equipped = (cat) => wallet().equipped[cat] || DEFAULTS[cat];
+export const owns = (id) => wallet().owned.includes(id) || Object.values(DEFAULTS).includes(id);
 export const backpay = () => {
   const w = wallet();
   const b = w.backpay || 0;

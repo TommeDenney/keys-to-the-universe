@@ -8,7 +8,7 @@
 import { h, icon, starsHTML } from '../ui.js';
 import { COURSE, allLessons } from '../data/course.js';
 import { progress } from '../store.js';
-import { lessonUnlocked, nextLesson } from './learn.js';
+import { lessonUnlocked, nextLesson, galaxyStars, starGate } from './learn.js';
 import { installCard, fullscreenButton } from './install.js';
 import { worldTextures, WORLD_KINDS } from '../render/worlds.js';
 import { songNow, pieceMeta } from '../data/catalog.js';
@@ -17,7 +17,9 @@ import { shipSVG as skinSVG } from '../render/ships.js';
 import { challengesCard, openQuest } from './challenges.js';
 import { QUESTS } from '../data/quests.js';
 import { questDone } from '../economy.js';
-import { divinaeEl, DIVINAE } from './divinae.js';
+import { divinaeEl, FORMS as DIVINAE_FORMS } from './divinae.js';
+import { constellationsFor, constellationEl } from '../constellations.js';
+import { navFocus } from '../nav.js';
 
 // Moons currently on screen, animated by the cosmos loop (3D-ish orbits that pass behind their planet).
 let ORBITS = [];
@@ -26,7 +28,7 @@ let ORBITS = [];
 
 const GALAXIES = {
   u1: { name: 'Primera', style: 'twinkle', top: '#0B0B2B', bottom: '#1A1550', neb: ['#5B6CFF', '#9B7BFF', '#3BC9FF'], star: '#FFFFFF' },
-  u2: { name: 'Pentara', style: 'sparkle', top: '#120A2E', bottom: '#2A1259', neb: ['#8B5CF6', '#EC4899', '#6366F1'], star: '#F3E8FF' },
+  u2: { name: 'Divine', style: 'sparkle', top: '#120A2E', bottom: '#2A1259', neb: ['#8B5CF6', '#EC4899', '#6366F1'], star: '#F3E8FF' },
   u3: { name: 'Octavia', style: 'bokeh', top: '#1B0A26', bottom: '#3D0F45', neb: ['#EC4899', '#F472B6', '#A855F7'], star: '#FFE4F1' },
   u4: { name: 'Basso Spiral', style: 'embers', top: '#1A0C08', bottom: '#3B1608', neb: ['#F97316', '#EF4444', '#F59E0B'], star: '#FFD7A8' },
   u5: { name: 'Gemini Cluster', style: 'twins', top: '#06141F', bottom: '#0B2E2A', neb: ['#10B981', '#3B82F6', '#22D3EE'], star: '#E0FFF6' },
@@ -148,7 +150,7 @@ export function renderUniverse(root) {
   const lessons = allLessons();
   const done = lessons.filter((l) => progress.lesson(l.id)).length;
   const next = nextLesson();
-  const canvas = h('canvas', { class: 'cosmos', 'aria-hidden': 'true' });
+  const canvas = h('div', { class: 'cosmos', 'aria-hidden': 'true' });
   const page = h('div', { class: 'page uni-page' });
   const wrap = h('div', { class: 'universe' }, [canvas, page]);
   root.append(wrap);
@@ -177,7 +179,17 @@ export function renderUniverse(root) {
         h('h2', {}, `${bodyName(next.id, false)}: ${next.title}`),
         h('p', {}, done === 0 ? 'Every musician starts with one note. Launch to the first planet and meet Middle C.' : `${done} of ${lessons.length} worlds visited. Keep exploring!`),
       ]),
-      h('a', { class: 'btn primary big', href: `#/lesson/${next.id}` }, [icon('play'), done === 0 ? 'Launch' : 'Fly there']),
+      h('button', { class: 'btn primary big', onclick: () => flyTo(page) }, [icon('play'), done === 0 ? 'Launch' : 'Fly there']),
+    ]));
+  } else if (starGate()) {
+    const gate = starGate();
+    page.append(h('section', { class: 'uni-next gate-card' }, [
+      h('div', { class: 'uni-next-ship', html: shipSVG() }),
+      h('div', { class: 'grow' }, [
+        h('div', { class: 'eyebrow' }, 'Star gate'),
+        h('h2', {}, `Collect ${gate.missing} more \u2605 in the ${galaxyOf(gate.from).name} Galaxy`),
+        h('p', {}, `The way to the ${galaxyOf(gate.to).name} Galaxy opens at ${gate.needed}/${gate.max} stars (you have ${gate.total}). Replay worlds for more stars, or conquer a rogue planet for a +3 bonus.`),
+      ]),
     ]));
   } else {
     page.append(h('section', { class: 'uni-next' }, [h('div', { class: 'grow' }, [h('div', { class: 'eyebrow' }, 'Universe explored'), h('h2', {}, 'You visited every world!'), h('p', {}, 'Keep playing songs from the library, or import your own music.')])]));
@@ -191,6 +203,8 @@ export function renderUniverse(root) {
     const uDone = unit.lessons.filter((l) => progress.lesson(l.id)).length;
     const sec = h('section', { class: 'galaxy', style: { '--g1': gal.neb[0], '--g2': gal.neb[1], '--g3': gal.neb[2] } });
     sec._gal = gal;
+    // Personal constellations (imported privately on this device) shine in their galaxy.
+    for (const c of constellationsFor(unit.id)) sec.append(constellationEl(c, () => { root.replaceChildren(); renderUniverse(root); }));
     sec.append(h('div', { class: 'galaxy-head' }, [
       h('div', { class: 'galaxy-emblem' }, [h('i'), h('i')]),
       h('div', { class: 'grow' }, [
@@ -198,14 +212,23 @@ export function renderUniverse(root) {
         h('h2', {}, `${gal.name} Galaxy`),
         h('p', {}, unit.subtitle),
       ]),
-      h('div', { class: 'galaxy-count' }, [h('b', {}, `${uDone}/${unit.lessons.length}`), h('span', {}, 'worlds')]),
+      (() => {
+        const g = galaxyStars(unit);
+        const ok = g.total >= g.needed;
+        return h('div', { class: `galaxy-count ${ok ? 'gate-open' : ''}` }, [
+          h('b', {}, `${uDone}/${unit.lessons.length}`), h('span', {}, 'worlds'),
+          h('div', { class: 'gate' }, [h('i', { style: { width: `${Math.min(100, (g.total / g.max) * 100)}%` } }), h('em', { style: { left: `${(g.needed / g.max) * 100}%` } })]),
+          h('small', {}, `\u2605 ${g.total}/${g.max}${g.bonus ? ` (incl. +${g.bonus} bonus)` : ''} \u00b7 ${ok ? 'next galaxy open' : `${g.needed} needed`}`),
+        ]);
+      })(),
     ]));
     buildSystems(unit).forEach((sys, si) => {
       const sysEl = h('div', { class: 'system' });
       sysEl._sys = si;
+      const star = starType(`${unit.id}:${si}`);
       sysEl.append(h('div', { class: 'sun-wrap' }, [
-        h('div', { class: 'sun' }, [h('i', { class: 'corona' }), h('i', { class: 'core' })]),
-        h('div', { class: 'sun-label' }, [h('small', {}, `Solar system ${si + 1}`), h('b', {}, sys.name)]),
+        h('div', { class: `sun sun-${star.id}` }, star.parts()),
+        h('div', { class: 'sun-label' }, [h('small', {}, `Solar system ${si + 1} \u00b7 ${star.name}`), h('b', {}, sys.name)]),
       ]));
       const track = h('div', { class: 'bodies' });
       const path = svgEl('svg', { class: 'route', 'aria-hidden': 'true' });
@@ -216,8 +239,10 @@ export function renderUniverse(root) {
     });
     const boss = unit.lessons.find((l) => l.boss);
     if (boss) sec.append(guardianEl(boss, gal, next));
-    if (unit.id === DIVINAE.galaxy) sec.append(divinaeEl());
+    for (const f of DIVINAE_FORMS) if (unit.id === f.galaxy) sec.append(divinaeEl(f));
     page.append(sec);
+    // Divinae, Ascended roams the void as a rogue-planet boss.
+    for (const f of DIVINAE_FORMS) if (unit.id === f.rogueAfter) page.append(h('div', { class: 'rogue rogue-boss' }, [h('i', { class: 'rogue-trail' }), divinaeEl(f)]));
     // Rogue planets drift through the space between galaxies.
     for (const q of QUESTS.filter((x) => x.after === gi + 1)) page.append(roguePlanet(q, gal));
     sections.push(sec);
@@ -262,7 +287,7 @@ function planetEl(p, gal, index, next) {
   if (!rec && fx === 'fx-restore') orb.append(h('i', { class: 'corruption' }));
   if (celebrate) setTimeout(() => progress.clearJustCompleted(), 4000);
   const body = h('div', { class: 'planet-body' }, [
-    rec && fx !== 'fx-check' ? h('i', { class: 'fx-layer' }, fx === 'fx-bloom' ? Array.from({ length: 6 }, (_, i) => h('i', { class: 'bloom', style: { '--a': `${i * 60}deg` } })) : fx === 'fx-heavenly' ? [h('i', { class: 'halo' }), h('i', { class: 'rays' }), h('i', { class: 'cloud c1' }), h('i', { class: 'cloud c2' })] : fx === 'fx-supernova' ? [h('i', { class: 'nova-ring' }), h('i', { class: 'nova-ring r2' })] : [h('i', { class: 'healed' })]) : null,
+    rec && fx !== 'fx-check' ? h('i', { class: 'fx-layer' }, fx === 'fx-bloom' ? Array.from({ length: 6 }, (_, i) => h('i', { class: 'bloom', style: { '--a': `${i * 60}deg` } })) : fx === 'fx-galaxy' ? [h('i', { class: 'spiral' }), h('i', { class: 'spiral s2' })] : fx === 'fx-notes' ? [h('i', { class: 'note-ring', html: '<span>\u266A</span><span>\u266B</span><span>\u2669</span><span>\u266C</span>' })] : fx === 'fx-heavenly' ? [h('i', { class: 'halo' }), h('i', { class: 'rays' }), h('i', { class: 'cloud c1' }), h('i', { class: 'cloud c2' })] : fx === 'fx-supernova' ? [h('i', { class: 'nova-ring' }), h('i', { class: 'nova-ring r2' })] : [h('i', { class: 'healed' })]) : null,
     celebrate ? h('i', { class: 'celebration' }, Array.from({ length: 18 }, (_, i) => h('i', { style: { '--a': `${i * 20}deg`, '--d': `${60 + (i % 3) * 25}px` } }))) : null,
     look.ring ? h('i', { class: 'p-ring ring-back', style: { '--rt': `${look.tilt - 12}deg` } }) : null,
     orb,
@@ -321,6 +346,54 @@ function roguePlanet(q, gal) {
     h('div', { class: 'rogue-body' }, [h('i', { class: 'rogue-trail' }), orb]),
     h('div', { class: 'body-label' }, [h('small', {}, 'Rogue planet \u00b7 side quest'), h('b', {}, q.name), h('span', { class: 'g-sub' }, questDone(q.id) ? 'Conquered \u2713' : `Reward ${q.reward} \u2726`)]),
   ]);
+}
+
+/** Every solar system gets its own kind of star. */
+const STAR_TYPES = [
+  { id: 'yellow', name: 'Yellow dwarf' },
+  { id: 'redgiant', name: 'Red giant' },
+  { id: 'bluegiant', name: 'Blue giant' },
+  { id: 'whitedwarf', name: 'White dwarf' },
+  { id: 'orange', name: 'Orange dwarf' },
+  { id: 'binary', name: 'Binary stars' },
+  { id: 'pulsar', name: 'Pulsar' },
+  { id: 'magenta', name: 'Magenta star' },
+  { id: 'proto', name: 'Protostar' },
+  { id: 'emerald', name: 'Emerald star' },
+  { id: 'aqua', name: 'Aqua star' },
+  { id: 'prism', name: 'Prism star' },
+  { id: 'void', name: 'Void star' },
+  { id: 'rosegold', name: 'Rose-gold star' },
+];
+// A fixed rotation through all nine types: even spread, no neighbours alike.
+const STAR_ORDER = [0, 9, 2, 12, 1, 5, 10, 3, 7, 13, 4, 11, 6, 8];
+const starSeen = new Map();
+function starType(key) {
+  if (!starSeen.has(key)) starSeen.set(key, STAR_TYPES[STAR_ORDER[starSeen.size % STAR_ORDER.length]]);
+  const t = starSeen.get(key);
+  return {
+    ...t,
+    parts: () => t.id === 'binary'
+      ? [h('i', { class: 'binary-orbit' }, [h('i', { class: 'core a' }), h('i', { class: 'core b' })])]
+      : t.id === 'pulsar'
+        ? [h('i', { class: 'beam' }), h('i', { class: 'beam b2' }), h('i', { class: 'core' })]
+        : t.id === 'proto'
+          ? [h('i', { class: 'disk' }), h('i', { class: 'core' })]
+          : [h('i', { class: 'corona' }), h('i', { class: 'core' })],
+  };
+}
+
+/** "Fly there": glide to your next world and make it call out (tap it to start). */
+function flyTo(page) {
+  const target = page.querySelector('.planet.current, .guardian.current, .moon-chip.current');
+  if (!target) return;
+  const host = target.classList.contains('moon-chip') ? target.closest('.planet') : target;
+  host.scrollIntoView({ block: 'center', behavior: 'smooth' });
+  // Piano navigation: the next C4 lands on this world.
+  navFocus(target.classList.contains('moon-chip') ? target : host.querySelector('.orb, .guardian-orb') || host);
+  host.classList.remove('arrive');
+  setTimeout(() => { void host.offsetWidth; host.classList.add('arrive'); }, 500);
+  setTimeout(() => host.classList.remove('arrive'), 3200);
 }
 
 /** The Guardian: a boss world at the edge of each galaxy. */
@@ -389,7 +462,11 @@ function drawRoute(track) {
     const my = (y0 + y1) / 2;
     d += ` C${x0},${my} ${x1},${my} ${x1},${y1}`;
   }
-  svg.innerHTML = `<path d="${d}" class="route-glow"/><path d="${d}" class="route-dash"/>`;
+  const trail = equipped('trail') || 'trail-dots';
+  const pathId = `rt${Math.random().toString(36).slice(2, 8)}`;
+  const glyph = trail === 'trail-notes' ? '\u266A \u266B \u2669 ' : trail === 'trail-stars' ? '\u2726 ' : '';
+  svg.setAttribute('class', `route ${trail}`);
+  svg.innerHTML = `<path d="${d}" class="route-glow"/><path id="${pathId}" d="${d}" class="route-dash"/>${glyph ? `<text class="route-text"><textPath href="#${pathId}">${glyph.repeat(220)}</textPath></text>` : ''}`;
 }
 
 function shipSVG() {
@@ -416,324 +493,193 @@ function hexToRgb(hx) {
 const mix = (a, b, t) => a.map((x, i) => x + (b[i] - x) * t);
 const rgb = (c, a = 1) => `rgba(${c[0] | 0},${c[1] | 0},${c[2] | 0},${a})`;
 
+/**
+ * The cosmos background, built from GPU-composited layers so it animates at
+ * the display's full refresh rate (120 Hz on ProMotion iPads):
+ *  - a fixed backdrop: galaxy colours (smooth CSS colour transitions), drifting
+ *    nebula clouds and a twinkling distant starfield;
+ *  - each galaxy carries its own near-star layer in its style, scrolling
+ *    natively with the planets (it can never lag behind them);
+ *  - warp speed on fast scrolling and shooting stars are CSS animations.
+ * Only the (slow) moon orbits are updated from script.
+ */
 class Cosmos {
-  constructor(canvas, scroller, sections) {
-    this.canvas = canvas;
-    this.ctx = canvas.getContext('2d');
+  constructor(backdrop, scroller, sections) {
+    this.backdrop = backdrop;
     this.scroller = scroller;
     this.sections = sections;
     this.reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    this.gal = sections[0] ? sections[0]._gal : GALAXIES.u1;
-    this.prevGal = this.gal;
-    this.fade = 1;
-    this.sysIndex = 0;
-    this.sysProgress = 0;
-    this.cur = this.palette(this.gal, 0);
-    this.stars = Array.from({ length: 240 }, (_, i) => ({
-      x: Math.random(), y: Math.random(), z: 0.2 + Math.random() * 0.8, ph: Math.random() * Math.PI * 2,
-      sp: 0.6 + Math.random() * 1.8, r: Math.random(), twin: i % 2,
-    }));
-    this.shooters = [];
-    // Smoothed scroll + velocity: stars glide with a little inertia instead of
-    // stepping with raw scroll events, and fast scrolling triggers warp trails.
-    this.sScroll = scroller.scrollTop || 0;
-    this.vel = 0;
-    this.warp = 0;
-    this.resize();
-    this.onResize = () => this.resize();
-    window.addEventListener('resize', this.onResize);
+    backdrop.append(
+      h('i', { class: 'neb n1' }), h('i', { class: 'neb n2' }), h('i', { class: 'neb n3' }),
+      h('i', { class: 'far f1', style: { backgroundImage: `url(${starTile('far', 1)})` } }),
+      h('i', { class: 'far f2', style: { backgroundImage: `url(${starTile('far', 2)})` } }),
+      h('i', { class: 'warp-glow' }),
+      h('i', { class: 'shooters' }),
+    );
+    // Near stars per galaxy, in that galaxy's style.
+    for (const sec of sections) {
+      const g = sec._gal;
+      const layer = h('div', { class: `gstars st-${g.style}`, 'aria-hidden': 'true' }, [
+        h('i', { class: 'gs a', style: { backgroundImage: `url(${starTile(g.style, 1, g)})` } }),
+        h('i', { class: 'gs b', style: { backgroundImage: `url(${starTile(g.style, 2, g)})` } }),
+        h('i', { class: 'gs streaks', style: { backgroundImage: `url(${starTile('streak', 3, g)})` } }),
+        g.style === 'rays' ? h('i', { class: 'g-rays' }) : null,
+        g.style === 'aurora' ? h('i', { class: 'g-aurora' }) : null,
+      ]);
+      sec.prepend(layer);
+    }
+    this.onScroll = () => this.scrolled();
+    scroller.addEventListener('scroll', this.onScroll, { passive: true });
+    this.lastY = scroller.scrollTop;
+    this.lastT = performance.now();
+    this.scrolled();
+    if (!this.reduced) this.shootTimer = setInterval(() => this.shoot(), 4000);
     this.t0 = performance.now();
     this.raf = requestAnimationFrame((t) => this.frame(t));
   }
 
-  palette(gal, sysIndex) {
-    // Each solar system shifts the nebula colours around; the galaxy sets the base.
-    const n = gal.neb.map(hexToRgb);
-    const k = sysIndex % n.length;
-    return { top: hexToRgb(gal.top), bottom: hexToRgb(gal.bottom), neb: [n[k], n[(k + 1) % n.length], n[(k + 2) % n.length]], star: hexToRgb(gal.star) };
-  }
-
-  resize() {
-    const dpr = Math.min(window.devicePixelRatio || 1, 2);
-    this.w = window.innerWidth;
-    this.h = window.innerHeight;
-    this.canvas.width = Math.round(this.w * dpr);
-    this.canvas.height = Math.round(this.h * dpr);
-    this.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-  }
-
-  /** Which galaxy / solar system is in view, and how far through the system we are. */
-  locate() {
-    const mid = this.h * 0.45;
+  /** Which galaxy is in view → backdrop colours; scroll speed → warp. */
+  scrolled() {
+    const mid = window.innerHeight * 0.45;
     let gal = this.sections[0] && this.sections[0]._gal;
     let sys = 0;
-    let prog = 0;
     for (const sec of this.sections) {
-      const r = sec.getBoundingClientRect();
-      if (r.top <= mid) {
+      if (sec.getBoundingClientRect().top <= mid) {
         gal = sec._gal;
-        for (const s of sec.querySelectorAll('.system')) {
-          const sr = s.getBoundingClientRect();
-          if (sr.top <= mid) {
-            sys = s._sys + this.sections.indexOf(sec) * 3;
-            prog = Math.max(0, Math.min(1, (mid - sr.top) / Math.max(1, sr.height)));
-          }
-        }
+        sec.querySelectorAll('.system').forEach((s) => { if (s.getBoundingClientRect().top <= mid) sys = s._sys; });
       }
     }
-    return { gal, sys, prog };
+    if (gal && (gal !== this.gal || sys !== this.sys)) {
+      this.gal = gal;
+      this.sys = sys;
+      const k = sys % gal.neb.length;
+      const st = this.backdrop.style;
+      st.setProperty('--c-top', gal.top);
+      st.setProperty('--c-bottom', gal.bottom);
+      st.setProperty('--c-n1', gal.neb[k]);
+      st.setProperty('--c-n2', gal.neb[(k + 1) % gal.neb.length]);
+      st.setProperty('--c-n3', gal.neb[(k + 2) % gal.neb.length]);
+      st.setProperty('--c-star', gal.star);
+    }
+    // Warp: fast scrolling stretches stars into light trails (CSS transitions do the motion).
+    const now = performance.now();
+    const y = this.scroller.scrollTop;
+    const v = Math.abs(y - this.lastY) / Math.max(1, now - this.lastT) * 1000; // px/s
+    this.lastY = y;
+    this.lastT = now;
+    if (!this.reduced && v > 2200) {
+      document.body.classList.add('warping');
+      document.body.classList.toggle('warp-up', y < this.lastWarpY);
+      this.lastWarpY = y;
+      clearTimeout(this.warpOff);
+      this.warpOff = setTimeout(() => document.body.classList.remove('warping', 'warp-up'), 180);
+    }
+  }
+
+  shoot() {
+    if (document.hidden || Math.random() < 0.35) return;
+    const s = h('i', { class: 'shooting', style: { left: `${30 + Math.random() * 70}%`, top: `${Math.random() * 45}%` } });
+    this.backdrop.querySelector('.shooters').append(s);
+    setTimeout(() => s.remove(), 1600);
   }
 
   frame(now) {
     if (this.dead) return;
     const t = (now - this.t0) / 1000;
-    const dt = Math.min(0.05, (now - (this.last || now)) / 1000);
-    this.last = now;
-    const scrollTarget = this.scroller.scrollTop || 0;
-    const prevS = this.sScroll;
-    this.sScroll += (scrollTarget - this.sScroll) * (1 - Math.exp(-dt * 16));
-    if (Math.abs(scrollTarget - this.sScroll) < 0.05) this.sScroll = scrollTarget;
-    const v = dt > 0 ? (this.sScroll - prevS) / dt : 0;
-    this.vel += (v - this.vel) * (1 - Math.exp(-dt * 10));
-    const want = this.reduced ? 0 : Math.max(0, Math.min(1, (Math.abs(this.vel) - 900) / 3000));
-    this.warp += (want - this.warp) * (1 - Math.exp(-dt * (want > this.warp ? 8 : 3)));
-    const { gal, sys, prog } = this.locate();
-    if (gal && gal !== this.gal) { this.prevGal = this.gal; this.gal = gal; this.fade = 0; }
-    this.fade = Math.min(1, this.fade + dt * 1.2);
-    this.sysProgress += (prog - this.sysProgress) * Math.min(1, dt * 3);
-    const target = this.palette(this.gal, sys);
-    const k = Math.min(1, dt * 2.2);
-    this.cur = {
-      top: mix(this.cur.top, target.top, k), bottom: mix(this.cur.bottom, target.bottom, k),
-      neb: this.cur.neb.map((c, i) => mix(c, target.neb[i], k)), star: mix(this.cur.star, target.star, k),
-    };
-    this.draw(this.reduced ? 0 : t, dt);
     if (!this.reduced) updateOrbits(t);
     else if (!this.placed) { updateOrbits(0); this.placed = true; }
     this.raf = requestAnimationFrame((tt) => this.frame(tt));
   }
 
-  draw(t, dt) {
-    const { ctx, w, h } = this;
-    const c = this.cur;
-    const scroll = this.sScroll;
-    const g = ctx.createLinearGradient(0, 0, 0, h);
-    g.addColorStop(0, rgb(c.top));
-    g.addColorStop(1, rgb(c.bottom));
-    ctx.fillStyle = g;
-    ctx.fillRect(0, 0, w, h);
-
-    // Nebula clouds drifting slowly; brighter near the "sun" (start of a system).
-    const sunGlow = 1 - this.sysProgress;
-    const blobs = [
-      [0.2 + 0.05 * Math.sin(t * 0.05), 0.25, 0.55, c.neb[0], 0.32],
-      [0.85 + 0.04 * Math.cos(t * 0.04), 0.6, 0.5, c.neb[1], 0.26],
-      [0.5, 0.95 + 0.03 * Math.sin(t * 0.06), 0.6, c.neb[2], 0.2],
-    ];
-    ctx.globalCompositeOperation = 'lighter';
-    for (const [x, y, r, col, a] of blobs) {
-      const rg = ctx.createRadialGradient(x * w, y * h, 0, x * w, y * h, r * Math.max(w, h));
-      rg.addColorStop(0, rgb(col, a));
-      rg.addColorStop(1, rgb(col, 0));
-      ctx.fillStyle = rg;
-      ctx.fillRect(0, 0, w, h);
-    }
-    // Warm sunlight from above when you're near a system's sun.
-    const sg = ctx.createRadialGradient(w * 0.5, -h * 0.1, 0, w * 0.5, -h * 0.1, h * 0.9);
-    sg.addColorStop(0, `rgba(255,210,140,${0.22 * sunGlow})`);
-    sg.addColorStop(1, 'rgba(255,210,140,0)');
-    ctx.fillStyle = sg;
-    ctx.fillRect(0, 0, w, h);
-    ctx.globalCompositeOperation = 'source-over';
-
-    // Star layers: crossfade between the previous and current galaxy's style.
-    if (this.warp > 0.02) this.drawWarp(scroll);
-    else {
-      if (this.fade < 1) this.drawStars(this.prevGal.style, 1 - this.fade, t, scroll, dt);
-      this.drawStars(this.gal.style, this.fade, t, scroll, dt);
-    }
-    if (this.warp > 0.02 && this.warp < 0.6) { // blend back into normal stars as we slow down
-      this.drawStars(this.gal.style, 1 - this.warp / 0.6, t, scroll, dt);
-    }
-    this.drawShooters(t, dt);
-  }
-
-  starPos(s, scroll, t) {
-    // Parallax: nearer stars (bigger z) drift further as you scroll.
-    const y = (((s.y * this.h - scroll * s.z * 0.35) % this.h) + this.h) % this.h;
-    return [s.x * this.w + Math.sin(t * 0.05 + s.ph) * 4 * s.z, y];
-  }
-
-  drawStars(style, alpha, t, scroll, dt) {
-    const { ctx } = this;
-    const col = this.cur.star;
-    // Further out in a system: more, dimmer stars. Near the sun: fewer, bigger.
-    const count = Math.round(this.stars.length * (0.55 + 0.45 * this.sysProgress));
-    ctx.save();
-    ctx.globalAlpha = alpha;
-    if (style === 'rays') this.drawRays(t);
-    if (style === 'aurora') this.drawAurora(t);
-    const pts = [];
-    for (let i = 0; i < count; i++) {
-      const s = this.stars[i];
-      const tw = 0.35 + 0.65 * (0.5 + 0.5 * Math.sin(t * s.sp + s.ph));
-      let [x, y] = this.starPos(s, scroll, t);
-      if (style === 'embers' || style === 'motes') {
-        const rise = style === 'embers' ? -1 : 1;
-        y = ((((s.y * this.h + rise * t * 14 * s.z) % this.h) + this.h) % this.h);
-        x += Math.sin(t * 0.6 + s.ph) * 10 * s.z;
-      }
-      pts.push([x, y, s]);
-      const r = (0.6 + s.z * 1.4) * (1 + 0.4 * (1 - this.sysProgress));
-      if (style === 'sparkle' || style === 'constellations' || style === 'rays') {
-        if (s.r > 0.7) { this.sparkle(x, y, r * 3 * tw, col, tw); continue; }
-      }
-      if (style === 'bokeh' && s.r > 0.8) {
-        ctx.fillStyle = rgb(this.cur.neb[i % 3], 0.18 * tw);
-        ctx.beginPath(); ctx.arc(x, y, r * 7, 0, Math.PI * 2); ctx.fill();
-        continue;
-      }
-      let c = col;
-      if (style === 'twins') c = s.twin ? [150, 200, 255] : [255, 200, 140];
-      if (style === 'embers') c = [255, 150 + 80 * s.r, 60];
-      if (style === 'motes') c = [255, 180, 190];
-      ctx.fillStyle = rgb(c, tw * (0.5 + 0.5 * s.z));
-      ctx.beginPath();
-      ctx.arc(x, y, r, 0, Math.PI * 2);
-      ctx.fill();
-    }
-    if (style === 'constellations') {
-      ctx.strokeStyle = rgb(col, 0.16);
-      ctx.lineWidth = 1;
-      for (let i = 0; i < pts.length - 1; i += 1) {
-        const [x0, y0, s0] = pts[i];
-        if (s0.r < 0.7) continue;
-        let best = null;
-        let bd = 160 * 160;
-        for (let j = i + 1; j < Math.min(pts.length, i + 40); j++) {
-          const [x1, y1, s1] = pts[j];
-          if (s1.r < 0.7) continue;
-          const d = (x1 - x0) ** 2 + (y1 - y0) ** 2;
-          if (d < bd) { bd = d; best = pts[j]; }
-        }
-        if (best) { ctx.beginPath(); ctx.moveTo(x0, y0); ctx.lineTo(best[0], best[1]); ctx.stroke(); }
-      }
-    }
-    ctx.restore();
-  }
-
-  /** Warp speed: stars stretch into light trails along the scroll direction. */
-  drawWarp(scroll) {
-    const { ctx, w, h } = this;
-    const dir = Math.sign(this.vel) || 1;
-    const wp = this.warp;
-    const col = this.cur.star;
-    ctx.save();
-    // A soft glow down the middle of the "tunnel".
-    const g = ctx.createRadialGradient(w / 2, h / 2, 0, w / 2, h / 2, Math.max(w, h) * 0.7);
-    g.addColorStop(0, `rgba(200,220,255,${0.12 * wp})`);
-    g.addColorStop(1, 'rgba(200,220,255,0)');
-    ctx.fillStyle = g;
-    ctx.fillRect(0, 0, w, h);
-    ctx.globalCompositeOperation = 'lighter';
-    ctx.lineCap = 'round';
-    for (const s of this.stars) {
-      const y = (((s.y * h - scroll * s.z * 0.35) % h) + h) % h;
-      const x = s.x * w + (s.x - 0.5) * w * 0.08 * wp * s.z; // spread slightly outward
-      const len = wp * (20 + 170 * s.z * s.z);
-      const tail = y + dir * len; // trail points back where the star came from
-      const grad = ctx.createLinearGradient(x, y, x, tail);
-      const c = mix(col, [190, 215, 255], 0.4 * wp);
-      grad.addColorStop(0, rgb(c, Math.min(1, 0.3 + 0.5 * s.z) * (0.6 + 0.4 * wp)));
-      grad.addColorStop(1, rgb(c, 0));
-      ctx.strokeStyle = grad;
-      ctx.lineWidth = 0.5 + s.z * 1.3;
-      ctx.beginPath();
-      ctx.moveTo(x, y);
-      ctx.lineTo(x, tail);
-      ctx.stroke();
-    }
-    ctx.restore();
-  }
-
-  sparkle(x, y, r, col, tw) {
-    const { ctx } = this;
-    ctx.fillStyle = rgb(col, 0.9 * tw);
-    ctx.beginPath();
-    ctx.moveTo(x, y - r);
-    ctx.quadraticCurveTo(x, y, x + r, y);
-    ctx.quadraticCurveTo(x, y, x, y + r);
-    ctx.quadraticCurveTo(x, y, x - r, y);
-    ctx.quadraticCurveTo(x, y, x, y - r);
-    ctx.fill();
-  }
-
-  drawRays(t) {
-    const { ctx, w, h } = this;
-    ctx.save();
-    ctx.globalCompositeOperation = 'lighter';
-    for (let i = 0; i < 5; i++) {
-      const a = -0.5 + i * 0.25 + Math.sin(t * 0.1 + i) * 0.05;
-      ctx.save();
-      ctx.translate(w * 0.5, -h * 0.2);
-      ctx.rotate(a);
-      const g = ctx.createLinearGradient(0, 0, 0, h * 1.3);
-      g.addColorStop(0, rgb(this.cur.neb[i % 3], 0.12));
-      g.addColorStop(1, rgb(this.cur.neb[i % 3], 0));
-      ctx.fillStyle = g;
-      ctx.fillRect(-40 - i * 6, 0, 80 + i * 12, h * 1.3);
-      ctx.restore();
-    }
-    ctx.restore();
-  }
-
-  drawAurora(t) {
-    const { ctx, w, h } = this;
-    ctx.save();
-    ctx.globalCompositeOperation = 'lighter';
-    for (let k = 0; k < 3; k++) {
-      ctx.beginPath();
-      const base = h * (0.2 + k * 0.18);
-      ctx.moveTo(0, base);
-      for (let x = 0; x <= w; x += 24) ctx.lineTo(x, base + Math.sin(x / 160 + t * 0.4 + k) * 40 + Math.sin(x / 70 + t * 0.7) * 12);
-      ctx.lineTo(w, base + 160);
-      ctx.lineTo(0, base + 160);
-      ctx.closePath();
-      const g = ctx.createLinearGradient(0, base - 40, 0, base + 160);
-      g.addColorStop(0, rgb(this.cur.neb[k], 0.18));
-      g.addColorStop(1, rgb(this.cur.neb[k], 0));
-      ctx.fillStyle = g;
-      ctx.fill();
-    }
-    ctx.restore();
-  }
-
-  drawShooters(t, dt) {
-    const { ctx } = this;
-    if (!this.reduced && Math.random() < dt * 0.25) {
-      this.shooters.push({ x: Math.random() * this.w, y: Math.random() * this.h * 0.5, vx: -(300 + Math.random() * 300), vy: 120 + Math.random() * 120, life: 0 });
-    }
-    this.shooters = this.shooters.filter((s) => s.life < 1.1);
-    for (const s of this.shooters) {
-      s.life += dt;
-      s.x += s.vx * dt;
-      s.y += s.vy * dt;
-      const a = Math.max(0, 1 - s.life);
-      const g = ctx.createLinearGradient(s.x, s.y, s.x - s.vx * 0.15, s.y - s.vy * 0.15);
-      g.addColorStop(0, `rgba(255,255,255,${a})`);
-      g.addColorStop(1, 'rgba(255,255,255,0)');
-      ctx.strokeStyle = g;
-      ctx.lineWidth = 2;
-      ctx.beginPath();
-      ctx.moveTo(s.x, s.y);
-      ctx.lineTo(s.x - s.vx * 0.15, s.y - s.vy * 0.15);
-      ctx.stroke();
-    }
-  }
-
   destroy() {
     this.dead = true;
     cancelAnimationFrame(this.raf);
-    window.removeEventListener('resize', this.onResize);
+    clearInterval(this.shootTimer);
+    clearTimeout(this.warpOff);
+    document.body.classList.remove('warping', 'warp-up');
+    this.scroller.removeEventListener('scroll', this.onScroll);
   }
+}
+
+// ---- Star tiles: painted once per style, then repeated by the GPU ------------
+const tileCache = new Map();
+function starTile(style, variant, gal) {
+  const key = `${style}:${variant}:${gal ? gal.name : ''}`;
+  if (tileCache.has(key)) return tileCache.get(key);
+  const S = 512; // CSS px; drawn at 2x for Retina
+  const cv = document.createElement('canvas');
+  cv.width = cv.height = S * 2;
+  const ctx = cv.getContext('2d');
+  ctx.scale(2, 2);
+  let seed = hash(key);
+  const R = () => ((seed = Math.imul(seed ^ (seed >>> 15), 2246822507) >>> 0) / 4294967296);
+  const col = gal ? gal.star : '#FFFFFF';
+  const neb = gal ? gal.neb : ['#FFFFFF'];
+  const dot = (x, y, r, c, a) => {
+    for (const dx of [0, -S, S]) for (const dy of [0, -S, S]) { // wrap so the tile repeats seamlessly
+      ctx.globalAlpha = a;
+      ctx.fillStyle = c;
+      ctx.beginPath();
+      ctx.arc(x + dx, y + dy, r, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  };
+  const sparkle = (x, y, r, c, a) => {
+    ctx.globalAlpha = a;
+    ctx.fillStyle = c;
+    ctx.beginPath();
+    ctx.moveTo(x, y - r); ctx.quadraticCurveTo(x, y, x + r, y); ctx.quadraticCurveTo(x, y, x, y + r);
+    ctx.quadraticCurveTo(x, y, x - r, y); ctx.quadraticCurveTo(x, y, x, y - r);
+    ctx.fill();
+  };
+  const glow = (x, y, r, c, a) => {
+    const g = ctx.createRadialGradient(x, y, 0, x, y, r);
+    g.addColorStop(0, c); g.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.globalAlpha = a; ctx.fillStyle = g; ctx.fillRect(x - r, y - r, r * 2, r * 2);
+  };
+  if (style === 'far') {
+    for (let i = 0; i < (variant === 1 ? 140 : 70); i++) dot(R() * S, R() * S, 0.4 + R() * (variant === 1 ? 0.7 : 1.1), '#FFFFFF', 0.35 + R() * 0.5);
+  } else if (style === 'streak') {
+    ctx.lineCap = 'round';
+    for (let i = 0; i < 70; i++) {
+      const x = R() * S; const y = R() * S; const len = 40 + R() * 140;
+      const g = ctx.createLinearGradient(x, y, x, y + len);
+      g.addColorStop(0, col); g.addColorStop(1, 'rgba(255,255,255,0)');
+      ctx.globalAlpha = 0.5 + R() * 0.5; ctx.strokeStyle = g; ctx.lineWidth = 0.8 + R() * 1.6;
+      ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x, y + len); ctx.stroke();
+    }
+  } else {
+    const n = variant === 1 ? 70 : 34;
+    const pts = [];
+    for (let i = 0; i < n; i++) {
+      const x = R() * S; const y = R() * S; const z = R();
+      pts.push([x, y, z]);
+      if (style === 'sparkle' || style === 'rays' || style === 'constellations') {
+        if (z > 0.72) { sparkle(x, y, 3 + z * 6, col, 0.9); glow(x, y, 10 + z * 10, col, 0.25); } else dot(x, y, 0.7 + z * 1.4, col, 0.8);
+      } else if (style === 'bokeh') {
+        if (z > 0.75) glow(x, y, 10 + z * 18, neb[i % neb.length], 0.35); else dot(x, y, 0.7 + z * 1.4, col, 0.85);
+      } else if (style === 'embers') {
+        dot(x, y, 0.8 + z * 2, ['#FFB45C', '#FF7A3D', '#FFD58A'][i % 3], 0.85); glow(x, y, 6 + z * 6, '#FF8A3D', 0.25);
+      } else if (style === 'motes') {
+        dot(x, y, 0.8 + z * 1.8, ['#FFC2CF', '#FFE1C2', '#FFFFFF'][i % 3], 0.75);
+      } else if (style === 'twins') {
+        dot(x, y, 0.8 + z * 1.6, i % 2 ? '#9BC8FF' : '#FFC890', 0.9);
+        if (z > 0.8) glow(x, y, 9, i % 2 ? '#9BC8FF' : '#FFC890', 0.3);
+      } else {
+        dot(x, y, 0.7 + z * 1.6, col, 0.9);
+        if (z > 0.85) glow(x, y, 8, col, 0.3);
+      }
+    }
+    if (style === 'constellations' && variant === 1) {
+      ctx.globalAlpha = 0.18; ctx.strokeStyle = col; ctx.lineWidth = 1;
+      const bright = pts.filter((p) => p[2] > 0.72);
+      for (let i = 0; i + 1 < bright.length; i += 1) {
+        const [x0, y0] = bright[i]; const [x1, y1] = bright[i + 1];
+        if ((x1 - x0) ** 2 + (y1 - y0) ** 2 < 170 * 170) { ctx.beginPath(); ctx.moveTo(x0, y0); ctx.lineTo(x1, y1); ctx.stroke(); }
+      }
+    }
+  }
+  const url = cv.toDataURL('image/png');
+  tileCache.set(key, url);
+  return url;
 }

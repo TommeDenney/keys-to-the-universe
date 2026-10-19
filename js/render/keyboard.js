@@ -148,6 +148,9 @@ export class Keyboard {
     if (fx === 'sparks') spawn('spark', 7, (p) => { p.style.setProperty('--dx', `${(Math.random() - 0.5) * 60}px`); p.style.setProperty('--dy', `${-30 - Math.random() * 50}px`); });
     else if (fx === 'ripple') spawn('ripple', 1, () => {});
     else if (fx === 'stars') spawn('star', 4, (p, i) => { p.textContent = '\u2726'; p.style.setProperty('--dx', `${(i - 1.5) * 14 + (Math.random() - 0.5) * 8}px`); p.style.setProperty('--dy', `${-50 - Math.random() * 40}px`); });
+    else if (fx === 'hearts') spawn('star heart', 3, (p, i) => { p.textContent = '\u2665'; p.style.setProperty('--dx', `${(i - 1) * 14}px`); p.style.setProperty('--dy', `${-45 - Math.random() * 35}px`); });
+    else if (fx === 'notes') spawn('star note', 2, (p, i) => { p.textContent = ['\u266A', '\u266B', '\u2669'][Math.floor(Math.random() * 3)]; p.style.setProperty('--dx', `${(i ? 1 : -1) * (6 + Math.random() * 14)}px`); p.style.setProperty('--dy', `${-55 - Math.random() * 30}px`); });
+    else if (fx === 'lightning') spawn('bolt', 1, () => {});
     else if (fx === 'fire') spawn('flame', 3, (p, i) => { p.style.setProperty('--dx', `${(i - 1) * 6}px`); p.style.animationDelay = `${i * 0.05}s`; });
   }
 

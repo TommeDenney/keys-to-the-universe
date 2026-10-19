@@ -8,7 +8,7 @@ import { SYMBOL, owns, spend, questDone, completeQuest, walletPill, balance } fr
 import { getState, saveState } from '../store.js';
 import { getSong } from '../data/catalog.js';
 import { playSong } from './songpage.js';
-import { divinaeEl } from './divinae.js';
+import { divinaeEl, FORMS as DIVINAE_FORMS } from './divinae.js';
 
 function countdown(period) {
   const ms = nextReset(period) - Date.now();
@@ -98,8 +98,8 @@ export function renderChallenges(root) {
       h('p', { class: 'muted' }, `Every Guardian pays its full Stardust reward again once a week (resets Monday). Rematch old bosses to earn more!`),
     ]),
     h('section', { class: 'card ch-period special-boss' }, [
-      h('div', { class: 'ch-head' }, [h('h2', {}, 'Special boss'), h('span', { class: 'badge' }, 'Weekly bounty')]),
-      divinaeEl(),
+      h('div', { class: 'ch-head' }, [h('h2', {}, 'Special bosses'), h('span', { class: 'badge' }, 'Weekly bounties')]),
+      h('div', { class: 'special-row' }, DIVINAE_FORMS.map((f) => divinaeEl(f))),
     ]),
     h('section', { class: 'card ch-period' }, [
       h('div', { class: 'ch-head' }, [h('h2', {}, 'Rogue planets'), h('span', { class: 'badge' }, 'Side quests')]),

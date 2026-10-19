@@ -15,6 +15,17 @@ export const COLORS = {
   playhead: '#6C4DF6',
 };
 
+// Sheet music paper themes (bought in the Shop).
+const SHEET_THEMES = {
+  classic: { paper: '#FFFFFF', ink: '#262340', line: '#B9B6CC', faint: '#CFCDDC' },
+  parchment: { paper: '#F6ECD6', ink: '#3B2F25', line: '#C9B79A', faint: '#DCCFB6' },
+  night: { paper: '#17152E', ink: '#ECEAF8', line: '#4C4874', faint: '#3B3760' },
+  blueprint: { paper: '#0F3D70', ink: '#EAF3FF', line: '#5E8EC4', faint: '#3E6EA4' },
+};
+export function applySheetTheme(name) {
+  Object.assign(COLORS, SHEET_THEMES[name] || SHEET_THEMES.classic);
+}
+
 const MUSIC_FONT = '"Noto Music", "Apple Symbols", "Segoe UI Symbol", serif';
 const STEP_INDEX = { C: 0, D: 1, E: 2, F: 3, G: 4, A: 5, B: 6 };
 const TREBLE_TOP = 38; // F5

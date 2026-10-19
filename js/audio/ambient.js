@@ -13,6 +13,8 @@ const PROGRESSIONS = {
   'amb-lofi': [[50, 57, 60, 65], [55, 59, 62, 65], [48, 55, 59, 64], [45, 52, 55, 60]],
   'amb-choir': [[48, 55, 64, 67], [53, 57, 60, 65], [45, 57, 60, 64], [43, 55, 59, 62]],
   'amb-shimmer': [[72, 79, 84, 88], [69, 76, 81, 84], [65, 72, 77, 81], [67, 74, 79, 83]],
+  'amb-dream': [[72, 76, 79, 84], [69, 72, 76, 81], [65, 69, 72, 77], [67, 71, 74, 79]],
+  'amb-ocean': [[0]],
 };
 
 export function startAmbient(id) {
@@ -24,6 +26,30 @@ export function startAmbient(id) {
   out.gain.linearRampToValueAtTime(settings.get('ambientVolume') ?? 0.35, ctx.currentTime + 3);
   out.connect(audio.musicBus);
   const prog = PROGRESSIONS[id];
+  if (id === 'amb-ocean') { // filtered noise waves: no pitch at all, so it never confuses the mic
+    const len = ctx.sampleRate * 4;
+    const buf = ctx.createBuffer(1, len, ctx.sampleRate);
+    const d = buf.getChannelData(0);
+    for (let i = 0; i < len; i++) d[i] = Math.random() * 2 - 1;
+    const src = ctx.createBufferSource();
+    src.buffer = buf;
+    src.loop = true;
+    const lp = ctx.createBiquadFilter();
+    lp.type = 'lowpass';
+    lp.frequency.value = 650;
+    const wave = ctx.createGain();
+    wave.gain.value = 0.12;
+    const lfo = ctx.createOscillator();
+    lfo.frequency.value = 0.09;
+    const depth = ctx.createGain();
+    depth.gain.value = 0.1;
+    lfo.connect(depth).connect(wave.gain);
+    src.connect(lp).connect(wave).connect(out);
+    src.start();
+    lfo.start();
+    current = { id, out, timer: 0, voices: [src, lfo] };
+    return;
+  }
   const chordLen = id === 'amb-lofi' ? 4.8 : 9;
   let k = 0;
   let nextAt = ctx.currentTime + 0.1;
@@ -35,14 +61,14 @@ export function startAmbient(id) {
       const f = midiToFreq(m);
       const g = ctx.createGain();
       g.gain.setValueAtTime(0, t);
-      const peak = id === 'amb-shimmer' ? 0.035 : id === 'amb-lofi' ? 0.05 : 0.045;
+      const peak = id === 'amb-shimmer' || id === 'amb-dream' ? 0.035 : id === 'amb-lofi' ? 0.05 : 0.045;
       g.gain.linearRampToValueAtTime(peak, t + (id === 'amb-lofi' ? 1.2 : 2.6));
       g.gain.setTargetAtTime(0, t + chordLen - 1.2, 1.1);
       const lp = ctx.createBiquadFilter();
       lp.type = 'lowpass';
       lp.frequency.value = id === 'amb-shimmer' ? 6000 : id === 'amb-choir' ? 1600 : 1100;
       g.connect(lp).connect(out);
-      const types = id === 'amb-lofi' ? ['sine', 'triangle'] : id === 'amb-choir' ? ['sawtooth', 'sawtooth'] : ['sawtooth', 'triangle'];
+      const types = id === 'amb-lofi' || id === 'amb-dream' ? ['sine', 'triangle'] : id === 'amb-choir' ? ['sawtooth', 'sawtooth'] : ['sawtooth', 'triangle'];
       types.forEach((type, i) => {
         const o = ctx.createOscillator();
         o.type = type;

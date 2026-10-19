@@ -21,6 +21,9 @@ import { startAmbient, stopAmbient } from './audio/ambient.js';
 import { equipped } from './economy.js';
 import { renderChallenges } from './screens/challenges.js';
 import { touch as touchChallenges } from './challenges.js';
+import { loadConstellations } from './constellations.js';
+import { mountMusicBar } from './screens/musicbar.js';
+import { state as bgState } from './audio/bgmusic.js';
 
 applyTheme();
 applyCosmetics();
@@ -94,7 +97,7 @@ async function renderTab(name) {
   const r = { learn, library: renderLibrary, chords: renderChords, shop: renderShop, settings: renderSettings }[name];
   cleanup = (await r(main)) || null;
   // Learn-tab ambience (bought in the Shop).
-  if (name === 'learn' && equipped('amb') !== 'amb-none') startAmbient(equipped('amb'));
+  if (name === 'learn' && equipped('amb') !== 'amb-none' && !bgState().playing) startAmbient(equipped('amb'));
   else if (name !== 'shop') stopAmbient();
 }
 
@@ -104,7 +107,7 @@ function setActiveTab(name) {
 
 window.addEventListener('hashchange', route);
 // The graded repertoire galaxies come from a manifest; load it before the first render.
-loadCatalog().finally(() => route());
+Promise.all([loadCatalog(), loadConstellations()]).finally(() => { route(); mountMusicBar(); });
 
 if (!settings.get('onboarded')) setTimeout(() => showOnboarding(), 350);
 

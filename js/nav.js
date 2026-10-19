@@ -224,3 +224,8 @@ export function initPianoNav() {
 }
 
 export { LEGEND as NAV_KEYS };
+
+/** Let screens move the piano-navigation focus (e.g. after "Fly there"). */
+export function navFocus(el) {
+  if (el) setFocus(el);
+}
