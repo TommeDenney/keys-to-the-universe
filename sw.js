@@ -1,6 +1,6 @@
 // Offline support: network-first for app files (so updates arrive right
 // away), cache fallback when offline. Piano samples and fonts are cache-first.
-const CACHE = 'ivory-v1';
+const CACHE = 'ivory-v1'; // v2: revalidate app files
 
 self.addEventListener('install', () => self.skipWaiting());
 self.addEventListener('activate', (e) => e.waitUntil(self.clients.claim()));
@@ -19,7 +19,9 @@ self.addEventListener('fetch', (e) => {
     return;
   }
   if (url.origin !== location.origin) return;
-  e.respondWith(fetch(req).then((res) => {
+  // no-cache: always ask the server if a file changed (GitHub Pages would
+  // otherwise let the browser reuse files for 10 minutes after a deploy).
+  e.respondWith(fetch(req, { cache: 'no-cache' }).then((res) => {
     const copy = res.clone();
     caches.open(CACHE).then((c) => c.put(req, copy));
     return res;
