@@ -168,6 +168,10 @@ export function renderSettings(root) {
       h('span', { class: 'grow' }, [h('b', {}, 'About, credits & licences'), h('small', {}, 'Privacy, disclosures, the MIT licence, and credits for every piece of music and sound.')]),
       icon('chevron'),
     ]),
+    h('div', { class: 'legal-links' }, [
+      h('a', { class: 'btn ghost sm', href: 'privacy.html', target: '_blank', rel: 'noopener' }, 'Privacy Policy'),
+      h('a', { class: 'btn ghost sm', href: 'terms.html', target: '_blank', rel: 'noopener' }, 'Terms of Service'),
+    ]),
     h('section', { class: 'about' }, [
       h('p', {}, 'Computer keyboard: A W S E D F T G Y H U J K play C to C (Z / X change octave).'),
     ]),

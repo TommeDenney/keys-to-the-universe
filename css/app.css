@@ -1812,3 +1812,7 @@ body[data-tabpos="top"] .shop-tabs.pinned { top: calc(80px + var(--safe-t)); }
 .vk-art { position: relative; width: 64px; height: 64px; display: grid; place-items: center; border-radius: 50%; background: radial-gradient(circle, color-mix(in srgb, var(--ev) 55%, #1E1B4B), #1E1B4B); }
 .vk-emoji { font-size: 32px; } .vk-keyhole { position: absolute; right: -6px; bottom: -4px; font-size: 22px; }
 .vault-key.done { opacity: .7; }
+
+/* Privacy / terms links (Settings, sign-in) */
+.legal-links { display: flex; flex-wrap: wrap; gap: 10px; margin: -4px 0 16px; }
+.legal-note a { color: var(--brand, #6D28D9); font-weight: 700; }

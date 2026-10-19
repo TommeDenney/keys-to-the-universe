@@ -44,6 +44,7 @@ export function openSignIn() {
       h('button', { class: 'btn ghost sm', onclick: () => { getState().settings.signInNever = true; saveState(); close(); } }, 'Don\u2019t ask again'),
     ]),
     h('p', { class: 'muted small' }, 'Playing as a guest saves on this device only. Under 13? Ask a parent or guardian to help you sign in. Your saves go to a "Keys to the Universe" folder in your Drive; the app can only see files it creates there.'),
+    h('p', { class: 'muted small legal-note' }, ['By signing in you agree to the ', h('a', { href: 'terms.html', target: '_blank', rel: 'noopener' }, 'Terms of Service'), ' and ', h('a', { href: 'privacy.html', target: '_blank', rel: 'noopener' }, 'Privacy Policy'), '.']),
   ])]);
 }
 
