@@ -1,0 +1,117 @@
+// "Songs" tab: built-in library + imported sheet music.
+
+import { h, icon, starsHTML, toast, coverGradient } from '../ui.js';
+import { builtinSongs } from '../data/songs.js';
+import { library, progress } from '../store.js';
+import { importFile } from '../music/importer.js';
+import { practicePlan } from '../music/song.js';
+
+const LEVELS = ['All', 'Beginner', 'Easy', 'Intermediate'];
+const levelName = (l) => (l <= 1 ? 'Beginner' : l <= 2 ? 'Easy' : l <= 3 ? 'Easy+' : 'Intermediate');
+
+export const SOURCES = [
+  { name: 'MuseScore', url: 'https://musescore.com/sheetmusic/beginner/piano', fmt: 'MusicXML', note: 'Huge community library. On a score page choose Download → MusicXML (free account; some scores are Pro-only).' },
+  { name: '8notes', url: 'https://www.8notes.com/piano/sheet_music/?difficulty=1', fmt: 'MIDI', note: 'Beginner arrangements. Many pieces include a MIDI download next to the PDF.' },
+  { name: 'G Major Music Theory', url: 'https://www.gmajormusictheory.org/', fmt: 'MIDI', note: 'Free PDFs, MIDI files and slow MP3s sorted by level. Grab the MIDI.' },
+  { name: 'Mutopia Project', url: 'https://www.mutopiaproject.org/', fmt: 'MIDI', note: 'Public-domain classical pieces with MIDI downloads.' },
+  { name: 'Making Music Fun', url: 'https://www.makingmusicfun.net/htm/printit_piano_sheet_music_index', fmt: 'PDF', note: 'Lovely level-based printables (PDF). Play from paper, or convert to MusicXML.' },
+  { name: 'Hoffman Academy', url: 'https://www.hoffmanacademy.com/', fmt: 'PDF', note: 'Early-elementary printables (PDF).' },
+  { name: 'IMSLP', url: 'https://imslp.org/', fmt: 'PDF', note: 'The biggest public-domain score library. Mostly PDF; some MIDI/MusicXML.' },
+];
+
+let filter = { q: '', level: 'All', src: 'all' };
+
+export async function renderLibrary(root) {
+  const imports = await library.all();
+  const builtins = builtinSongs();
+  const page = h('div', { class: 'page library' });
+  root.append(page);
+
+  const fileInput = h('input', { type: 'file', class: 'hidden', multiple: true, onchange: (e) => doImport([...e.target.files]) });
+
+  async function doImport(files) {
+    for (const f of files) {
+      try {
+        const song = await importFile(f);
+        const id = `imp-${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`;
+        song.id = id;
+        await library.put({ id, title: song.title, composer: song.composer, fileName: f.name, createdAt: Date.now(), song });
+        toast(`Imported “${song.title}”`, 'ok');
+        if (files.length === 1) { location.hash = `#/song/${id}`; return; }
+      } catch (err) {
+        toast(`${f.name}: ${err.message}`, 'bad');
+      }
+    }
+    root.replaceChildren();
+    renderLibrary(root);
+  }
+
+  const grid = h('div', { class: 'song-grid' });
+  const draw = () => {
+    grid.replaceChildren();
+    const q = filter.q.toLowerCase();
+    const items = [
+      ...(filter.src === 'builtin' ? [] : imports.map((r) => ({ ...r.song, id: r.id, imported: true }))),
+      ...(filter.src === 'mine' ? [] : builtins),
+    ].filter((s) => (!q || `${s.title} ${s.composer} ${(s.tags || []).join(' ')}`.toLowerCase().includes(q))
+      && (filter.level === 'All' || s.imported || levelName(s.level).startsWith(filter.level)));
+    if (!items.length) grid.append(h('p', { class: 'muted empty' }, filter.src === 'mine' ? 'No imported music yet. Tap “Import sheet music” to add MusicXML or MIDI files.' : 'No songs match.'));
+    for (const s of items) grid.append(songCard(s));
+  };
+
+  page.append(
+    h('header', { class: 'top' }, [h('div', {}, [h('div', { class: 'eyebrow' }, 'Library'), h('h1', {}, 'Songs')])]),
+    h('section', { class: 'import-card' }, [
+      h('div', { class: 'import-icon' }, icon('upload')),
+      h('div', { class: 'grow' }, [
+        h('h3', {}, 'Import sheet music'),
+        h('p', {}, 'Add MusicXML (.musicxml, .xml, .mxl) or MIDI (.mid) files. The app reads the notes, splits them into hands and sections, and builds a practice plan.'),
+      ]),
+      h('button', { class: 'btn primary', onclick: () => fileInput.click() }, [icon('upload'), 'Import']),
+      fileInput,
+    ]),
+    h('div', { class: 'filters' }, [
+      h('label', { class: 'search' }, [icon('search'), h('input', { type: 'search', placeholder: 'Search songs', value: filter.q, oninput: (e) => { filter.q = e.target.value; draw(); } })]),
+      h('div', { class: 'seg' }, [['all', 'All'], ['builtin', 'Built-in'], ['mine', `My music${imports.length ? ` (${imports.length})` : ''}`]].map(([v, l]) =>
+        h('button', { class: filter.src === v ? 'on' : '', onclick: (e) => { filter.src = v; e.target.parentNode.querySelectorAll('button').forEach((b) => b.classList.remove('on')); e.target.classList.add('on'); draw(); } }, l))),
+      h('div', { class: 'chips' }, LEVELS.map((l) => h('button', { class: `chip ${filter.level === l ? 'on' : ''}`, onclick: (e) => { filter.level = l; e.target.parentNode.querySelectorAll('.chip').forEach((b) => b.classList.remove('on')); e.target.classList.add('on'); draw(); } }, l))),
+    ]),
+    grid,
+    sourcesSection(),
+  );
+  draw();
+}
+
+function songCard(s) {
+  const plan = practicePlan(s);
+  const recs = progress.songSteps(s.id);
+  const best = plan.reduce((a, p) => a + (recs[p.key] || 0), 0);
+  const pct = Math.round((best / (plan.length * 3)) * 100);
+  return h('a', { class: 'song-card', href: `#/song/${s.id}` }, [
+    h('div', { class: 'cover', style: { background: coverGradient(s.id + s.title) } }, [
+      h('span', { class: 'cover-note' }, icon('note')),
+      s.imported ? h('span', { class: 'tag light' }, 'Imported') : h('span', { class: 'tag light' }, levelName(s.level)),
+    ]),
+    h('div', { class: 'meta' }, [
+      h('b', {}, s.title),
+      h('span', {}, s.composer || 'Unknown composer'),
+      h('div', { class: 'progress-line' }, h('i', { style: { width: `${pct}%` } })),
+    ]),
+  ]);
+}
+
+function sourcesSection() {
+  return h('section', { class: 'sources' }, [
+    h('h2', {}, 'Find free sheet music'),
+    h('p', { class: 'muted' }, 'Download MusicXML or MIDI files from these sites, then import them above. Files stay on this device. Look for the format badge: MusicXML and MIDI import directly; PDF needs converting first.'),
+    h('div', { class: 'source-list' }, SOURCES.map((s) => h('a', { class: 'source', href: s.url, target: '_blank', rel: 'noopener' }, [
+      h('div', { class: 'grow' }, [h('b', {}, s.name), h('span', {}, s.note)]),
+      h('span', { class: `fmt fmt-${s.fmt.toLowerCase()}` }, s.fmt),
+      icon('link'),
+    ]))),
+    h('details', { class: 'pdf-help' }, [
+      h('summary', {}, 'Converting PDFs'),
+      h('p', {}, 'A PDF is a picture of the music, so the notes have to be recognised first (“optical music recognition”). Free options: open the PDF in MuseScore Studio’s PDF import, or use Audiveris, then export as MusicXML and import it here. Clean, simple scores convert best. Check the result before practising.'),
+    ]),
+  ]);
+}
