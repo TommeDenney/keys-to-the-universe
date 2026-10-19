@@ -17,7 +17,8 @@ import { shipSVG as skinSVG } from '../render/ships.js';
 import { challengesCard, openQuest } from './challenges.js';
 import { QUESTS } from '../data/quests.js';
 import { questDone } from '../economy.js';
-import { divinaeEl, FORMS as DIVINAE_FORMS } from './divinae.js';
+import { specialBossEl, specialBosses } from './specialboss.js';
+import { personalGalaxyName } from '../personal.js';
 import { constellationsFor, constellationEl } from '../constellations.js';
 import { navFocus } from '../nav.js';
 import { petHTML } from '../render/pets.js';
@@ -30,7 +31,7 @@ let ORBITS = [];
 
 const GALAXIES = {
   u1: { name: 'Primera', style: 'twinkle', top: '#0B0B2B', bottom: '#1A1550', neb: ['#5B6CFF', '#9B7BFF', '#3BC9FF'], star: '#FFFFFF' },
-  u2: { name: 'Divine', style: 'sparkle', top: '#120A2E', bottom: '#2A1259', neb: ['#8B5CF6', '#EC4899', '#6366F1'], star: '#F3E8FF' },
+  u2: { name: 'Pentara', style: 'sparkle', top: '#120A2E', bottom: '#2A1259', neb: ['#8B5CF6', '#EC4899', '#6366F1'], star: '#F3E8FF' },
   u3: { name: 'Octavia', style: 'bokeh', top: '#1B0A26', bottom: '#3D0F45', neb: ['#EC4899', '#F472B6', '#A855F7'], star: '#FFE4F1' },
   u4: { name: 'Basso Spiral', style: 'embers', top: '#1A0C08', bottom: '#3B1608', neb: ['#F97316', '#EF4444', '#F59E0B'], star: '#FFD7A8' },
   u5: { name: 'Gemini Cluster', style: 'twins', top: '#06141F', bottom: '#0B2E2A', neb: ['#10B981', '#3B82F6', '#22D3EE'], star: '#E0FFF6' },
@@ -50,7 +51,11 @@ const GALAXIES = {
   g9: { name: 'Virtuoso Expanse', style: 'motes', top: '#1A1404', bottom: '#3A2C08', neb: ['#EAB308', '#F59E0B', '#FDE047'], star: '#FFF8D6' },
   g10: { name: 'Crown of Stars', style: 'sparkle', top: '#141008', bottom: '#2E2410', neb: ['#FACC15', '#FDE68A', '#F59E0B'], star: '#FFFBEA' },
 };
-const galaxyOf = (unit) => GALAXIES[unit.id] || GALAXIES.u1;
+const galaxyOf = (unit) => {
+  const g = GALAXIES[unit.id] || GALAXIES.u1;
+  const name = personalGalaxyName(unit.id); // a personal pack can rename galaxies
+  return name ? { ...g, name } : g;
+};
 export const galaxyName = (unit) => `${galaxyOf(unit).name} Galaxy`;
 export const planetName = (id) => bodyName(id, false);
 
@@ -230,7 +235,7 @@ export function renderUniverse(root) {
     const systems = buildSystems(unit);
     const rogues = [
       ...QUESTS.filter((x) => x.after === gi + 1).map((q) => [q.id, () => roguePlanet(q, gal)]),
-      ...DIVINAE_FORMS.filter((f) => unit.id === f.rogueAfter).map((f) => [f.id, () => h('div', { class: 'rogue rogue-boss' }, [divinaeEl(f)])]),
+      ...specialBosses().filter((f) => unit.id === f.rogueAfter).map((f) => [f.id, () => h('div', { class: 'rogue rogue-boss' }, [specialBossEl(f)])]),
     ].map(([id, make]) => ({ id, make, after: hash(`${id}:spot`) % systems.length }));
     // Galactic features (asteroid belts, black holes...) between some solar systems.
     const feats = galacticFeatures(unit.id, systems.length);
@@ -253,7 +258,7 @@ export function renderUniverse(root) {
     });
     const boss = unit.lessons.find((l) => l.boss);
     if (boss) sec.append(guardianEl(boss, gal, next));
-    for (const f of DIVINAE_FORMS) if (unit.id === f.galaxy) sec.append(divinaeEl(f));
+    for (const f of specialBosses()) if (unit.id === f.galaxy) sec.append(specialBossEl(f));
     page.append(sec);
     sections.push(sec);
   });

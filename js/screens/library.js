@@ -77,6 +77,7 @@ export async function renderLibrary(root) {
       h('div', { class: 'grow' }, [
         h('h3', {}, 'Import sheet music'),
         h('p', {}, `Add MusicXML (.musicxml, .xml, .mxl) or MIDI (.mid) files. The app reads the notes, splits them into hands and sections, and builds a practice plan. Costs ${IMPORT_COST} ${SYMBOL} per file.`),
+        h('p', { class: 'muted small' }, 'Only import music you have the right to use (public domain, your own, or licensed to you). Imports stay on this device and are never uploaded.'),
       ]),
       h('button', { class: 'btn primary', onclick: () => fileInput.click() }, [icon('upload'), 'Import']),
       fileInput,

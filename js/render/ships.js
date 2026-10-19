@@ -34,7 +34,7 @@ const SHIPS = {
     <path d="M32 2 L36 26 L28 26 Z" fill="#3B82F6"/>
     <path d="M6 44 L24 30 L24 44 Z M58 44 L40 30 L40 44 Z" fill="#94A3B8"/>
     <circle cx="32" cy="30" r="4" fill="#38BDF8" stroke="#0F172A" stroke-width="1.5"/>`,
-  'ship-divine': `
+  'ship-seed': `
     <path class="flame" d="M27 46 Q32 62 37 46 Z" fill="#86EFAC"/>
     <path d="M32 4 C46 16 46 34 40 46 L24 46 C18 34 18 16 32 4 Z" fill="#16A34A"/>
     <path d="M32 8 C40 18 40 32 36 44 L28 44 C24 32 24 18 32 8 Z" fill="#4ADE80"/>

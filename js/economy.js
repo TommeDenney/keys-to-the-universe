@@ -32,7 +32,11 @@ function wallet() {
     st.wallet.backpay = back;
     saveState();
   }
-  return st.wallet;
+  // Renamed item ids.
+  const w = st.wallet;
+  if (w.owned.includes('ship-divine')) w.owned = w.owned.map((x) => (x === 'ship-divine' ? 'ship-seed' : x));
+  if (w.equipped.ship === 'ship-divine') w.equipped.ship = 'ship-seed';
+  return w;
 }
 
 const subs = new Set();

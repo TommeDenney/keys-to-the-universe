@@ -1,9 +1,7 @@
-// Special bosses: The Nature Goddess Divinae (a request from Divine), in two forms.
-//  - Divinae (Easy) in the Divine galaxy: uses your imported "(Easy)" arrangement,
-//    or the original "Divinae's Garden" if none is imported.
-//  - Divinae, Ascended (Advanced): a rogue-planet boss after the Syncopa galaxy: uses your "(Advanced)" import.
-// "Only Wanna Give It To You" by Elle Varner is copyrighted, so it's never bundled
-// with the app; imports stay on the device. Each form has an exclusive reward.
+// Special bosses: bonus battles that come from a personal pack (see js/personal.js).
+// Each boss can live in a galaxy or roam as a rogue planet, uses a fallback song or
+// music you import yourself (imports stay on the device), pays a weekly bounty and
+// grants an exclusive Shop reward the first time you win.
 
 import { h, icon, modal, toast } from '../ui.js';
 import { getState, saveState, library } from '../store.js';
@@ -12,31 +10,21 @@ import { importFile } from '../music/importer.js';
 import { playSong } from './songpage.js';
 import { earn, owns, grantItem, SYMBOL } from '../economy.js';
 import { bossRewardAvailable, markBossRewarded, track } from '../challenges.js';
-import { divinaeArt } from '../render/divinae-art.js';
+import { personalBosses, personalArt } from '../personal.js';
 
-export const FORMS = [
-  {
-    key: 'easy', id: 'boss-divinae', name: 'The Nature Goddess Divinae', short: 'Divinae', level: 'Easy', galaxy: 'u2', bounty: 300,
-    match: /\(\s*easy\s*\)/i, fallback: 'divinae-garden', fallbackName: 'Divinae’s Garden (original R&B slow jam)',
-    reward: 'fx-bloom', rewardName: 'Divinae’s Bloom', rewardHint: 'Equip it in the Shop › Completion effects.',
-  },
-  {
-    key: 'adv', id: 'boss-divinae-ascended', name: 'Divinae, Ascended', short: 'Divinae, Ascended', level: 'Advanced', galaxy: null, rogueAfter: 'g7', bounty: 800, ascended: true,
-    match: /\(\s*advanced\s*\)/i, fallback: null,
-    reward: 'ship-divine', rewardName: 'the Divine Seedship', rewardHint: 'Equip it in the Shop › Spaceships.',
-  },
-];
-// Kept for older imports of this module.
-export const DIVINAE = FORMS[0];
+/** The special bosses from your personal pack (none in the public app). */
+export function specialBosses() {
+  return personalBosses().map((b) => ({ ...b, match: b.match ? new RegExp(b.match, 'i') : null }));
+}
+const art = (f) => personalArt(f.art) || '<span class="sboss-glyph">\u2726</span>';
 
 const st = () => {
   const s = getState();
-  s.divinae ||= {};
-  s.divinae.forms ||= {};
-  for (const f of FORMS) s.divinae.forms[f.key] ||= { songId: null, wins: 0 };
-  // Carry over a win from the single-boss version.
-  if (s.divinae.wins && !s.divinae.forms.easy.wins) s.divinae.forms.easy.wins = s.divinae.wins;
-  return s.divinae.forms;
+  if (s.divinae && !s.sboss) { s.sboss = s.divinae; delete s.divinae; } // carry over wins saved before the rename
+  s.sboss ||= {};
+  s.sboss.forms ||= {};
+  for (const f of personalBosses()) s.sboss.forms[f.key] ||= { songId: null, wins: 0 };
+  return s.sboss.forms;
 };
 export const formDefeated = (f) => (st()[f.key].wins || 0) > 0;
 
@@ -48,16 +36,16 @@ async function resolveSong(f) {
     if (rec) return { id: rec.id, title: rec.title, imported: true };
   }
   const imports = await library.all();
-  const auto = imports.find((r) => f.match.test(r.title || '') || f.match.test(r.fileName || ''));
+  const auto = f.match && imports.find((r) => f.match.test(r.title || '') || f.match.test(r.fileName || ''));
   if (auto) return { id: auto.id, title: auto.title, imported: true, auto: true };
   return f.fallback ? { id: f.fallback, title: f.fallbackName, imported: false } : null;
 }
 
-export function divinaeEl(f = FORMS[0]) {
+export function specialBossEl(f) {
   const won = formDefeated(f);
-  return h('div', { class: `divinae ${f.ascended ? 'ascended' : ''} ${won ? 'done' : ''}` }, [
-    h('button', { class: 'divinae-orb', 'aria-label': `Special boss: ${f.name}`, onclick: () => openDivinae(f) }, [
-      h('i', { class: 'aura' }), h('i', { class: 'core', html: divinaeArt(!!f.ascended) }),
+  return h('div', { class: `sboss ${f.ascended ? 'ascended' : ''} ${won ? 'done' : ''}` }, [
+    h('button', { class: 'sboss-orb', 'aria-label': `Special boss: ${f.name}`, onclick: () => openSpecialBoss(f) }, [
+      h('i', { class: 'aura' }), h('i', { class: 'core', html: art(f) }),
       ...Array.from({ length: f.ascended ? 12 : 8 }, (_, i) => h('i', { class: 'leaf', style: { '--a': `${i * (f.ascended ? 30 : 45)}deg`, '--d': `${(f.ascended ? 4 : 6) + (i % 3) * 2}s` } })),
       won ? h('span', { class: 'won-badge' }, '\u{1F33A}') : null,
     ]),
@@ -69,11 +57,11 @@ export function divinaeEl(f = FORMS[0]) {
   ]);
 }
 
-export async function openDivinae(f = FORMS[0]) {
+export async function openSpecialBoss(f) {
   const song = await resolveSong(f);
   const imports = await library.all();
   modal((close) => {
-    const reopen = () => { close(); openDivinae(f); };
+    const reopen = () => { close(); openSpecialBoss(f); };
     const fileIn = h('input', { type: 'file', class: 'hidden', onchange: async (e) => {
       const file = e.target.files[0];
       if (!file) return;
@@ -91,17 +79,17 @@ export async function openDivinae(f = FORMS[0]) {
       }
     } });
     const choose = (id) => { st()[f.key].songId = id; saveState(); reopen(); };
-    return [h('div', { class: `divinae-modal ${f.ascended ? 'ascended' : ''}` }, [
-      h('div', { class: 'divinae-emblem' }, [h('i'), h('span', { class: 'emblem-art', html: divinaeArt(!!f.ascended) })]),
+    return [h('div', { class: `sboss-modal ${f.ascended ? 'ascended' : ''}` }, [
+      h('div', { class: 'sboss-emblem' }, [h('i'), h('span', { class: 'emblem-art', html: art(f) })]),
       h('div', { class: 'eyebrow' }, `Special boss · ${f.level}`),
       h('h2', {}, `${f.name} challenges you!`),
       h('p', {}, `Score 75% with the beat at full speed to win her bounty (${f.bounty} ${SYMBOL}, weekly) and the exclusive ${f.rewardName}.`),
       song
-        ? h('div', { class: 'divinae-linked' }, [icon('note'), h('span', {}, ['Battle music: ', h('b', {}, song.title), song.auto ? ' (found in your imports)' : ''])])
-        : h('div', { class: 'divinae-need' }, [h('p', {}, `Import your “(${f.level})” arrangement of “Only Wanna Give It To You” to unlock this battle. It stays on this device only.`)]),
-      h('details', { class: 'divinae-need' }, [
+        ? h('div', { class: 'sboss-linked' }, [icon('note'), h('span', {}, ['Battle music: ', h('b', {}, song.title), song.auto ? ' (found in your imports)' : ''])])
+        : h('div', { class: 'sboss-need' }, [h('p', {}, `Import your “(${f.level})” arrangement${f.songName ? ` of “${f.songName}”` : ''} to unlock this battle. It stays on this device only.`)]),
+      h('details', { class: 'sboss-need' }, [
         h('summary', {}, 'Choose different music'),
-        imports.length ? h('div', { class: 'divinae-pick' }, [h('small', {}, 'Use something you imported:'), ...imports.slice(0, 8).map((r) => h('button', { class: 'chip-btn', onclick: () => choose(r.id) }, r.title))]) : null,
+        imports.length ? h('div', { class: 'sboss-pick' }, [h('small', {}, 'Use something you imported:'), ...imports.slice(0, 8).map((r) => h('button', { class: 'chip-btn', onclick: () => choose(r.id) }, r.title))]) : null,
         h('div', { class: 'row' }, [
           h('button', { class: 'btn ghost sm', onclick: () => fileIn.click() }, [icon('upload'), 'Import a file (free)']),
           st()[f.key].songId ? h('button', { class: 'btn ghost sm', onclick: () => { st()[f.key].songId = null; saveState(); reopen(); } }, 'Reset to default') : null,

@@ -11,6 +11,12 @@ import { reqProgress, reqText, badges } from '../achievements.js';
 import { rewardLook } from '../data/rewards.js';
 import { petHTML } from '../render/pets.js';
 import { fxRing } from './universe.js';
+import { specialBosses } from './specialboss.js';
+import { personalItemName } from '../personal.js';
+
+// Exclusive items only show up when a special boss (from a personal pack) offers them.
+const offered = (id) => specialBosses().some((b) => b.reward === id);
+const displayName = (it) => personalItemName(it.id) || it.name;
 
 export function renderShop(root) {
   const page = h('div', { class: 'page shop' });
@@ -50,7 +56,7 @@ export function renderShop(root) {
       ...CATEGORIES.map((c) => h('section', { class: 'shop-cat' }, [
         h('h2', {}, c.name),
         h('p', { class: 'muted' }, c.blurb),
-        h('div', { class: 'shop-grid' }, SHOP.filter((it) => it.cat === c.id && !it.req).map(card)),
+        h('div', { class: 'shop-grid' }, SHOP.filter((it) => it.cat === c.id && !it.req && (!it.exclusive || owns(it.id) || offered(it.id))).map(card)),
         SHOP.some((it) => it.cat === c.id && it.req) ? h('h3', { class: 'achv-head' }, [h('span', {}, '\u{1F3C6}'), ' Achievement rewards ', h('small', { class: 'muted' }, 'Earn the right, then buy with Stardust')]) : null,
         h('div', { class: 'shop-grid' }, SHOP.filter((it) => it.cat === c.id && it.req).map(card)),
       ])),
@@ -77,12 +83,12 @@ export function renderShop(root) {
           equip(it.cat, it.id); applyCosmetics(); toast(`${it.name} unlocked and equipped!`, 'ok'); draw();
         } }, [h('span', { class: 'sd' }, SYMBOL), String(it.price)])
         : h('button', { class: 'btn ghost sm', disabled: true }, [icon('lock'), h('span', { class: 'sd' }, SYMBOL), String(it.price)]);
-      return h('div', { class: `shop-item achv ${rp.met ? 'met' : 'locked'}`, 'data-item': it.id }, [preview, h('div', { class: 'shop-meta' }, [tag, h('b', {}, it.name), h('span', {}, it.desc), req]), h('div', { class: 'shop-buy' }, [buyBtn])]);
+      return h('div', { class: `shop-item achv ${rp.met ? 'met' : 'locked'}`, 'data-item': it.id }, [preview, h('div', { class: 'shop-meta' }, [tag, h('b', {}, displayName(it)), h('span', {}, it.desc), req]), h('div', { class: 'shop-buy' }, [buyBtn])]);
     }
     if (it.exclusive && !have) {
       const preview = h('div', { class: `shop-preview prev-${it.cat}` });
       fillPreview(it, preview);
-      return h('div', { class: 'shop-item exclusive' }, [preview, h('div', { class: 'shop-meta' }, [h('b', {}, it.name), h('span', {}, it.desc)]), h('div', { class: 'shop-buy' }, [h('span', { class: 'badge warn' }, [icon('lock'), ` ${it.exclusive}`])])]);
+      return h('div', { class: 'shop-item exclusive' }, [preview, h('div', { class: 'shop-meta' }, [h('b', {}, displayName(it)), h('span', {}, it.desc)]), h('div', { class: 'shop-buy' }, [h('span', { class: 'badge warn' }, [icon('lock'), ` ${it.exclusive}`])])]);
     }
     const btn = on
       ? h('button', { class: 'btn ghost sm', disabled: true }, [icon('check'), 'Equipped'])
@@ -100,7 +106,7 @@ export function renderShop(root) {
         }, [h('span', { class: 'sd' }, SYMBOL), String(it.price)]);
     return h('div', { class: `shop-item ${on ? 'on' : ''} ${have ? 'owned' : ''} ${it.req ? 'achv met' : ''}`, 'data-item': it.id }, [
       preview,
-      h('div', { class: 'shop-meta' }, [h('b', {}, it.name), h('span', {}, it.desc)]),
+      h('div', { class: 'shop-meta' }, [h('b', {}, displayName(it)), h('span', {}, it.desc)]),
       h('div', { class: 'shop-buy' }, [it.price === 0 && !have ? h('span', { class: 'muted small' }, 'Free') : null, btn]),
     ]);
   }

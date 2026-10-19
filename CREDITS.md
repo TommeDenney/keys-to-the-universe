@@ -106,5 +106,5 @@ The graded pieces in the Learn path and Songs tab come from the [Mutopia Project
 
 ## Other
 
-- Built-in folk/classical melodies are public domain; arrangements, test pieces and "Divinae’s Garden" are original to this app.
+- Built-in folk/classical melodies are public domain; arrangements and test pieces are original to this app.
 - Fonts: Nunito and Noto Music (SIL Open Font License).

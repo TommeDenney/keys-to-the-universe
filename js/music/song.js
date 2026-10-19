@@ -231,7 +231,7 @@ export function buildEvents(notes) {
   return events;
 }
 
-/** The ordered practice plan for a song (Simply-style breakdown). */
+/** The ordered practice plan for a song (a step-by-step breakdown). */
 export function practicePlan(song) {
   const steps = [];
   const both = song.hands.R && song.hands.L;

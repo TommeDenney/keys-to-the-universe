@@ -1,6 +1,7 @@
 // Settings: input setup (mic test, MIDI / Bluetooth piano), sound, display, progress.
 
 import { h, icon, modal, toast } from '../ui.js';
+import { hasPersonalPack, personalName, validPersonalPack, installPersonalPack, removePersonalPack } from '../personal.js';
 import { settings, progress, makeBackup, restoreBackup, lastBackup, storageStatus, protectStorage } from '../store.js';
 import { mic } from '../input/mic.js';
 import { input } from '../input/hub.js';
@@ -159,7 +160,7 @@ export function renderSettings(root) {
       ]) }, 'Reset')),
     ]),
     h('section', { class: 'about' }, [
-      h('p', {}, 'Ivory is a personal practice app. Piano sound: Salamander Grand Piano by Alexander Holm (CC BY 3.0). Built-in songs are public-domain melodies with simplified arrangements written for this app.'),
+      h('p', {}, 'Ivory is a free, open-source piano practice app. Piano sound: Salamander Grand Piano by Alexander Holm (CC BY 3.0). Built-in songs are public-domain melodies with simplified arrangements written for this app.'),
       h('p', {}, 'Computer keyboard: A W S E D F T G Y H U J K play C to C (Z / X change octave).'),
     ]),
   );
@@ -170,13 +171,23 @@ function constellationRow() {
   const status = h('span', { class: 'badge' }, '\u2026');
   import('../constellations.js').then(async ({ loadConstellations }) => {
     const list = await loadConstellations();
-    status.textContent = list.length ? `${list.length} constellations \u00b7 ${list.filter((c) => c.unlocked).length} unlocked` : 'None imported';
-    status.className = `badge ${list.length ? 'ok' : ''}`;
+    const parts = [];
+    if (hasPersonalPack()) parts.push(`${personalName()} pack`);
+    if (list.length) parts.push(`${list.length} constellations \u00b7 ${list.filter((c) => c.unlocked).length} unlocked`);
+    status.textContent = parts.length ? parts.join(' \u00b7 ') : 'None imported';
+    status.className = `badge ${parts.length ? 'ok' : ''}`;
   });
   const fileIn = h('input', { type: 'file', class: 'hidden', onchange: async (e) => {
     const f = e.target.files[0];
     if (!f) return;
     try {
+      const data = JSON.parse(await f.text());
+      if (validPersonalPack(data)) {
+        installPersonalPack(data);
+        toast('Personal pack installed. Reloading\u2026', 'ok');
+        setTimeout(() => location.reload(), 900);
+        return;
+      }
       const { importPack } = await import('../constellations.js');
       const n = await importPack(f);
       toast(`${n} constellations added to your universe \u2728`, 'ok');
@@ -186,9 +197,13 @@ function constellationRow() {
     }
   } });
   return h('div', { class: 'sub-card' }, [
-    h('div', { class: 'sub-head' }, [h('b', {}, 'Personal constellations'), status]),
-    h('p', { class: 'muted small' }, 'Import a private constellation pack (.ivorypack.json). Its pictures stay on this device only and appear as constellations in their galaxies.'),
-    h('div', { class: 'row', style: { justifyContent: 'flex-start' } }, [h('button', { class: 'btn ghost sm', onclick: () => fileIn.click() }, [icon('upload'), 'Import constellation pack']), fileIn]),
+    h('div', { class: 'sub-head' }, [h('b', {}, 'Private packs'), status]),
+    h('p', { class: 'muted small' }, 'Import a private pack (.ivorypack.json): photo constellations, or a personal pack with your own galaxy names, songs and special bosses. Packs stay on this device only (and in your backups).'),
+    h('div', { class: 'row', style: { justifyContent: 'flex-start' } }, [
+      h('button', { class: 'btn ghost sm', onclick: () => fileIn.click() }, [icon('upload'), 'Import a pack']),
+      hasPersonalPack() ? h('button', { class: 'btn ghost sm danger', onclick: () => { removePersonalPack(); toast('Personal pack removed. Reloading\u2026'); setTimeout(() => location.reload(), 900); } }, `Remove ${personalName()} pack`) : null,
+      fileIn,
+    ]),
   ]);
 }
 

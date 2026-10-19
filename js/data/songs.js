@@ -1,6 +1,7 @@
 // Built-in library. Every melody here is in the public domain; the
 // arrangements (simplified left hands, fingerings) were written for this app.
 import { songFromDef } from '../music/song.js';
+import { personalSongDefs, personalSongTitle } from '../personal.js';
 import { parsePitch, diatonic } from '../music/theory.js';
 
 const C = '(C3@5 E3@3 G3@1)';
@@ -204,21 +205,10 @@ export const SONG_DEFS = [
     lh: `r/2. | (C3 E3 G3)/1 | (C3 E3 G3)/1 | (C3 E3 G3)/1 | (C3 E3 G3)/1 | (C3 E3 G3)/1 | (C3 E3 G3)/1 | (B2 F3 G3)/1 |
          (B2 F3 G3)/1 | (C3 E3 G3)/1 | (C3 E3 Bb3)/1 | (C3 F3 A3)/1 | (C3 E3 G3)/1 | (C3 E3 G3)/1 | (B2 F3 G3)/1 | (C3 E3 G3)/1 |`,
   },
-  // ---- Special boss: The Nature Goddess Divinae (original composition) ----
-  { id: 'divinae-garden', title: 'Divinae\u2019s Garden', composer: 'Ivory original (R&B slow jam)', level: 3, bpm: 88, tags: ['Boss', 'R&B', 'Both hands'],
-    about: 'An original neo-soul groove written for The Nature Goddess Divinae: a syncopated melody over Am, Dm, F and C.',
-    rh: `r/8 E4/8 G4/8 A4/8 r/8 G4/8 E4 | D4/2. r | r/8 E4/8 G4/8 A4/8 C5/8 A4/8 G4 | A4/2 G4 E4 |
-         r/8 E4/8 G4/8 A4/8 r/8 G4/8 E4 | D4/4. E4/8 C4/2 | r/8 C4/8 D4/8 E4/8 G4/8 E4/8 D4 | C4/1 |
-         C5/4. A4/8 G4 E4 | G4/8 A4/8 G4 E4/2 | C5/4. A4/8 G4 A4 | B4/2 r/2 |
-         C5/4. A4/8 G4 E4 | G4/8 A4/8 G4 E4 D4 | E4/8 D4/8 C4 D4 E4 | C4/1 |`,
-    lh: `A2/2 E3/2 | D3/2 A2/2 | A2/2 E3/2 | E3/2 B2/2 | A2/2 E3/2 | D3/2 C3/2 | F2/2 G2/2 | C3/1 |
-         F2/2 C3/2 | C3/2 G2/2 | F2/2 C3/2 | G2/2 D3/2 | F2/2 C3/2 | C3/2 E3/2 | D3/2 G2/2 | C3/1 |`,
-    sections: [[1, 8, 'Verse'], [9, 16, 'Chorus']] },
-
   // ---- Boss battles: original test pieces, one per galaxy ----
   { id: 'boss-u1', title: 'Primera Trial', composer: 'Ivory test piece', level: 1, bpm: 84, pos: { R: 'C4' }, tags: ['Boss'], about: 'C, D and E with mixed rhythms. Keep the beat!',
     rh: 'C4 D4 E4 C4 | E4 D4 C4/2 | C4 C4 D4 D4 | E4/1 | E4 D4 C4 D4 | E4 E4 D4/2 | C4/8 D4/8 E4/8 D4/8 C4 E4 | C4/1 |' },
-  { id: 'boss-u2', title: 'Divine Trial', composer: 'Ivory test piece', level: 2, bpm: 92, pos: { R: 'C4' }, tags: ['Boss'], about: 'All five fingers, eighth notes, a dotted rhythm and rests.',
+  { id: 'boss-u2', title: 'Pentara Trial', composer: 'Ivory test piece', level: 2, bpm: 92, pos: { R: 'C4' }, tags: ['Boss'], about: 'All five fingers, eighth notes, a dotted rhythm and rests.',
     rh: 'C4 E4 G4/2 | F4 E4 D4 r | E4/4. F4/8 G4 E4 | D4/2 r/2 | G4 F4/8 E4/8 D4 C4 | E4/2. D4 | C4 D4 E4 F4 | G4/2 C4/2 |' },
   { id: 'boss-u3', title: 'Octavia Trial', composer: 'Ivory test piece', level: 2, bpm: 88, tags: ['Boss'], about: 'The whole octave: thumb under, A and B, and back down.',
     rh: 'C4@1 D4@2 E4@3 F4@1 | G4@2 A4@3 B4@4 C5@5 | C5@5 B4@4 A4@3 G4@2 | A4/2 G4/2 | E4@1 G4@2 A4@3 C5@5 | B4@4 A4@3 G4@2/2 | F4@1 A4@3 G4@2 E4@1 | C4@1/1 |' },
@@ -262,7 +252,8 @@ export function buildSong(def) {
 let cache = null;
 export function builtinSongs() {
   if (!cache) {
-    cache = SONG_DEFS.map(buildSong);
+    // Songs from a personal pack (private, on this device) join the built-in ones.
+    cache = [...SONG_DEFS, ...personalSongDefs()].map((d) => buildSong(personalSongTitle(d.id) ? { ...d, title: personalSongTitle(d.id) } : d));
     for (const s of cache) if (s.errors.length) console.warn(s.errors.join('\n'));
   }
   return cache;

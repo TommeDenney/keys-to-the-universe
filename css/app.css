@@ -999,28 +999,28 @@ body.in-universe .screen { color: #F4F3FA; }
 .unlock-card { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
 .unlock-icon { width: 56px; height: 56px; border-radius: 16px; display: grid; place-items: center; background: var(--brand-soft); color: var(--brand); }
 
-/* ---- Divinae ---- */
-.divinae { position: relative; display: flex; flex-direction: column; align-items: center; gap: 12px; margin: 20px 0; }
-.divinae-orb { appearance: none; border: 0; padding: 0; cursor: pointer; background: none; position: relative; width: 140px; height: 140px; transition: transform .35s var(--spring); }
-.divinae-orb:active { transform: scale(.94); }
-.divinae-orb .aura { position: absolute; inset: -16px; border-radius: 50%; background: conic-gradient(from 0deg, #4ADE80, #FDE68A, #F9A8D4, #34D399, #4ADE80); filter: blur(14px); opacity: .75; animation: spin 9s linear infinite; }
-.divinae-orb .core { position: absolute; inset: 14px; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #F0FFF4, #86EFAC 35%, #15803D 75%, #052E16); box-shadow: 0 0 40px #4ADE80, inset -14px -14px 30px rgba(0,0,0,.45); animation: core-pulse 4s ease-in-out infinite; --g1: #4ADE80; --g2: #FDE68A; }
-.divinae-orb .leaf { position: absolute; left: 50%; top: 50%; width: 16px; height: 9px; margin: -4px 0 0 -8px; border-radius: 0 100% 0 100%; background: linear-gradient(135deg, #BBF7D0, #22C55E); box-shadow: 0 0 8px rgba(74,222,128,.6); animation: leaf-orbit var(--d) linear infinite; transform: rotate(var(--a)) translateX(78px); }
-.divinae-orb .leaf:nth-child(odd) { background: radial-gradient(circle, #FFF1F2, #F9A8D4); border-radius: 50%; width: 11px; height: 11px; }
+/* ---- Special bosses (from a personal pack) ---- */
+.sboss { position: relative; display: flex; flex-direction: column; align-items: center; gap: 12px; margin: 20px 0; }
+.sboss-orb { appearance: none; border: 0; padding: 0; cursor: pointer; background: none; position: relative; width: 140px; height: 140px; transition: transform .35s var(--spring); }
+.sboss-orb:active { transform: scale(.94); }
+.sboss-orb .aura { position: absolute; inset: -16px; border-radius: 50%; background: conic-gradient(from 0deg, #4ADE80, #FDE68A, #F9A8D4, #34D399, #4ADE80); filter: blur(14px); opacity: .75; animation: spin 9s linear infinite; }
+.sboss-orb .core { position: absolute; inset: 14px; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #F0FFF4, #86EFAC 35%, #15803D 75%, #052E16); box-shadow: 0 0 40px #4ADE80, inset -14px -14px 30px rgba(0,0,0,.45); animation: core-pulse 4s ease-in-out infinite; --g1: #4ADE80; --g2: #FDE68A; }
+.sboss-orb .leaf { position: absolute; left: 50%; top: 50%; width: 16px; height: 9px; margin: -4px 0 0 -8px; border-radius: 0 100% 0 100%; background: linear-gradient(135deg, #BBF7D0, #22C55E); box-shadow: 0 0 8px rgba(74,222,128,.6); animation: leaf-orbit var(--d) linear infinite; transform: rotate(var(--a)) translateX(78px); }
+.sboss-orb .leaf:nth-child(odd) { background: radial-gradient(circle, #FFF1F2, #F9A8D4); border-radius: 50%; width: 11px; height: 11px; }
 @keyframes leaf-orbit { from { transform: rotate(var(--a)) translateX(78px) rotate(0deg); } to { transform: rotate(calc(var(--a) + 360deg)) translateX(78px) rotate(-360deg); } }
-.divinae-orb .g-icon { position: absolute; inset: 0; display: grid; place-items: center; font-size: 42px; filter: drop-shadow(0 0 10px #4ADE80); animation: bob 3s ease-in-out infinite; }
-.divinae .body-label small { color: #86EFAC; }
-.special-boss .divinae .body-label b { color: var(--ink); text-shadow: none; }
-.special-boss .divinae-orb { width: 110px; height: 110px; }
-.divinae-modal { text-align: center; }
-.divinae-emblem { position: relative; width: 90px; height: 90px; margin: 0 auto 6px; display: grid; place-items: center; }
-.divinae-emblem i { position: absolute; inset: 0; border-radius: 50%; background: conic-gradient(#4ADE80, #FDE68A, #F9A8D4, #4ADE80); filter: blur(8px); animation: spin 6s linear infinite; }
-.divinae-emblem span { position: relative; font-size: 40px; }
-.divinae-need { text-align: left; background: var(--tint); border-radius: 14px; padding: 10px 14px; margin-top: 12px; }
-.divinae-need ol { padding-left: 20px; color: var(--ink-2); line-height: 1.6; margin: 6px 0 0; }
-.divinae-linked { display: inline-flex; gap: 8px; align-items: center; margin-top: 12px; background: #E3F8EE; color: #0B7F4B; padding: 8px 14px; border-radius: 12px; }
-.divinae-pick { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; margin-top: 12px; }
-.divinae-pick small { width: 100%; color: var(--ink-3); font-weight: 800; }
+.sboss-orb .g-icon { position: absolute; inset: 0; display: grid; place-items: center; font-size: 42px; filter: drop-shadow(0 0 10px #4ADE80); animation: bob 3s ease-in-out infinite; }
+.sboss .body-label small { color: #86EFAC; }
+.special-boss .sboss .body-label b { color: var(--ink); text-shadow: none; }
+.special-boss .sboss-orb { width: 110px; height: 110px; }
+.sboss-modal { text-align: center; }
+.sboss-emblem { position: relative; width: 90px; height: 90px; margin: 0 auto 6px; display: grid; place-items: center; }
+.sboss-emblem i { position: absolute; inset: 0; border-radius: 50%; background: conic-gradient(#4ADE80, #FDE68A, #F9A8D4, #4ADE80); filter: blur(8px); animation: spin 6s linear infinite; }
+.sboss-emblem span { position: relative; font-size: 40px; }
+.sboss-need { text-align: left; background: var(--tint); border-radius: 14px; padding: 10px 14px; margin-top: 12px; }
+.sboss-need ol { padding-left: 20px; color: var(--ink-2); line-height: 1.6; margin: 6px 0 0; }
+.sboss-linked { display: inline-flex; gap: 8px; align-items: center; margin-top: 12px; background: #E3F8EE; color: #0B7F4B; padding: 8px 14px; border-radius: 12px; }
+.sboss-pick { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; margin-top: 12px; }
+.sboss-pick small { width: 100%; color: var(--ink-3); font-weight: 800; }
 .planet.fx-bloom.done .orb { box-shadow: 0 0 26px #4ADE80, 0 0 70px rgba(74,222,128,.35); }
 .fx-bloom .bloom { position: absolute; left: 50%; top: 50%; width: 14px; height: 14px; margin: -7px; border-radius: 50%; background: radial-gradient(circle, #FFF7D6 25%, #F9A8D4 30%, #EC4899 70%); box-shadow: 0 0 8px #F9A8D4; transform: rotate(var(--a)) translateX(calc(var(--size) / 2 + 6px)); animation: bloom-sway 4s ease-in-out infinite; }
 .fx-bloom .bloom:nth-child(even) { background: radial-gradient(circle, #FEF9C3 25%, #86EFAC 30%, #16A34A 75%); border-radius: 0 100% 0 100%; }
@@ -1029,7 +1029,7 @@ body.in-universe .screen { color: #F4F3FA; }
 .fx-demo.fx-bloom .demo-orb { box-shadow: 0 0 20px #4ADE80, inset -8px -8px 18px rgba(0,0,0,.5); }
 .shop-item.exclusive { opacity: .85; }
 .g-sub { display: block; color: #C9C6E6; font-weight: 700; font-size: 13px; }
-.divinae-need summary { font-weight: 800; cursor: pointer; } .divinae-need p { margin-top: 6px; color: var(--ink-2); }
+.sboss-need summary { font-weight: 800; cursor: pointer; } .sboss-need p { margin-top: 6px; color: var(--ink-2); }
 
 /* ===================== Cosmos (GPU-composited, full refresh rate) ===================== */
 @property --c-top { syntax: '<color>'; inherits: true; initial-value: #0B0B2B; }
@@ -1081,10 +1081,10 @@ body.warping .gstars .gs.streaks { opacity: .9; }
 body.warping.warp-up .gstars .gs.streaks { transform: scaleY(-1); }
 @media (prefers-reduced-motion: reduce) { .cosmos *, .gstars * { animation: none !important; transition: none !important; } }
 .special-row { display: flex; flex-wrap: wrap; gap: 30px; justify-content: center; }
-.divinae.ascended .divinae-orb .aura { background: conic-gradient(from 0deg, #FDE68A, #4ADE80, #F472B6, #A78BFA, #FDE68A); filter: blur(18px); opacity: .9; animation-duration: 5s; }
-.divinae.ascended .divinae-orb .core { background: radial-gradient(circle at 35% 30%, #FFFBEB, #FDE68A 25%, #22C55E 60%, #052E16); box-shadow: 0 0 50px #FDE68A, 0 0 100px rgba(74,222,128,.5), inset -14px -14px 30px rgba(0,0,0,.45); }
-.divinae.ascended .body-label small { color: #FDE68A; }
-.divinae-modal.ascended .divinae-emblem i { background: conic-gradient(#FDE68A, #4ADE80, #F472B6, #A78BFA, #FDE68A); }
+.sboss.ascended .sboss-orb .aura { background: conic-gradient(from 0deg, #FDE68A, #4ADE80, #F472B6, #A78BFA, #FDE68A); filter: blur(18px); opacity: .9; animation-duration: 5s; }
+.sboss.ascended .sboss-orb .core { background: radial-gradient(circle at 35% 30%, #FFFBEB, #FDE68A 25%, #22C55E 60%, #052E16); box-shadow: 0 0 50px #FDE68A, 0 0 100px rgba(74,222,128,.5), inset -14px -14px 30px rgba(0,0,0,.45); }
+.sboss.ascended .body-label small { color: #FDE68A; }
+.sboss-modal.ascended .sboss-emblem i { background: conic-gradient(#FDE68A, #4ADE80, #F472B6, #A78BFA, #FDE68A); }
 .planet.arrive .planet-body, .guardian.arrive .guardian-orb { animation: arrive 1.2s var(--spring) 2; }
 @keyframes arrive { 0% { transform: scale(1); } 30% { transform: scale(1.18); filter: brightness(1.5); } 100% { transform: scale(1); } }
 .planet.arrive .body-label b::after, .guardian.arrive .body-label b::after { content: '  \2190  tap to land'; font-size: 13px; color: #FDE68A; font-weight: 800; }
@@ -1122,16 +1122,16 @@ body.warping.warp-up .gstars .gs.streaks { transform: scaleY(-1); }
 @keyframes draw-line { to { stroke-dashoffset: 0; } }
 @keyframes star-in { from { transform: scale(0); opacity: 0; } to { transform: scale(1); opacity: 1; } }
 @keyframes fade-overlay { to { opacity: .25; } }
-.divinae-orb .core { overflow: hidden; display: block; }
-.divinae-orb .core svg, .emblem-art svg { width: 100%; height: 100%; display: block; }
-.divinae-orb .core .divinae-art { animation: goddess-breathe 5s ease-in-out infinite; transform-origin: 50% 70%; }
+.sboss-orb .core { overflow: hidden; display: block; }
+.sboss-orb .core svg, .emblem-art svg { width: 100%; height: 100%; display: block; }
+.sboss-orb .core > svg { animation: goddess-breathe 5s ease-in-out infinite; transform-origin: 50% 70%; }
 @keyframes goddess-breathe { 50% { transform: scale(1.03) translateY(-1px); } }
-.divinae-orb .won-badge { position: absolute; right: 4px; bottom: 4px; font-size: 26px; filter: drop-shadow(0 0 6px #F9A8D4); z-index: 3; }
-.divinae-orb .leaf { z-index: 2; }
+.sboss-orb .won-badge { position: absolute; right: 4px; bottom: 4px; font-size: 26px; filter: drop-shadow(0 0 6px #F9A8D4); z-index: 3; }
+.sboss-orb .leaf { z-index: 2; }
 .emblem-art { position: relative; width: 84px; height: 84px; border-radius: 50%; overflow: hidden; display: block; }
 .rogue-boss { margin: 10px 0 60px; animation-duration: 20s; }
 .rogue-boss .rogue-trail { top: 38%; height: 28%; width: 220px; background: linear-gradient(90deg, transparent, rgba(253,230,138,.55), rgba(74,222,128,.5)); }
-.rogue-boss .divinae { margin: 0; }
+.rogue-boss .sboss { margin: 0; }
 .rogue-boss .body-label small::before { content: 'Rogue planet \00b7  '; }
 
 /* ---- Shop expansion ---- */
@@ -1438,3 +1438,5 @@ body[data-tabpos="right"] .nav-legend { right: 108px; }
   body[data-tabpos="left"] .screen { padding-left: 80px; } body[data-tabpos="right"] .screen { padding-right: 80px; }
   body[data-tabpos="left"] .musicbar { left: 84px; } body[data-tabpos="right"] .nav-legend { right: 84px; }
 }
+
+.sboss-glyph { display: grid; place-items: center; width: 100%; height: 100%; font-size: 40px; color: #FDE68A; }

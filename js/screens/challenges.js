@@ -8,7 +8,7 @@ import { SYMBOL, owns, spend, questDone, completeQuest, walletPill, balance } fr
 import { getState, saveState } from '../store.js';
 import { getSong } from '../data/catalog.js';
 import { playSong } from './songpage.js';
-import { divinaeEl, FORMS as DIVINAE_FORMS } from './divinae.js';
+import { specialBossEl, specialBosses } from './specialboss.js';
 
 function countdown(period) {
   const ms = nextReset(period) - Date.now();
@@ -97,10 +97,10 @@ export function renderChallenges(root) {
       h('div', { class: 'ch-head' }, [h('h2', {}, 'Guardian bounties'), h('span', { class: 'badge' }, countdown('weekly'))]),
       h('p', { class: 'muted' }, `Every Guardian pays its full Stardust reward again once a week (resets Monday). Rematch old bosses to earn more!`),
     ]),
-    h('section', { class: 'card ch-period special-boss' }, [
+    specialBosses().length ? h('section', { class: 'card ch-period special-boss' }, [
       h('div', { class: 'ch-head' }, [h('h2', {}, 'Special bosses'), h('span', { class: 'badge' }, 'Weekly bounties')]),
-      h('div', { class: 'special-row' }, DIVINAE_FORMS.map((f) => divinaeEl(f))),
-    ]),
+      h('div', { class: 'special-row' }, specialBosses().map((f) => specialBossEl(f))),
+    ]) : null,
     h('section', { class: 'card ch-period' }, [
       h('div', { class: 'ch-head' }, [h('h2', {}, 'Rogue planets'), h('span', { class: 'badge' }, 'Side quests')]),
       h('p', { class: 'muted' }, 'Special challenges drifting between galaxies. Pay the launch fuel once, then beat the challenge for a big reward.'),

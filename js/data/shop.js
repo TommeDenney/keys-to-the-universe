@@ -9,7 +9,7 @@ export const SHOP = [
   { id: 'ship-comet', cat: 'ship', name: 'Comet Rider', price: 200, desc: 'Ride a blazing comet with a glowing tail.' },
   { id: 'ship-piano', cat: 'ship', name: 'Grand Piano Rocket', price: 300, desc: 'A rocket with keys down its side.' },
   { id: 'ship-fighter', cat: 'ship', name: 'Starfighter', price: 400, desc: 'Sleek wings and twin blue engines.' },
-  { id: 'ship-divine', cat: 'ship', name: 'Divine Seedship', price: 0, exclusive: 'Defeat Divinae, Ascended', desc: 'A living seed-pod ship wrapped in leaves and blossoms. Exclusive.' },
+  { id: 'ship-seed', cat: 'ship', name: 'Seedship', price: 0, exclusive: 'Defeat a special boss', desc: 'A living seed-pod ship wrapped in leaves and blossoms. Exclusive.' },
   { id: 'ship-whale', cat: 'ship', name: 'Space Whale', price: 350, desc: 'A gentle whale swimming between the stars.' },
   { id: 'ship-guitar', cat: 'ship', name: 'Galaxy Guitar', price: 450, desc: 'Fly a starry guitar. Endless possibilities.' },
   { id: 'ship-bubble', cat: 'ship', name: 'Bubble Pod', price: 250, desc: 'A shimmering soap-bubble pod.' },
@@ -31,7 +31,7 @@ export const SHOP = [
   { id: 'fx-galaxy', cat: 'fx', name: 'Spiral Galaxy', price: 350, desc: 'Completed worlds spin up their own little galaxy arms.' },
   { id: 'fx-notes', cat: 'fx', name: 'Orbiting Notes', price: 300, desc: 'Rings of music notes circle every world you finish.' },
   { id: 'fx-restore', cat: 'fx', name: 'Restoration', price: 400, desc: 'Unvisited worlds are corrupted. Complete them to heal them back to life.' },
-  { id: 'fx-bloom', cat: 'fx', name: 'Divinae\u2019s Bloom', price: 0, exclusive: 'Defeat The Nature Goddess Divinae', desc: 'Completed worlds bloom with vines and flowers. Exclusive: earned, never bought.' },
+  { id: 'fx-bloom', cat: 'fx', name: 'Bloom', price: 0, exclusive: 'Defeat a special boss', desc: 'Completed worlds bloom with vines and flowers. Exclusive: earned, never bought.' },
 
   // Keyboard themes (on-screen keyboard)
   { id: 'kb-classic', cat: 'kb', name: 'Classic Ivory', price: 0, desc: 'Ivory and ebony.' },
