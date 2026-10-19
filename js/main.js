@@ -36,7 +36,7 @@ import { mountMusicBar } from './screens/musicbar.js';
 import { registerPackPets } from './packpets.js';
 import { mountDock } from './screens/dock.js';
 import { watchFocus } from './focus.js';
-import { state as bgState, stopTabAmbient } from './audio/bgmusic.js';
+import { state as bgState, stopTabAmbient, autoStart as autoStartMusic } from './audio/bgmusic.js';
 
 applyTheme();
 document.body.dataset.tabpos = settings.get('tabBar') || 'bottom';
@@ -175,6 +175,7 @@ Promise.all([loadCatalog(), loadConstellations(), accountReady]).then(async ([, 
   route();
   mountMusicBar();
   mountDock();
+  autoStartMusic();
   initAchievements({ toast, items: () => SHOP });
   onWallet(() => checkAchievements());
   checkAchievements();

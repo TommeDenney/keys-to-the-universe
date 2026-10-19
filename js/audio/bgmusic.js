@@ -120,6 +120,7 @@ function resume() {
 
 export function play() {
   paused = false;
+  if (!settings.get('bgOn')) settings.set('bgOn', true); // remembered for next time
   if (isHeld()) return emit();
   if (cur && cur.pausedAt != null) resume();
   else if (!cur || audio.now > cur.end) { const id = nextId(); if (id) startSong(id); }
@@ -128,6 +129,7 @@ export function play() {
 
 export function pause() {
   paused = true;
+  if (settings.get('bgOn')) settings.set('bgOn', false);
   suspend();
   emit();
 }
@@ -163,3 +165,20 @@ audio.onPlay(() => {
   clearTimeout(soundT);
   soundT = setTimeout(() => release('sound'), 3500);
 });
+
+/**
+ * If music was on when you last used the app, carry on. Browsers only allow sound
+ * after you interact, so it starts on your first tap or key press.
+ */
+export function autoStart() {
+  if (!settings.get('bgOn') || !playlist().length) return;
+  const go = () => {
+    removeEventListener('pointerdown', go, true);
+    removeEventListener('keydown', go, true);
+    if (!paused || !settings.get('bgOn')) return;
+    audio.ensure();
+    play();
+  };
+  addEventListener('pointerdown', go, true);
+  addEventListener('keydown', go, true);
+}
