@@ -3,9 +3,9 @@
 import { h, icon, starsHTML, toast, coverGradient } from '../ui.js';
 import { builtinSongs } from '../data/songs.js';
 import { catalogPieces } from '../data/catalog.js';
-import { songUnlocked } from '../unlocks.js';
+import { songUnlocked, unlockCondition } from '../unlocks.js';
 import { songPrice, IMPORT_COST } from '../data/shop.js';
-import { spend, balance, SYMBOL, walletPill } from '../economy.js';
+import { spend, balance, buySong, SYMBOL, walletPill } from '../economy.js';
 import { library, progress } from '../store.js';
 import { importFile } from '../music/importer.js';
 import { practicePlan } from '../music/song.js';
@@ -105,7 +105,7 @@ function songCard(s) {
     pct = Math.round((best / (plan.length * 3)) * 100);
   }
   const locked = !s.imported && !songUnlocked(s.id);
-  return h('a', { class: `song-card ${locked ? 'locked' : ''}`, href: `#/song/${s.id}` }, [
+  const card = h('a', { class: `song-card ${locked ? 'locked' : ''}`, href: `#/song/${s.id}` }, [
     locked ? h('span', { class: 'price-tag' }, [icon('lock'), ` ${songPrice(s)} ${SYMBOL}`]) : null,
     h('div', { class: 'cover', style: { background: coverGradient(s.id + s.title) } }, [
       h('span', { class: 'cover-note' }, icon('note')),
@@ -114,9 +114,32 @@ function songCard(s) {
     h('div', { class: 'meta' }, [
       h('b', {}, s.title),
       h('span', {}, s.composer || 'Unknown composer'),
-      h('div', { class: 'progress-line' }, h('i', { style: { width: `${pct}%` } })),
+      locked ? h('small', { class: 'unlock-cond' }, unlockCondition(s.id) || 'Not on the Learn path: unlock it with Stardust') : h('div', { class: 'progress-line' }, h('i', { style: { width: `${pct}%` } })),
+      locked ? buyNow(s, () => card.replaceWith(songCard(s))) : null,
     ]),
   ]);
+  return card;
+}
+
+/** "Buy now" on a locked song card: tap once to see the price confirm, tap again to buy. */
+function buyNow(s, done) {
+  const price = songPrice(s);
+  let armed = 0;
+  const label = () => [`Buy now \u00b7 ${price.toLocaleString('en-US')} ${SYMBOL}`];
+  const btn = h('button', { class: 'btn primary sm buy-now', onclick: (e) => {
+    e.preventDefault(); e.stopPropagation();
+    if (!armed) {
+      if (balance() < price) { toast(`You need ${(price - balance()).toLocaleString('en-US')} more ${SYMBOL}. Complete lessons and challenges to earn more!`, 'bad'); return; }
+      btn.classList.add('armed'); btn.replaceChildren(`Tap again to spend ${price.toLocaleString('en-US')} ${SYMBOL}`);
+      armed = setTimeout(() => { armed = 0; btn.classList.remove('armed'); btn.replaceChildren(...label()); }, 3500);
+      return;
+    }
+    clearTimeout(armed); armed = 0;
+    if (!buySong(s.id, price)) { toast(`You need ${(price - balance()).toLocaleString('en-US')} more ${SYMBOL}.`, 'bad'); return; }
+    toast(`${s.title} unlocked!`, 'ok');
+    done();
+  } }, label());
+  return btn;
 }
 
 function sourcesSection() {

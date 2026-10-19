@@ -8,7 +8,7 @@ import { keyName } from '../music/theory.js';
 import { Player } from './player.js';
 import { rewardSongStep, rewardDaily } from '../economy.js';
 import { track } from '../challenges.js';
-import { songUnlocked } from '../unlocks.js';
+import { songUnlocked, unlockCondition } from '../unlocks.js';
 import { songPrice } from '../data/shop.js';
 import { buySong, balance, SYMBOL, walletPill } from '../economy.js';
 import { toast } from '../ui.js';
@@ -109,7 +109,8 @@ function build(page, song) {
       h('div', { class: 'unlock-icon' }, icon('lock')),
       h('div', { class: 'grow' }, [
         h('h2', {}, 'This song is locked'),
-        h('p', { class: 'muted' }, `It unlocks for free when you reach it in the Learn path, or unlock it now for ${price} ${SYMBOL}. You can listen to it first.`),
+        h('p', { class: 'unlock-cond' }, unlockCondition(song.id) ? `${unlockCondition(song.id)} (free)` : 'Not on the Learn path: unlock it with Stardust'),
+        h('p', { class: 'muted' }, `Or buy it now for ${price.toLocaleString('en-US')} ${SYMBOL}. You can listen to it first.`),
       ]),
       walletPill(),
       h('button', {
@@ -118,7 +119,7 @@ function build(page, song) {
           toast(`${song.title} unlocked!`, 'ok');
           redraw();
         },
-      }, [`Unlock for ${price} ${SYMBOL}`]),
+      }, [`Buy now \u00b7 ${price.toLocaleString('en-US')} ${SYMBOL}`]),
     ]));
     return;
   }

@@ -1831,3 +1831,9 @@ body[data-tabpos="top"] .shop-tabs.pinned { top: calc(80px + var(--safe-t)); }
 .card.fold:not(.open) > :not(h3) { display: none; }
 .card.fold.open > :not(h3) { animation: rise .35s var(--ease) both; }
 .card.fold > h3:focus-visible { outline: 3px solid var(--brand, #6D28D9); outline-offset: 4px; border-radius: 8px; }
+
+/* Locked songs: what unlocks them, and Buy now */
+.unlock-cond { display: block; font-size: 12.5px; font-weight: 700; color: var(--ink-3); line-height: 1.3; margin-top: 4px; }
+p.unlock-cond { font-size: 15px; color: var(--ink-2); margin: 4px 0; }
+.song-card .buy-now { margin-top: 8px; align-self: flex-start; }
+.song-card .buy-now.armed { background: var(--good, #059669); }
