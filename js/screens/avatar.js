@@ -4,7 +4,7 @@
 
 import { h, icon, toast } from '../ui.js';
 import { avatarSVG } from '../render/avatar.js';
-import { PARTS, AVATAR_ITEMS, HAIR_COLORS, CLOTHES_COLORS, BG_COLORS, HIGHLIGHT_COLORS } from '../data/avatar.js';
+import { PARTS, AVATAR_ITEMS, HAIR_COLORS, CLOTHES_COLORS, BG_COLORS, HIGHLIGHT_COLORS, EYE_COLORS } from '../data/avatar.js';
 import { EVENT_ITEMS, eventItemAvailable, eventOf } from '../data/events.js';
 import { avatar, setAvatar, displayName } from '../profile.js';
 import { owns, buy, balance, walletPill, SYMBOL } from '../economy.js';
@@ -90,6 +90,7 @@ export function renderAvatar(root) {
     grid.replaceChildren(...items.map(option).filter(Boolean));
     colours.replaceChildren(
       ...(part === 'hair' || part === 'facial' ? [swatches('Hair colour', 'hairColor', HAIR_COLORS)] : []),
+      ...(part === 'eyes' ? [swatches('Eye colour', 'eyeColor', EYE_COLORS)] : []),
       ...(part === 'hair' ? [highlights()] : []),
       ...(part === 'clothes' || part === 'hat' ? [swatches('Clothes colour', 'clothesColor', CLOTHES_COLORS)] : []),
       swatches('Background', 'bg', BG_COLORS),

@@ -65,6 +65,8 @@ export const AVATAR_ITEMS = [
 ];
 
 export const DEFAULT_AVATAR = { skin: 'skin-umber', hair: 'hair-afro', hairColor: '#1B1210', hlMode: 'off', hlColor: '#C68642', hlLen: 40, expr: 'expr-smile', eyes: 'eyes-round', ears: 'ears-human', facial: 'facial-none', glasses: 'glasses-none', clothes: 'clothes-hoodie', clothesColor: '#6D28D9', hat: 'hat-none', bg: '#312E81' };
+// Eye colours: natural browns, hazel, green, blue and grey, plus a few fantasy ones.
+export const EYE_COLORS = ['#3B2416', '#6B3E26', '#8E6B3A', '#B7791F', '#3F7D4E', '#2F6E8E', '#3B6FB6', '#7A8794', '#141019', '#7C3AED', '#B91C1C', '#D4A017'];
 export const HIGHLIGHT_COLORS = ['#C68642', '#E0A96D', '#F2C57C', '#F5E6B3', '#A23B2A', '#C0502E', '#7B1E3A', '#B45309', '#D9D9D9', '#F1F5F9', '#F472B6', '#A78BFA', '#38BDF8', '#34D399'];
 export const HAIR_COLORS = ['#0E0A09', '#1B1210', '#2B1A12', '#3B2416', '#55331F', '#6E4428', '#8A5A33', '#B07A45', '#D9A86C', '#E8C98A', '#A23B2A', '#C0502E', '#9CA3AF', '#F1F5F9', '#7C3AED', '#2563EB', '#DB2777', '#059669', '#F59E0B'];
 export const CLOTHES_COLORS = ['#6D28D9', '#2563EB', '#0891B2', '#059669', '#65A30D', '#CA8A04', '#EA580C', '#DC2626', '#DB2777', '#7C2D12', '#111827', '#475569', '#E2E8F0', '#F5E6CC'];

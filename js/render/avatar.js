@@ -59,7 +59,8 @@ export function avatarSVG(a, { size = 100, uid = 'av' } = {}) {
     ${skin.galaxy ? `<radialGradient id="${g('gx')}" cx=".4" cy=".3" r=".9"><stop offset="0" stop-color="#A78BFA"/><stop offset=".6" stop-color="#4338CA"/><stop offset="1" stop-color="#1E1B4B"/></radialGradient>` : ''}
   </defs>`;
   const SK = skin.galaxy ? `url(#${g('gx')})` : `url(#${g('sk')})`;
-  const ctx = { tone, shade, glow, blush, lip, hairC, hairHi, cloth, clothDark, SK, deep, g,
+  const eyeC = a.eyeColor || '#3B2416';
+  const ctx = { tone, shade, glow, blush, lip, hairC, hairHi, cloth, clothDark, SK, deep, g, eyeC, eyeSet: !!a.eyeColor,
     F: `url(#${g('hair')})`, hi: hairHi, dark: mixc(hairC, '#000000', 0.35), skinLine: shade, accent: cloth,
     helmet: helmetFor(hair) };
   const out = [];
@@ -104,15 +105,15 @@ const strands = (c, xs, y0, y1, w = 3) => xs.map((x) => `<path d="M${x} ${y0} V$
 export const LOOKS = {
   skin: {},
   eyes: {
-    'eyes-round': { draw: (c) => eyesPair((x) => `<ellipse cx="${x}" cy="45" rx="3" ry="3.6" fill="#1E1B3A"/><circle cx="${x - 1}" cy="43.8" r="1.1" fill="#fff"/>`) + brows(c) },
+    'eyes-round': { draw: (c) => eyesPair((x) => `<ellipse cx="${x}" cy="45" rx="3" ry="3.6" fill="${c.eyeC}"/><ellipse cx="${x}" cy="45.3" rx="1.6" ry="2" fill="#1E1B3A"/><circle cx="${x - 1}" cy="43.8" r="1.1" fill="#fff"/>`) + brows(c) },
     'eyes-happy': { draw: (c) => eyesPair((x) => `<path d="M${x - 3.5} 46 Q${x} 41.5 ${x + 3.5} 46" stroke="#1E1B3A" stroke-width="2" fill="none" stroke-linecap="round"/>`) + brows(c) },
     'eyes-sleepy': { draw: (c) => eyesPair((x) => `<path d="M${x - 3.5} 45 Q${x} 48 ${x + 3.5} 45" stroke="#1E1B3A" stroke-width="2" fill="none" stroke-linecap="round"/>`) + brows(c, 1) },
-    'eyes-wide': { draw: (c) => eyesPair((x) => `<ellipse cx="${x}" cy="45" rx="4.4" ry="5" fill="#fff"/><ellipse cx="${x}" cy="45.5" rx="2.8" ry="3.2" fill="#3B2416"/><circle cx="${x - 1}" cy="44" r="1" fill="#fff"/>`) + brows(c) },
-    'eyes-lashes': { draw: (c) => eyesPair((x) => `<ellipse cx="${x}" cy="45" rx="3" ry="3.6" fill="#1E1B3A"/><circle cx="${x - 1}" cy="43.8" r="1.1" fill="#fff"/><path d="M${x - 3.6} 42.4 l-1.6 -1.4 M${x - 1.6} 41.6 l-.8 -1.8 M${x + 1} 41.6 l.6 -1.8" stroke="#1E1B3A" stroke-width="1" stroke-linecap="round"/>`) + brows(c) },
+    'eyes-wide': { draw: (c) => eyesPair((x) => `<ellipse cx="${x}" cy="45" rx="4.4" ry="5" fill="#fff"/><ellipse cx="${x}" cy="45.5" rx="2.8" ry="3.2" fill="${c.eyeC}"/><ellipse cx="${x}" cy="45.7" rx="1.4" ry="1.7" fill="#1E1B3A"/><circle cx="${x - 1}" cy="44" r="1" fill="#fff"/>`) + brows(c) },
+    'eyes-lashes': { draw: (c) => eyesPair((x) => `<ellipse cx="${x}" cy="45" rx="3" ry="3.6" fill="${c.eyeC}"/><ellipse cx="${x}" cy="45.3" rx="1.6" ry="2" fill="#1E1B3A"/><circle cx="${x - 1}" cy="43.8" r="1.1" fill="#fff"/><path d="M${x - 3.6} 42.4 l-1.6 -1.4 M${x - 1.6} 41.6 l-.8 -1.8 M${x + 1} 41.6 l.6 -1.8" stroke="#1E1B3A" stroke-width="1" stroke-linecap="round"/>`) + brows(c) },
     'eyes-star': { draw: (c) => eyesPair((x) => `<path d="M${x} 40.5 L${x + 1.4} 43.8 L${x + 4.6} 44.5 L${x + 2.2} 46.7 L${x + 2.8} 50 L${x} 48.3 L${x - 2.8} 50 L${x - 2.2} 46.7 L${x - 4.6} 44.5 L${x - 1.4} 43.8 Z" fill="#FDE68A" stroke="#B45309" stroke-width=".6"/>`) },
     'eyes-heart': { draw: () => eyesPair((x) => `<path d="M${x} 49 C${x - 6} 45 ${x - 3.5} 40 ${x} 43 C${x + 3.5} 40 ${x + 6} 45 ${x} 49 Z" fill="#F43F5E"/>`) },
     'eyes-glow': { draw: () => eyesPair((x) => `<ellipse cx="${x}" cy="45" rx="5.6" ry="6" fill="#86EFAC" opacity=".25"/><ellipse cx="${x}" cy="45" rx="3" ry="3.6" fill="#BBF7D0"/>`) },
-    'eyes-cyclops': { draw: () => `<ellipse cx="50" cy="44" rx="7" ry="7.5" fill="#fff"/><ellipse cx="50" cy="44.6" rx="4.4" ry="4.8" fill="#7C3AED"/><circle cx="50" cy="44.6" r="2.2" fill="#1E1B3A"/><circle cx="48.4" cy="43" r="1.2" fill="#fff"/>` },
+    'eyes-cyclops': { draw: (c) => `<ellipse cx="50" cy="44" rx="7" ry="7.5" fill="#fff"/><ellipse cx="50" cy="44.6" rx="4.4" ry="4.8" fill="${c.eyeSet ? c.eyeC : '#7C3AED'}"/><circle cx="50" cy="44.6" r="2.2" fill="#1E1B3A"/><circle cx="48.4" cy="43" r="1.2" fill="#fff"/>` },
     'eyes-triple': { draw: () => [38, 50, 62].map((x, i) => `<ellipse cx="${x}" cy="${i === 1 ? 40 : 46}" rx="2.8" ry="3.2" fill="#1E1B3A"/><circle cx="${x - .9}" cy="${(i === 1 ? 40 : 46) - 1.1}" r="1" fill="#fff"/>`).join('') },
     'eyes-visor': { draw: () => `<rect x="32" y="40" width="36" height="10" rx="5" fill="#0F172A"/><rect x="34" y="42" width="32" height="6" rx="3" fill="#22D3EE" opacity=".85"/><path d="M38 45 H62" stroke="#ECFEFF" stroke-width="1.2" opacity=".7"/>` },
   },
