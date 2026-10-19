@@ -1404,3 +1404,12 @@ body[data-starc="rainbow"] .star.on, .starc-rainbow .star.on { animation: rainbo
 .reset-emblem { width: 64px; height: 64px; border-radius: 50%; display: grid; place-items: center; font-size: 30px; color: #fff; background: radial-gradient(circle at 35% 30%, var(--g2), var(--g1)); box-shadow: 0 0 24px var(--g1); }
 .reset-modal .row { justify-content: center; gap: 10px; }
 .guardian .g-skip { display: block; margin-top: 4px; font-size: 12px; font-weight: 800; color: #FCD34D; }
+
+/* Handbook: Chords entry at the top */
+.hb-chords { display: flex; align-items: center; gap: 14px; margin: 4px 0 18px; padding: 16px 18px; border-radius: 20px; text-decoration: none; color: #fff; background: linear-gradient(135deg, #4338CA, #7C3AED 60%, #DB2777); box-shadow: 0 8px 22px rgba(76,29,149,.3); }
+.hb-chords .grow { display: grid; gap: 2px; }
+.hb-chords b { font-size: 18px; }
+.hb-chords small { opacity: .85; font-weight: 600; }
+.hb-chords-icon { display: grid; place-items: center; width: 48px; height: 48px; border-radius: 14px; background: rgba(255,255,255,.18); }
+.hb-chords-icon .ico { width: 28px; height: 28px; }
+.page-back { margin: 16px 0 -8px 20px; }

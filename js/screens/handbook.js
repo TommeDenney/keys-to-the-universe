@@ -81,12 +81,16 @@ export function renderHandbook(root) {
   }
 
   page.append(
-    h('a', { class: 'back-link', href: '#/learn' }, [icon('back'), 'Learn']),
     h('header', { class: 'top' }, [h('div', {}, [h('div', { class: 'eyebrow' }, 'Your notes from every lesson'), h('h1', {}, 'Handbook')])]),
     h('label', { class: 'search hb-search' }, [icon('search'), h('input', {
       type: 'search', placeholder: 'Search: e.g. half note, sharp, chord, bass clef', value: query,
       oninput: (e) => { query = e.target.value; draw(); },
     })]),
+    h('a', { class: 'hb-chords', href: '#/chords' }, [
+      h('span', { class: 'hb-chords-icon' }, icon('chords')),
+      h('span', { class: 'grow' }, [h('b', {}, 'Chords'), h('small', {}, 'Build, hear and see every chord on the keyboard: majors, minors, sevenths and inversions.')]),
+      icon('chevron'),
+    ]),
     list,
   );
   draw();

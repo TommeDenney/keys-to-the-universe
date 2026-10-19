@@ -35,7 +35,7 @@ touchChallenges();
 const TABS = [
   { id: 'learn', label: 'Learn', icon: 'learn' },
   { id: 'library', label: 'Songs', icon: 'library' },
-  { id: 'chords', label: 'Chords', icon: 'chords' },
+  { id: 'handbook', label: 'Handbook', icon: 'book' },
   { id: 'shop', label: 'Shop', icon: 'shop' },
   { id: 'settings', label: 'Settings', icon: 'settings' },
 ];
@@ -82,8 +82,16 @@ async function route() {
     cleanup = renderBadges(main);
     return;
   }
+  if (name === 'chords') { // opened from the Handbook
+    setActiveTab('handbook');
+    main.replaceChildren();
+    main.scrollTop = 0;
+    main.append(h('a', { class: 'back-link page-back', href: '#/handbook' }, [icon('back'), 'Handbook']));
+    cleanup = renderChords(main) || null;
+    return;
+  }
   if (name === 'handbook') {
-    setActiveTab('learn');
+    setActiveTab('handbook');
     main.replaceChildren();
     main.scrollTop = 0;
     cleanup = renderHandbook(main);
