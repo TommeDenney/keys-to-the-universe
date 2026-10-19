@@ -29,6 +29,7 @@ import { mountMusicBar } from './screens/musicbar.js';
 import { state as bgState } from './audio/bgmusic.js';
 
 applyTheme();
+document.body.dataset.tabpos = settings.get('tabBar') || 'bottom';
 applyCosmetics();
 touchChallenges();
 

@@ -1413,3 +1413,28 @@ body[data-starc="rainbow"] .star.on, .starc-rainbow .star.on { animation: rainbo
 .hb-chords-icon { display: grid; place-items: center; width: 48px; height: 48px; border-radius: 14px; background: rgba(255,255,255,.18); }
 .hb-chords-icon .ico { width: 28px; height: 28px; }
 .page-back { margin: 16px 0 -8px 20px; }
+
+/* ---- Tab bar position (Settings › Display) ------------------------------------------- */
+body[data-tabpos="top"] .tabbar { top: calc(12px + var(--safe-t)); bottom: auto; }
+body[data-tabpos="top"] .screen { padding-bottom: calc(40px + var(--safe-b)); }
+body[data-tabpos="top"] .page { padding-top: calc(92px + var(--safe-t)); }
+body[data-tabpos="left"] .tabbar, body[data-tabpos="right"] .tabbar {
+  top: 50%; bottom: auto; transform: translateY(-50%); flex-direction: column; gap: 6px; padding: 8px; border-radius: 28px;
+}
+body[data-tabpos="left"] .tabbar { left: calc(12px + env(safe-area-inset-left, 0px)); }
+body[data-tabpos="right"] .tabbar { left: auto; right: calc(12px + env(safe-area-inset-right, 0px)); }
+body[data-tabpos="left"] .tab, body[data-tabpos="right"] .tab { flex-direction: column; justify-content: center; gap: 4px; width: 74px; height: 64px; padding: 6px 4px; border-radius: 20px; font-size: 11px; }
+body[data-tabpos="left"] .tab span, body[data-tabpos="right"] .tab span { display: inline; }
+body[data-tabpos="left"] .screen { padding-left: 104px; padding-bottom: calc(40px + var(--safe-b)); }
+body[data-tabpos="right"] .screen { padding-right: 104px; padding-bottom: calc(40px + var(--safe-b)); }
+/* With the bar out of the way, the music bar and key legend can sit low again. */
+body:not([data-tabpos="bottom"]) .musicbar { bottom: calc(18px + var(--safe-b)); }
+body:not([data-tabpos="bottom"]) .nav-legend:not(.low) { bottom: calc(18px + var(--safe-b)); }
+body[data-tabpos="left"] .musicbar { left: 108px; }
+body[data-tabpos="right"] .nav-legend { right: 108px; }
+@media (max-width: 560px) {
+  body[data-tabpos="left"] .tab, body[data-tabpos="right"] .tab { width: 56px; height: 52px; }
+  body[data-tabpos="left"] .tab span, body[data-tabpos="right"] .tab span { display: none; }
+  body[data-tabpos="left"] .screen { padding-left: 80px; } body[data-tabpos="right"] .screen { padding-right: 80px; }
+  body[data-tabpos="left"] .musicbar { left: 84px; } body[data-tabpos="right"] .nav-legend { right: 84px; }
+}
