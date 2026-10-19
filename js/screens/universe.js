@@ -7,7 +7,7 @@
 
 import { h, icon, starsHTML, modal, toast } from '../ui.js';
 import { COURSE, allLessons } from '../data/course.js';
-import { progress, settings } from '../store.js';
+import { progress } from '../store.js';
 import { lessonUnlocked, nextLesson, galaxyStars, starGate } from './learn.js';
 import { installCard, fullscreenButton } from './install.js';
 import { worldTextures, WORLD_KINDS } from '../render/worlds.js';
@@ -179,8 +179,6 @@ export function renderUniverse(root) {
   if (inst) page.append(inst);
   const season = seasonBanner();
   if (season) page.append(season);
-  const deco = seasonDecor();
-  if (deco) wrap.append(deco);
 
   // Next destination card.
   if (next) {
@@ -609,16 +607,6 @@ function seasonBanner() {
     h('span', { class: 'grow' }, [h('b', {}, sale ? `${e.name}: ${Math.round(sale * 100)}% off the whole Shop` : `Happy ${e.name}!`), h('small', {}, `${e.blurb} ${e.name} rares are in the Shop until ${leavesText(e)}.`)]),
     icon('chevron'),
   ]);
-}
-
-/** A few holiday decorations drifting over the map (Settings › Display to turn off). */
-function seasonDecor() {
-  const e = featuredEvent();
-  if (!e || settings.get('seasonDecor') === false || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return null;
-  return h('div', { class: `season-decor sd-${e.id}`, 'aria-hidden': 'true' }, Array.from({ length: 14 }, (_, i) => {
-    const r = (k) => (hash(`${e.id}:${i}:${k}`) % 1000) / 1000;
-    return h('i', { style: { left: `${r('x') * 100}%`, fontSize: `${14 + r('s') * 16}px`, animationDuration: `${16 + r('d') * 18}s`, animationDelay: `${-r('t') * 34}s`, '--sway': `${(r('w') - 0.5) * 120}px`, opacity: `${0.45 + r('o') * 0.4}` } }, e.deco[i % e.deco.length]);
-  }));
 }
 
 /** Your pet, flying alongside the ship. */

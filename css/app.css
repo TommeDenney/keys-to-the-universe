@@ -1510,13 +1510,6 @@ s.was { opacity: .6; margin-right: 4px; font-weight: 700; }
 .season-banner .grow { display: grid; gap: 2px; }
 .season-banner small { opacity: .85; font-weight: 600; }
 .sb-emoji { font-size: 34px; }
-.season-decor { position: fixed; inset: 0; z-index: 2; pointer-events: none; overflow: hidden; }
-.season-decor i { position: absolute; top: -40px; font-style: normal; animation: deco-fall linear infinite; will-change: transform; }
-@keyframes deco-fall { from { transform: translate(0, 0) rotate(0deg); } 50% { transform: translate(var(--sway), 55vh) rotate(25deg); } to { transform: translate(0, 110vh) rotate(-10deg); } }
-.sd-halloween i { animation-name: deco-fly; }
-@keyframes deco-fly { from { transform: translate(0, 20vh); } 25% { transform: translate(var(--sway), 30vh) scaleX(-1); } 50% { transform: translate(calc(var(--sway) * -1), 60vh); } 75% { transform: translate(var(--sway), 85vh) scaleX(-1); } to { transform: translate(0, 110vh); } }
-.sd-diwali i, .sd-newyear i, .sd-hanukkah i, .sd-kwanzaa i { animation-name: deco-rise; top: auto; bottom: -40px; }
-@keyframes deco-rise { from { transform: translate(0, 0); } 50% { transform: translate(var(--sway), -55vh); } to { transform: translate(0, -112vh); opacity: 0; } }
 .leaves-chip { margin-left: auto; padding: 3px 10px; border-radius: 99px; font-size: 12px; font-weight: 800; background: rgba(0,0,0,.06); color: var(--ink-2, #555); }
 .leaves-chip.soon { background: #FEE2E2; color: #B91C1C; }
 .season-event.gone { opacity: .75; }

@@ -134,7 +134,6 @@ export function renderSettings(root) {
     h('section', { class: 'card' }, [
       h('h3', {}, [icon('note'), 'Display']),
       rowItem('Tab bar', 'Where the Learn / Songs / Handbook / Shop / Settings bar sits. Left and right make it a vertical bar.', seg('tabBar', [['bottom', 'Bottom'], ['top', 'Top'], ['left', 'Left'], ['right', 'Right']], (v) => { document.body.dataset.tabpos = v; })),
-      rowItem('Holiday decorations', 'Seasonal decorations floating over the Learn map during holidays.', seg('seasonDecor', [[true, 'On'], [false, 'Off']])),
       rowItem('Learn layout', 'Universe: galaxies, solar systems, planets and moons. Classic: a simple lesson path.', seg('learnLayout', [['universe', 'Universe'], ['classic', 'Classic path']])),
       rowItem('Background colour', 'Change the page background. Cards and sheet music stay the same.', h('div', { class: 'swatches' }, THEMES.map((t) => h('button', {
         class: `swatch ${settings.get('theme') === t.id ? 'on' : ''}`,
