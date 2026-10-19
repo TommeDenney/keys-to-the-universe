@@ -1,6 +1,7 @@
 // Lesson runner: a sequence of "learn" cards and practice steps.
 
 import { h, icon, starsHTML, toast } from '../ui.js';
+import { markReturn } from '../transitions.js';
 import { allLessons } from '../data/course.js';
 import { buildSong } from '../data/songs.js';
 import { songNow, getSongs } from '../data/catalog.js';
@@ -139,7 +140,11 @@ export async function openLesson(id, onClose) {
     if (ro) { ro.disconnect(); ro = null; }
   }
 
+  let finished = false; // completed this world in this visit (the map flies you onward)
+  let autoT = 0;
   function close() {
+    clearTimeout(autoT);
+    markReturn(lesson.id, { completed: finished });
     teardown();
     input.deactivate();
     el.classList.remove('open');
@@ -253,19 +258,37 @@ export async function openLesson(id, onClose) {
       h('div', { class: 'stars-big', html: starsHTML(r.stars, 3, true) }),
       h('p', {}, nxt ? `A new galaxy awaits: ${nxt.unit.title}.` : 'You conquered the final galaxy. You can truly play the piano!'),
       backupOffer(),
+      autoReturn(),
       h('div', { class: 'row' }, [
-        nxt ? h('button', { class: 'btn primary', onclick: () => { teardown(); el.remove(); location.hash = `#/lesson/${nxt.id}`; } }, ['Onward', icon('chevron')]) : null,
-        h('button', { class: `btn ${nxt ? 'ghost' : 'primary'}`, onclick: close }, 'Back to the universe'),
+        h('button', { class: 'btn ghost', onclick: stayHere }, 'Stay here'),
+        h('button', { class: 'btn primary', onclick: close }, ['Back to orbit', icon('chevron')]),
       ]),
     ])));
+    finished = true;
     confetti(el);
+  }
+
+  /** "Returning to orbit…" with a progress bar; goes back to the map on its own. */
+  function autoReturn(ms = 5000) {
+    const bar = h('i');
+    const box = h('div', { class: 'auto-return' }, [h('span', {}, '\u{1F680} Returning to orbit\u2026'), h('span', { class: 'ar-bar' }, bar)]);
+    requestAnimationFrame(() => { bar.style.transitionDuration = `${ms}ms`; bar.style.width = '100%'; });
+    clearTimeout(autoT);
+    autoT = setTimeout(close, ms);
+    return box;
+  }
+  function stayHere(e) {
+    clearTimeout(autoT);
+    const box = el.querySelector('.auto-return');
+    if (box) box.remove();
+    if (e && e.target) e.target.remove();
   }
 
   /** After each world: offer a one-tap backup (skippable). */
   function backupOffer() {
     const box = h('div', { class: 'backup-offer' }, [
       h('span', {}, 'Save a backup of your progress?'),
-      h('button', { class: 'btn ghost sm', onclick: async () => { if (await backupNow()) box.replaceChildren(h('span', {}, 'Backed up \u2713')); } }, [icon('upload'), 'Back up']),
+      h('button', { class: 'btn ghost sm', onclick: async () => { clearTimeout(autoT); const ar = el.querySelector('.auto-return'); if (ar) ar.remove(); if (await backupNow()) box.replaceChildren(h('span', {}, 'Backed up \u2713')); } }, [icon('upload'), 'Back up']),
       h('button', { class: 'btn ghost sm', onclick: () => box.remove() }, 'Not now'),
     ]);
     return box;
@@ -290,13 +313,15 @@ export async function openLesson(id, onClose) {
       h('h2', {}, lesson.title),
       h('p', { class: 'muted' }, stars === 3 ? 'Perfect! You nailed it.' : 'Great work! Replay anytime to earn more stars.'),
       backupOffer(),
+      autoReturn(),
       h('div', { class: 'row' }, [
-        h('button', { class: 'btn ghost', onclick: () => { i = 0; results.length = 0; show(); } }, [icon('restart'), 'Replay']),
-        nxt ? h('button', { class: 'btn primary', onclick: () => { teardown(); el.remove(); location.hash = `#/lesson/${nxt.id}`; } }, ['Next lesson', icon('chevron')]) : null,
-        h('button', { class: `btn ${nxt ? 'ghost' : 'primary'}`, onclick: close }, 'Back to course'),
+        h('button', { class: 'btn ghost', onclick: () => { clearTimeout(autoT); i = 0; results.length = 0; show(); } }, [icon('restart'), 'Replay']),
+        h('button', { class: 'btn ghost', onclick: stayHere }, 'Stay here'),
+        h('button', { class: 'btn primary', onclick: close }, ['Back to orbit', icon('chevron')]),
       ]),
     ]);
     body.append(h('div', { class: 'ls-center' }, card));
+    finished = true;
     confetti(el);
   }
 

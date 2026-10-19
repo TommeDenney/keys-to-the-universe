@@ -1609,3 +1609,18 @@ s.was { opacity: .6; margin-right: 4px; font-weight: 700; }
 @keyframes bb-wave { 0%, 10% { transform: scale(.05); opacity: 0; } 18% { opacity: 1; } 60% { transform: scale(1.1); opacity: 0; } 100% { opacity: 0; } }
 @keyframes bb-galaxy { 0%, 30% { transform: rotate(0deg) scale(.4); opacity: 0; } 45% { opacity: .9; } 90% { transform: rotate(300deg) scale(1.2); opacity: .6; } 100% { opacity: 0; } }
 @media (prefers-reduced-motion: reduce) { .pet *, .sp-bigbang * { animation: none !important; } }
+
+/* ---- Travel: diving into worlds, returning to orbit, flying on ---------------------- */
+.travel-overlay { position: fixed; inset: 0; z-index: 90; pointer-events: none; background: radial-gradient(circle at var(--x) var(--y), color-mix(in srgb, var(--c) 70%, #fff) 0, var(--c) 30%, color-mix(in srgb, var(--c) 45%, #0B0B2B) 75%); clip-path: circle(0px at var(--x) var(--y)); }
+.travel-streaks { position: absolute; inset: 0; background: repeating-conic-gradient(from 0deg at var(--x) var(--y), rgba(255,255,255,.22) 0 1deg, transparent 1deg 9deg); -webkit-mask: radial-gradient(circle at var(--x) var(--y), transparent 12%, #000 55%); mask: radial-gradient(circle at var(--x) var(--y), transparent 12%, #000 55%); animation: streak-spin 1.2s linear infinite; }
+@keyframes streak-spin { to { transform: rotate(8deg); } }
+.ship-flyer { position: absolute; left: 0; top: 0; width: 0; height: 0; z-index: 6; pointer-events: none; will-change: transform; }
+.ship-flyer .sf-ship { position: absolute; width: 58px; height: 58px; margin: -29px 0 0 -29px; filter: drop-shadow(0 0 10px rgba(255,255,255,.55)); }
+.ship-flyer .sf-ship svg { width: 100%; height: 100%; overflow: visible; }
+.ship-flyer .sf-pet { position: absolute; width: 36px; height: 36px; margin: 10px 0 0 -40px; }
+.sf-spark { position: absolute; width: 6px; height: 6px; margin: -3px; border-radius: 50%; background: #FDE68A; box-shadow: 0 0 8px #FDE68A; pointer-events: none; z-index: 5; animation: sf-spark .9s ease-out forwards; }
+@keyframes sf-spark { to { transform: scale(.2); opacity: 0; } }
+.ship-incoming > .planet-body > .ship, .ship-incoming > .ship, .ship-incoming .pet-buddy { opacity: 0; }
+.auto-return { display: grid; gap: 6px; margin: 4px 0 2px; font-weight: 800; font-size: 14px; color: var(--ink-2); }
+.ar-bar { height: 6px; border-radius: 99px; background: rgba(0,0,0,.08); overflow: hidden; }
+.ar-bar i { display: block; height: 100%; width: 0; border-radius: inherit; background: linear-gradient(90deg, #8B5CF6, #38BDF8); transition: width linear; }

@@ -24,6 +24,7 @@ import { constellationsFor, constellationEl, galaxyReached } from '../constellat
 import { navFocus } from '../nav.js';
 import { petHTML } from '../render/pets.js';
 import { rewardLook } from '../data/rewards.js';
+import { diveInto, surfaceInto, takeReturn, flyShip } from '../transitions.js';
 
 // Moons currently on screen, animated by the cosmos loop (3D-ish orbits that pass behind their planet).
 let ORBITS = [];
@@ -270,11 +271,45 @@ export function renderUniverse(root) {
 
   // Draw the travel routes once laid out (and on resize).
   const drawRoutes = () => page.querySelectorAll('.bodies').forEach(drawRoute);
+  // Tapping a world dives into it.
+  page.addEventListener('click', (e) => {
+    const a = e.target.closest('a[href^="#/lesson/"]');
+    if (!a || e.defaultPrevented || e.metaKey || e.ctrlKey) return;
+    e.preventDefault();
+    const world = a.closest('[data-lesson]');
+    const orb = (world && world.querySelector('.orb, .guardian-orb')) || a;
+    diveInto(orb, a.getAttribute('href'), worldColour(world));
+  });
   requestAnimationFrame(() => {
     drawRoutes();
+    const back = takeReturn();
+    const left = back && page.querySelector(`[data-lesson="${CSS.escape(back.id)}"]`);
+    if (left) {
+      returnToOrbit(left, back.completed);
+      return;
+    }
     const cur = page.querySelector('.planet.current, .moon-chip.current');
     if (cur && done > 0) cur.scrollIntoView({ block: 'center', behavior: 'smooth' });
   });
+
+  /** Back from a world: shrink into it, then (if you finished it) fly on to the next one. */
+  async function returnToOrbit(left, completed) {
+    const host = left.classList.contains('moon-chip') ? left.closest('.planet') : left;
+    host.scrollIntoView({ block: 'center' });
+    const orb = host.querySelector('.orb, .guardian-orb') || host;
+    await surfaceInto(orb, worldColour(host));
+    if (!completed) return;
+    const next = page.querySelector('.planet.current, .guardian.current, .moon-chip.current');
+    const dest = next && (next.classList.contains('moon-chip') ? next.closest('.planet') : next);
+    if (!dest || dest === host) return;
+    // Hide the parked ship until the flying one lands.
+    dest.classList.add('ship-incoming');
+    await new Promise((r) => setTimeout(r, 900)); // let the completion effect play first
+    await flyShip({ host: page, scroller: root, from: orb, to: dest.querySelector('.orb, .guardian-orb') || dest, shipHTML: shipSVG(), petHTML: petHTML(equipped('pet')) });
+    dest.classList.remove('ship-incoming');
+    dest.classList.add('arrive');
+    setTimeout(() => dest.classList.remove('arrive'), 1400);
+  }
   const ro = new ResizeObserver(drawRoutes);
   ro.observe(page);
 
@@ -308,6 +343,7 @@ function planetEl(p, gal, index, next) {
   const just = progress.justCompleted();
   const celebrate = rec && just && just.id === l.id && Date.now() - just.at < 120000;
   const el = h('div', {
+    'data-lesson': l.id,
     class: `planet ${rec ? 'done' : ''} ${open ? '' : 'locked'} ${isNext ? 'current' : ''} ${fx} ${!rec && fx === 'fx-restore' ? 'corrupt' : ''} ${celebrate ? 'celebrate' : ''}`,
     style: { '--off': `${side * (60 + (hash(l.id) % 4) * 28)}px`, '--size': `${size}px`, '--base': look.base, '--lift': `${look.lift}px`, '--bob': `${5 + (hash(l.id) % 5)}s` },
   });
@@ -358,7 +394,7 @@ function planetEl(p, gal, index, next) {
       const mRec = progress.lesson(m.id);
       const mOpen = lessonUnlocked(m.id);
       const cur = next && next.id === m.id;
-      return h(mOpen ? 'a' : 'span', { class: `moon-chip ${mRec ? 'done' : ''} ${mOpen ? '' : 'locked'} ${cur ? 'current' : ''}`, href: mOpen ? `#/lesson/${m.id}` : null }, [
+      return h(mOpen ? 'a' : 'span', { 'data-lesson': m.id, class: `moon-chip ${mRec ? 'done' : ''} ${mOpen ? '' : 'locked'} ${cur ? 'current' : ''}`, href: mOpen ? `#/lesson/${m.id}` : null }, [
         h('i', { class: 'moon-dot', style: { '--base': bodyLook(m.id, gal).base } }),
         h('span', {}, [h('small', {}, `Moon ${bodyName(m.id, true)}`), m.title]),
         mRec ? h('span', { class: 'mini-stars', html: starsHTML(mRec.stars) }) : mOpen ? null : icon('lock'),
@@ -448,7 +484,7 @@ function guardianEl(l, gal, next) {
   const rec = progress.lesson(l.id);
   const open = lessonUnlocked(l.id);
   const isNext = next && next.id === l.id;
-  const el = h('div', { class: `guardian ${rec ? 'done' : ''} ${open ? '' : 'locked'} ${isNext ? 'current' : ''}`, style: { '--g1': gal.neb[0], '--g2': gal.neb[1] } });
+  const el = h('div', { 'data-lesson': l.id, class: `guardian ${rec ? 'done' : ''} ${open ? '' : 'locked'} ${isNext ? 'current' : ''}`, style: { '--g1': gal.neb[0], '--g2': gal.neb[1] } });
   el.append(h(open ? 'a' : 'div', { class: 'guardian-orb', href: open ? `#/lesson/${l.id}` : null, 'aria-label': `Boss battle: ${l.guardian}` }, [
     h('i', { class: 'disk' }), h('i', { class: 'disk d2' }), h('i', { class: 'core' }),
     h('span', { class: 'g-icon' }, rec ? '\u{1F3C6}' : open ? '\u2694' : ''),
@@ -607,6 +643,13 @@ function seasonBanner() {
     h('span', { class: 'grow' }, [h('b', {}, sale ? `${e.name}: ${Math.round(sale * 100)}% off the whole Shop` : `Happy ${e.name}!`), h('small', {}, `${e.blurb} ${e.name} rares are in the Shop until ${leavesText(e)}.`)]),
     icon('chevron'),
   ]);
+}
+
+/** The colour a world's dive/return transition uses. */
+function worldColour(world) {
+  if (!world) return '#6D5BFF';
+  const s = getComputedStyle(world);
+  return (s.getPropertyValue('--base') || s.getPropertyValue('--g1') || '').trim() || '#6D5BFF';
 }
 
 /** Your pet, flying alongside the ship. */
