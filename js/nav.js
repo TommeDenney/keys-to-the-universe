@@ -52,12 +52,12 @@ function defaultFocus(root, list) {
     || list[0];
 }
 
-function setFocus(el) {
+function setFocus(el, { scroll = true } = {}) {
   if (focused) focused.classList.remove('nav-focus');
   focused = el;
   if (!el) return;
   el.classList.add('nav-focus');
-  el.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: 'smooth' });
+  if (scroll) el.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: 'smooth' });
 }
 
 function move(dir) {
@@ -226,6 +226,6 @@ export function initPianoNav() {
 export { LEGEND as NAV_KEYS };
 
 /** Let screens move the piano-navigation focus (e.g. after "Fly there"). */
-export function navFocus(el) {
-  if (el) setFocus(el);
+export function navFocus(el, opts) {
+  if (el) setFocus(el, opts);
 }

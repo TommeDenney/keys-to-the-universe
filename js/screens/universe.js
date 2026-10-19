@@ -482,9 +482,23 @@ function flyTo(page) {
   const target = page.querySelector('.planet.current, .guardian.current, .moon-chip.current');
   if (!target) return;
   const host = target.classList.contains('moon-chip') ? target.closest('.planet') : target;
-  host.scrollIntoView({ block: 'center', behavior: 'smooth' });
-  // Piano navigation: the next C4 lands on this world.
-  navFocus(target.classList.contains('moon-chip') ? target : host.querySelector('.orb, .guardian-orb') || host);
+  // Centre it in the part of the screen you can see: below the header bars and
+  // above the tab bar (wherever it sits), not behind them.
+  const scroller = (() => { for (let p = host.parentElement; p; p = p.parentElement) { const o = getComputedStyle(p).overflowY; if ((o === 'auto' || o === 'scroll') && p.scrollHeight > p.clientHeight) return p; } return document.scrollingElement; })();
+  const box = scroller === document.scrollingElement ? { top: 0, bottom: innerHeight } : scroller.getBoundingClientRect();
+  let top = Math.max(0, box.top), bottom = Math.min(innerHeight, box.bottom);
+  const bar = document.querySelector('.tabbar');
+  if (bar) {
+    const r = bar.getBoundingClientRect();
+    if (r.width > innerWidth * 0.5 && r.height < innerHeight * 0.5) { // a horizontal bar
+      if (r.top > innerHeight / 2) bottom = Math.min(bottom, r.top);
+      else top = Math.max(top, r.bottom);
+    }
+  }
+  const r = host.querySelector('.planet-body, .guardian-orb, .orb')?.getBoundingClientRect() || host.getBoundingClientRect();
+  scroller.scrollBy({ top: (r.top + r.height / 2) - (top + bottom) / 2, behavior: 'smooth' });
+  // Piano navigation: the next C4 lands on this world (without scrolling it away again).
+  navFocus(target.classList.contains('moon-chip') ? target : host.querySelector('.orb, .guardian-orb') || host, { scroll: false });
   host.classList.remove('arrive');
   setTimeout(() => { void host.offsetWidth; host.classList.add('arrive'); }, 500);
   setTimeout(() => host.classList.remove('arrive'), 3200);
