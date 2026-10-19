@@ -28,9 +28,11 @@ const tabbar = h('nav', { class: 'tabbar' }, TABS.map((t) =>
 app.append(main, tabbar);
 
 audio.setVolume(settings.get('volume'));
+audio.setMusicVolume(settings.get('musicVolume'));
 mic.setSensitivity(settings.get('micSensitivity'));
 mic.setPitchOffset(settings.get('micPitchOffset'));
-onChange(() => audio.setVolume(settings.get('volume')));
+mic.setGhosts(settings.get('micGhosts'));
+onChange(() => { audio.setVolume(settings.get('volume')); audio.setMusicVolume(settings.get('musicVolume')); });
 
 let cleanup = null;
 

@@ -103,6 +103,7 @@ export class Player {
         ]),
         h('button', { class: 'chip-btn toggle names', title: 'Note names', onclick: () => this.toggleNames() }, [h('b', {}, 'ABC')]),
         h('button', { class: 'chip-btn toggle metro', title: 'Metronome', onclick: () => this.toggleMetro() }, [icon('metronome')]),
+        h('button', { class: 'chip-btn', title: 'Piano volume', 'aria-label': 'Piano volume', onclick: () => this.showVolume() }, [icon('volume')]),
       ]),
       h('div', { class: 'pl-keys' }),
       h('div', { class: 'pl-overlay' }),
@@ -200,10 +201,27 @@ export class Player {
   async begin() {
     audio.ensure();
     this.hideOverlay();
+    // The key press that hit "Start" (piano navigation) must not count as the
+    // first note, and its sound needs a moment to die away.
+    this.readyAt = performance.now() + 1300;
     await input.activate();
     this.updateInputChip();
     if (this.mode === 'timed') this.play();
-    else this.setWaitTargets();
+    else {
+      this.setWaitTargets();
+      this.readyCue();
+    }
+  }
+
+  readyCue() {
+    const count = this.el.querySelector('.pl-count');
+    const show = (txt, cls) => { count.textContent = txt; count.className = `pl-count ${cls}`; void count.offsetWidth; count.classList.add('pulse'); };
+    show('Ready…', 'word');
+    clearTimeout(this.readyT);
+    this.readyT = setTimeout(() => {
+      show('Go!', 'word go');
+      this.readyT = setTimeout(() => { count.textContent = ''; count.className = 'pl-count'; }, 650);
+    }, 700);
   }
 
   // ---- wait mode --------------------------------------------------------
@@ -227,8 +245,11 @@ export class Player {
   waitInput(e) {
     const ev = this.events[this.ei];
     if (!ev) return;
+    // Mic: just after a chord/note completes, its ringing overtones can look
+    // like the next notes. Give the sound a moment to settle.
+    if (e.source === 'mic' && performance.now() - (this.lastAdvance || 0) < 130) return;
     const pending = ev.notes.filter((n) => !this.hitSet.has(n.id));
-    const match = pending.find((n) => n.midi === e.midi);
+    const match = pending.find((n) => n.midi === e.midi) || (e.source === 'mic' && pending.find((n) => n.midi < 48 && Math.abs(n.midi - e.midi) === 12));
     if (match) {
       this.hitNote(match);
       if (!this.eventFirstHit) this.eventFirstHit = performance.now();
@@ -252,6 +273,8 @@ export class Player {
 
   advanceWait() {
     clearTimeout(this.chordTimer);
+    this.lastAdvance = performance.now();
+    this.prevMidis = new Set(this.events[this.ei].notes.map((n) => n.midi));
     this.ei++;
     this.eventFirstHit = 0;
     this.streak++;
@@ -366,7 +389,8 @@ export class Player {
     let best = null;
     let bestD = Infinity;
     for (const n of this.active) {
-      if (n.midi !== e.midi || this.hitSet.has(n.id) || this.sheet.state.get(n.id) === 'miss') continue;
+      const octaveOk = e.source === 'mic' && n.midi < 48 && Math.abs(n.midi - e.midi) === 12;
+      if ((n.midi !== e.midi && !octaveOk) || this.hitSet.has(n.id) || this.sheet.state.get(n.id) === 'miss') continue;
       const d = Math.abs(n.start - b) * spq;
       if (d < bestD) { bestD = d; best = n; }
     }
@@ -399,6 +423,12 @@ export class Player {
   }
 
   wrongNote(e) {
+    if (e.source === 'mic') {
+      // Ignore stray detections far outside this piece's range…
+      if (e.midi < (this.slice.minMidi ?? 0) - 12 || e.midi > (this.slice.maxMidi ?? 127) + 12) return;
+      // …and the previous notes still ringing after we moved on.
+      if (this.prevMidis && this.prevMidis.has(e.midi) && performance.now() - (this.lastAdvance || 0) < 700) return;
+    }
     const now = performance.now();
     if (now - (this.lastWrong.get(e.midi) || 0) < 500) return;
     this.lastWrong.set(e.midi, now);
@@ -418,14 +448,49 @@ export class Player {
     if (type === 'noteon' && e.source !== 'mic') this.kb.press(e.midi, 'play');
     if (type === 'noteoff') { this.kb.release(e.midi); return; }
     if (type !== 'noteon' || this.finished || this.overlayOpen || this.demo) return;
+    if (performance.now() < (this.readyAt || 0)) return;
     if (this.mode === 'wait') this.waitInput(e);
     else if (this.mode === 'timed' && this.running && audio.now >= this.countEnd - 0.4) this.timedInput(e);
   }
 
   // ---- listen (demo) ------------------------------------------------------
 
+  /** Piano volume card. `then` runs after "Done" (used before the first Listen). */
+  showVolume(then) {
+    const wasRunning = this.running && this.mode === 'timed';
+    if (wasRunning) this.pause();
+    audio.ensure();
+    const val = h('b', { class: 'vol-val' }, `${Math.round(settings.get('musicVolume') * 100)}%`);
+    const sample = () => {
+      const t = audio.now + 0.03;
+      [60, 64, 67, 72].forEach((m, i) => audio.play(m, { when: t + i * 0.16, dur: 0.9, velocity: 0.7 }));
+    };
+    this.showOverlay(h('div', { class: 'card start-card pop' }, [
+      h('div', { class: 'eyebrow' }, then ? 'Before you listen' : 'Sound'),
+      h('h2', {}, 'Piano volume'),
+      h('p', {}, then
+        ? 'Set how loud the app’s piano plays. It’s saved, so you only do this once. Metronome and effects keep their own volume.'
+        : 'How loud the app’s piano plays (Listen, the other hand and on-screen keys). Metronome and effects aren’t affected.'),
+      h('div', { class: 'vol-row' }, [
+        icon('volume'),
+        h('input', { type: 'range', min: 0, max: 1, step: 0.05, value: settings.get('musicVolume'), oninput: (e) => {
+          const v = +e.target.value;
+          settings.set('musicVolume', v);
+          audio.setMusicVolume(v);
+          val.textContent = `${Math.round(v * 100)}%`;
+        }, onchange: sample }),
+        val,
+      ]),
+      h('div', { class: 'row' }, [
+        h('button', { class: 'btn ghost', onclick: sample }, [icon('ear'), 'Play a sample']),
+        h('button', { class: 'btn primary', onclick: () => { settings.set('musicVolumeSet', true); this.hideOverlay(); if (then) then(); } }, then ? [icon('play'), 'Listen'] : 'Done'),
+      ]),
+    ]));
+  }
+
   listen() {
     if (this.demo) { this.stopDemo(); return; }
+    if (!settings.get('musicVolumeSet')) { this.showVolume(() => this.listen()); return; }
     audio.ensure();
     this.pause();
     this.demo = { prevMode: this.mode, prevBeat: this.beat, prevScroll: this.sheet.scroll, prevStates: new Map(this.sheet.state) };
@@ -573,7 +638,7 @@ export class Player {
         h('li', {}, 'Put your iPad on the music stand, close to the piano.'),
         h('li', {}, 'Use headphones for the app sound so the mic only hears your piano.'),
         h('li', {}, 'Play each note firmly and clearly, especially chords.'),
-        h('li', {}, 'Wrong notes being detected (e.g. C heard as E)? Tap \u201cCalibrate pitch\u201d.'),
+        h('li', {}, 'Wrong notes being detected (e.g. C heard as E)? Tap “Calibrate pitch”.'),
         h('li', {}, 'For the best accuracy, connect a MIDI piano (see Settings).'),
       ]),
       h('label', { class: 'field' }, [h('span', {}, 'Mic sensitivity'), sens]),
@@ -635,6 +700,7 @@ export class Player {
     if (Player.current === this) Player.current = null;
     cancelAnimationFrame(this.raf);
     clearTimeout(this.chordTimer);
+    clearTimeout(this.readyT);
     this.stopAudio();
     this.unsub();
     input.setExpected([]);

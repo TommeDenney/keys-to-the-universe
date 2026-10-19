@@ -7,9 +7,12 @@ const DEFAULT_SETTINGS = {
   micSensitivity: 0.5,
   micLatency: 40,
   micPitchOffset: 0, // semitones, measured by calibration
+  micGhosts: [], // phantom-note intervals learned by calibration
   theme: 'lavender', // page background colour (see theme.js) // ms subtracted from mic onset times (timed mode judging)
   midiLatency: 0,
-  volume: 0.8,
+  volume: 0.8, // effects + metronome
+  musicVolume: 0.35, // piano sound: Listen, accompaniment, on-screen keys
+  musicVolumeSet: false, // asked the user once?
   metronome: true,
   otherHand: true, // play the hand you're not practising during timed play
   noteNames: 'auto', // auto | always | never

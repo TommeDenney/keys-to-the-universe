@@ -145,7 +145,9 @@ export function parseMidiFile(arrayBuffer, fileName = '', opts = {}) {
 
   const song = {
     id: 'import',
-    title: (firstName && firstName.length > 2 && !/^track/i.test(firstName) ? firstName : fileName.replace(/\.[^.]+$/, '')) || 'Imported MIDI',
+    title: (firstName && firstName.length > 2 && !/^(track|staff|part|piano|untitled)|\b(hand|rh|lh|treble|bass|melody|left|right|upper|lower)\b/i.test(firstName.trim())
+      ? firstName.trim()
+      : fileName.replace(/\.[^.]+$/, '').replace(/[_-]+/g, ' ')) || 'Imported MIDI',
     composer: '',
     level: 0,
     tags: [],

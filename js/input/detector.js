@@ -127,6 +127,7 @@ export class PianoDetector {
       this.harm[m] = { long, list };
     }
   }
+
   /**
    * Where does the sound currently in the long spectrum actually sit?
    * Returns harmonic-sum salience for fractional pitches lo..hi (uncalibrated).
@@ -148,7 +149,6 @@ export class PianoDetector {
     }
     return out;
   }
-
 
   binRange(f, binHz, n) {
     const c = f / binHz;
@@ -287,6 +287,8 @@ export class PianoDetector {
     // loud and beat its (non-expected) neighbours within 2 semitones in the
     // high-resolution spectrum. Attack transients smear across neighbours;
     // real notes win once the window fills. Onset time is back-dated.
+    let maxRaw = -Infinity;
+    for (let m = LO; m <= HI; m++) if (raw[m] > maxRaw) maxRaw = raw[m];
     const still = [];
     for (const p of this.pending) {
       const m = p.midi;
@@ -297,13 +299,50 @@ export class PianoDetector {
       }
       const above = this.E[m] - this.floor[m];
       if (above < this.onDb * 0.4) continue; // faded away: it was a transient
-      p.ok = fine[m] >= nb - 0.5 ? (p.ok || 0) + 1 : 0;
+      if (!p.expected && this.isOvertone(m)) continue; // octave/twelfth ghost of a sounding note
+      if (!p.expected && above < this.onDb + 6) continue; // a wrong note has to be played clearly
+      const own = this.lowHarmonicsPresent(m);
+      // A real key is one of the dominant sounds, not a faint overtone match
+      // inside a much louder (wrong) note.
+      const dominant = raw[m] >= maxRaw - 10;
+      p.ok = fine[m] >= nb - 0.5 && own && dominant ? (p.ok || 0) + 1 : 0;
       if (p.ok >= (p.expected ? 1 : 3) && p.n >= 2) onsets.push(p);
       else if (p.n < 8) still.push(p);
+      else {
+        // Never confirmed (a ghost). Re-arm so a genuine strike later is
+        // judged as a fresh rise from the current level.
+        this.peak[m] = this.E[m];
+        this.trough[m] = this.E[m];
+      }
     }
     this.pending = still;
     this.frames++;
     return { onsets, level, loudest };
+  }
+
+  /**
+   * A real key has energy at its fundamental or 2nd harmonic. A note that only
+   * shares higher partials with other sounding notes (e.g. E4 inside C4's
+   * overtones) doesn't.
+   */
+  lowHarmonicsPresent(m) {
+    const list = this.harm[m].list;
+    const peak = ([a, b]) => { let p = 0; for (let k = a; k <= b; k++) if (this.magL[k] > p) p = this.magL[k]; return p; };
+    let max = 0;
+    for (const hm of list) max = Math.max(max, peak(hm.rL));
+    // From C3 up a piano's fundamental is strong; below that allow the 2nd harmonic.
+    const low = m >= 48 ? peak(list[0].rL) : Math.max(peak(list[0].rL), list[1] ? peak(list[1].rL) : 0);
+    return low >= max * 0.18;
+  }
+
+  /** Is m an overtone (or sub-octave) of another note that's sounding louder? */
+  isOvertone(m) {
+    for (let a = LO; a <= HI; a++) {
+      if (a === m || !this.active[a]) continue;
+      const d = m - a;
+      if ((d === 12 || d === 19 || d === 24 || d === 28 || d === 31 || d === -12 || d === -19 || d === -24) && this.E[a] - this.floor[a] >= this.E[m] - this.floor[m] - 6) return true;
+    }
+    return false;
   }
 
   fire(m, e, t, onsets, exp, above) {

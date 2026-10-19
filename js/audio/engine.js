@@ -17,7 +17,8 @@ class AudioEngine {
     this.master = null;
     this.buffers = new Map(); // midi → AudioBuffer
     this.loading = null;
-    this.volume = 0.8;
+    this.volume = 0.8; // effects + metronome
+    this.musicVolume = 0.35; // the piano itself: Listen, accompaniment, on-screen keys
     this.clickVolume = 0.6;
     this.voices = new Map(); // key → {src, gain}
   }
@@ -27,12 +28,17 @@ class AudioEngine {
     if (!this.ctx) {
       const Ctx = window.AudioContext || window.webkitAudioContext;
       this.ctx = new Ctx({ latencyHint: 'interactive' });
-      this.master = this.ctx.createGain();
-      this.master.gain.value = this.volume;
       const comp = this.ctx.createDynamicsCompressor();
       comp.threshold.value = -10;
       comp.ratio.value = 4;
-      this.master.connect(comp).connect(this.ctx.destination);
+      comp.connect(this.ctx.destination);
+      // Two independent buses: effects/metronome and piano sound.
+      this.master = this.ctx.createGain();
+      this.master.gain.value = this.volume;
+      this.master.connect(comp);
+      this.musicBus = this.ctx.createGain();
+      this.musicBus.gain.value = this.musicVolume;
+      this.musicBus.connect(comp);
       this.loadSamples();
     }
     if (this.ctx.state !== 'running') this.ctx.resume().catch(() => {});
@@ -43,9 +49,16 @@ class AudioEngine {
     return this.ctx ? this.ctx.currentTime : performance.now() / 1000;
   }
 
+  /** Effects + metronome volume. */
   setVolume(v) {
     this.volume = v;
     if (this.master) this.master.gain.value = v;
+  }
+
+  /** Piano volume (Listen, accompaniment, on-screen keys). */
+  setMusicVolume(v) {
+    this.musicVolume = v;
+    if (this.musicBus) this.musicBus.gain.setTargetAtTime(v, this.ctx.currentTime, 0.03);
   }
 
   loadSamples() {
@@ -85,7 +98,7 @@ class AudioEngine {
     const t = Math.max(when || 0, ctx.currentTime);
     const gain = ctx.createGain();
     const amp = 0.15 + 0.85 * velocity * velocity;
-    gain.connect(this.master);
+    gain.connect(this.musicBus);
     let src;
     const sm = this.nearestSample(midi);
     if (sm != null) {
@@ -151,19 +164,32 @@ class AudioEngine {
     return v;
   }
 
+  /**
+   * Metronome tick: a short burst of filtered noise (like a woodblock).
+   * Unpitched on purpose, so the microphone listener doesn't mistake it for
+   * a piano key. Click times are recorded so the mic can ignore them anyway.
+   */
   click(when, accent = false) {
     const ctx = this.ensure();
     const t = Math.max(when, ctx.currentTime);
-    const osc = ctx.createOscillator();
+    if (!this.noise) {
+      const n = Math.floor(ctx.sampleRate * 0.04);
+      this.noise = ctx.createBuffer(1, n, ctx.sampleRate);
+      const d = this.noise.getChannelData(0);
+      for (let i = 0; i < n; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / n, 3);
+    }
+    const src = ctx.createBufferSource();
+    src.buffer = this.noise;
+    const bp = ctx.createBiquadFilter();
+    bp.type = 'bandpass';
+    bp.frequency.value = accent ? 3200 : 2400;
+    bp.Q.value = 1.4;
     const g = ctx.createGain();
-    osc.type = 'triangle';
-    osc.frequency.value = accent ? 1760 : 1175;
-    g.gain.setValueAtTime(0, t);
-    g.gain.linearRampToValueAtTime(this.clickVolume * (accent ? 0.5 : 0.32), t + 0.002);
-    g.gain.exponentialRampToValueAtTime(0.0001, t + 0.06);
-    osc.connect(g).connect(this.master);
-    osc.start(t);
-    osc.stop(t + 0.08);
+    g.gain.value = this.clickVolume * (accent ? 2.2 : 1.5);
+    src.connect(bp).connect(g).connect(this.master);
+    src.start(t);
+    (this.clickTimes ||= []).push(t);
+    if (this.clickTimes.length > 32) this.clickTimes.splice(0, this.clickTimes.length - 32);
   }
 
   /** Small success chime. */

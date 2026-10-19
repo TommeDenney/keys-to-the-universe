@@ -18,6 +18,7 @@ const FOCUSABLE = 'a[href], button:not([disabled]), input[type=range], .switch, 
 let focused = null;
 let legend = null;
 let legendT = 0;
+let lastAct = 0;
 
 function songActive() {
   const p = Player.current;
@@ -156,6 +157,10 @@ function nextTab() {
 }
 
 function act(action, midi) {
+  // One key press = one action (the mic can re-detect a ringing key).
+  const now = performance.now();
+  if (midi != null && now - lastAct < 550) return;
+  lastAct = now;
   if (action === 'select') select();
   else if (action === 'back') back();
   else if (action === 'tab') nextTab();
@@ -164,15 +169,29 @@ function act(action, midi) {
   if (midi != null) showLegend(midi);
 }
 
-function showLegend(midi) {
+function ensureLegend() {
   if (!legend) {
-    legend = h('div', { class: 'nav-legend', 'aria-hidden': 'true' }, LEGEND.map(([m, n, l]) => h('div', { 'data-m': m, class: m === 60 ? 'c4' : '' }, [h('small', {}, n), l])));
+    legend = h('div', { class: 'nav-legend', 'aria-hidden': 'true' }, [
+      h('span', { class: 'nav-legend-title' }, 'Piano keys'),
+      h('div', { class: 'nav-legend-keys' }, LEGEND.map(([m, n, l]) => h('div', { 'data-m': m, class: m === 60 ? 'c4' : '' }, [h('small', {}, n), l]))),
+    ]);
     document.body.appendChild(legend);
   }
-  legend.classList.add('show');
-  legend.querySelectorAll('div').forEach((d) => d.classList.toggle('hit', +d.dataset.m === midi));
+  return legend;
+}
+
+/** The legend stays on screen whenever piano navigation is usable (hidden only while playing a song). */
+function updateLegend() {
+  const show = settings.get('pianoNav') && settings.get('input') !== 'touch' && !songActive() && !document.querySelector('.calib');
+  ensureLegend().classList.toggle('show', show);
+  // Sit above the tab bar when it's visible, lower inside full-screen flows.
+  legend.classList.toggle('low', !!document.querySelector('.fullscreen'));
+}
+
+function showLegend(midi) {
+  ensureLegend().querySelectorAll('.nav-legend-keys div').forEach((d) => d.classList.toggle('hit', +d.dataset.m === midi));
   clearTimeout(legendT);
-  legendT = setTimeout(() => legend.classList.remove('show'), 2600);
+  legendT = setTimeout(() => legend.querySelectorAll('.hit').forEach((d) => d.classList.remove('hit')), 450);
 }
 
 export function initPianoNav() {
@@ -199,6 +218,8 @@ export function initPianoNav() {
   });
   // Touching the screen hides the focus ring until the next key press.
   window.addEventListener('pointerdown', () => setFocus(null), true);
+  setInterval(updateLegend, 300);
+  updateLegend();
 }
 
 export { LEGEND as NAV_KEYS };

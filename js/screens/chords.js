@@ -47,7 +47,7 @@ export function renderChords(root) {
     const spelled = notes.map((m) => spellMidi(m, r.fifths));
     const label = r.name.split('/')[0] + t.symbol;
     name.replaceChildren(
-      h('h2', {}, [label, h('small', {}, ` ${r.name.split('/')[0]} ${t.label.toLowerCase()}`)]),
+      h('h2', {}, [label, h('small', {}, `  ${t.label}`)]),
       h('div', { class: 'chord-notes' }, spelled.map((s) => h('span', {}, s.step + accidentalSymbol(s.alter)))),
       h('p', { class: 'muted' }, t.blurb),
     );

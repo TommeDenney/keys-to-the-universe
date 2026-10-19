@@ -121,7 +121,8 @@ export function renderSettings(root) {
     ]),
     h('section', { class: 'card' }, [
       h('h3', {}, [icon('ear'), 'Sound']),
-      rowItem('Volume', null, h('div', { class: 'inline' }, slider('volume', 0, 1, 0.05, (v) => `${Math.round(v * 100)}%`, (v) => audio.setVolume(v)))),
+      rowItem('Piano volume', 'Listen, the auto-played other hand and on-screen keys. Keep it low if your iPad is at full volume.', h('div', { class: 'inline' }, slider('musicVolume', 0, 1, 0.05, (v) => `${Math.round(v * 100)}%`, (v) => { audio.setMusicVolume(v); settings.set('musicVolumeSet', true); }))),
+      rowItem('Effects & metronome volume', null, h('div', { class: 'inline' }, slider('volume', 0, 1, 0.05, (v) => `${Math.round(v * 100)}%`, (v) => audio.setVolume(v)))),
       rowItem('Metronome', 'Click along in “with the beat” mode.', toggle('metronome')),
       rowItem('Play the other hand', 'When practising one hand with the beat, the app plays the other.', toggle('otherHand')),
     ]),
