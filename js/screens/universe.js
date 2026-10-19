@@ -10,6 +10,10 @@ import { COURSE, allLessons } from '../data/course.js';
 import { progress } from '../store.js';
 import { lessonUnlocked, nextLesson } from './learn.js';
 import { installCard, fullscreenButton } from './install.js';
+import { worldTextures, WORLD_KINDS } from '../render/worlds.js';
+
+// Moons currently on screen, animated by the cosmos loop (3D-ish orbits that pass behind their planet).
+let ORBITS = [];
 
 // ---- Galaxy identities ------------------------------------------------------
 
@@ -45,11 +49,34 @@ function bodyName(id, moon) {
   const suffix = moon ? '' : ['', '', ' Prime', ' Minor', ' IV', ' b', ' Major', ' VII'][(x >>> 20) % 8];
   return s + suffix;
 }
-const KINDS = ['banded', 'rocky', 'ringed', 'ocean', 'lava', 'ice', 'banded', 'ringed'];
+/** Every world's own personality: surface type, spin speed/direction, axial tilt, rings. */
 function bodyLook(id, gal) {
   const x = hash(id + 'look');
+  const y = hash(id + 'spin');
   const base = gal.neb[x % gal.neb.length];
-  return { kind: KINDS[(x >>> 4) % KINDS.length], base, hue: ((x >>> 8) % 60) - 30, tilt: ((x >>> 14) % 40) - 20, spin: 10 + ((x >>> 18) % 14) };
+  const kind = WORLD_KINDS[(x >>> 4) % WORLD_KINDS.length];
+  return {
+    kind, base,
+    ring: (kind === 'gas' || kind === 'ice') && (y % 3) !== 0,
+    tilt: (y % 50) - 25, // axial tilt, degrees
+    spin: 22 + (y >>> 6) % 48, // seconds per rotation
+    dir: (y >>> 12) % 5 === 0 ? 'reverse' : 'normal', // some worlds spin backwards
+    cloudSpin: 0.55 + ((y >>> 16) % 30) / 100,
+    size: 84 + (x >>> 20) % 6 * 10,
+    lift: (y >>> 20) % 40, // vertical jitter so worlds don't line up
+  };
+}
+
+/** A textured, spinning sphere (planet or moon). */
+function worldOrb(tag, attrs, id, look, kind) {
+  const tex = worldTextures(hash(id + 'tex'), kind, look.base);
+  return h(tag, attrs, [
+    h('i', { class: 'tiltw', style: { '--tilt': `${look.tilt}deg` } }, [
+      h('i', { class: 'tex', style: { backgroundImage: `url(${tex.surface})`, '--spin': `${look.spin}s`, '--dir': look.dir } }),
+      tex.clouds ? h('i', { class: 'tex clouds', style: { backgroundImage: `url(${tex.clouds})`, '--spin': `${(look.spin * look.cloudSpin).toFixed(1)}s`, '--dir': look.dir } }) : null,
+    ]),
+    h('i', { class: `shade ${kind === 'terran' || kind === 'ocean' ? 'atmo' : ''}` }),
+  ]);
 }
 
 // ---- Course → universe structure -------------------------------------------
@@ -75,6 +102,7 @@ function buildSystems(unit) {
 // ---- Rendering ----------------------------------------------------------------
 
 export function renderUniverse(root) {
+  ORBITS = [];
   const lessons = allLessons();
   const done = lessons.filter((l) => progress.lesson(l.id)).length;
   const next = nextLesson();
@@ -169,29 +197,42 @@ function planetEl(p, gal, index, next) {
   const open = lessonUnlocked(l.id);
   const isNext = next && next.id === l.id;
   const look = bodyLook(l.id, gal);
-  const size = 92 + (hash(l.id) % 4) * 10;
+  const size = look.size;
   const side = index % 2 === 0 ? -1 : 1;
   const el = h('div', {
     class: `planet ${rec ? 'done' : ''} ${open ? '' : 'locked'} ${isNext ? 'current' : ''}`,
-    style: { '--off': `${side * (70 + (hash(l.id) % 3) * 30)}px`, '--size': `${size}px`, '--base': look.base, '--hue': `${look.hue}deg`, '--tilt': `${look.tilt}deg`, '--spin': `${look.spin}s` },
+    style: { '--off': `${side * (60 + (hash(l.id) % 4) * 28)}px`, '--size': `${size}px`, '--base': look.base, '--lift': `${look.lift}px`, '--bob': `${5 + (hash(l.id) % 5)}s` },
   });
-  const orb = h(open ? 'a' : 'div', { class: `orb kind-${look.kind}`, href: open ? `#/lesson/${l.id}` : null, 'aria-label': `${bodyName(l.id)}: ${l.title}` }, [
-    h('i', { class: 'surface' }),
-    h('i', { class: 'shade' }),
-    open ? null : h('span', { class: 'lock' }, icon('lock')),
-    rec ? h('span', { class: 'flag' }, icon('check')) : null,
+  const orb = worldOrb(open ? 'a' : 'div', { class: 'orb', href: open ? `#/lesson/${l.id}` : null, 'aria-label': `${bodyName(l.id)}: ${l.title}` }, l.id, look, look.kind);
+  if (!open) orb.append(h('span', { class: 'lock' }, icon('lock')));
+  if (rec) orb.append(h('span', { class: 'flag' }, icon('check')));
+  const body = h('div', { class: 'planet-body' }, [
+    look.ring ? h('i', { class: 'p-ring ring-back', style: { '--rt': `${look.tilt - 12}deg` } }) : null,
+    orb,
+    look.ring ? h('i', { class: 'p-ring ring-front', style: { '--rt': `${look.tilt - 12}deg` } }) : null,
   ]);
-  // Rings wrap around the planet: back half behind it, front half in front.
-  const ringed = look.kind === 'ringed';
-  const body = h('div', { class: 'planet-body' }, [ringed ? h('i', { class: 'ring ring-back' }) : null, orb, ringed ? h('i', { class: 'ring ring-front' }) : null]);
-  // Moons orbit the planet (decorative + tappable); chips below are the reliable targets.
+  // Moons: each on its own tilted, elliptical orbit, passing behind the planet.
   p.moons.forEach((m, mi) => {
     const mOpen = lessonUnlocked(m.id);
-    const mLook = bodyLook(m.id, gal);
-    const r = size / 2 + 26 + mi * 18;
-    body.append(h('div', { class: 'moon-orbit', style: { '--r': `${r}px`, '--dur': `${16 + mi * 7}s`, '--delay': `${-(hash(m.id) % 20)}s` } }, [
-      h(mOpen ? 'a' : 'span', { class: `moon ${progress.lesson(m.id) ? 'done' : ''} ${mOpen ? '' : 'locked'}`, href: mOpen ? `#/lesson/${m.id}` : null, tabindex: '-1', 'data-nav-skip': '1', 'aria-hidden': 'true', style: { '--base': mLook.base } }),
-    ]));
+    const mx = hash(m.id + 'orbit');
+    const mLook = { ...bodyLook(m.id, gal), tilt: 0, spin: 14 + (mx % 20) };
+    const orbit = {
+      r: size / 2 + 22 + mi * 20 + (mx % 10),
+      k: 0.28 + ((mx >>> 4) % 30) / 100, // how "edge-on" the orbit looks
+      tilt: (((mx >>> 9) % 50) - 25) * (Math.PI / 180),
+      period: 9 + ((mx >>> 14) % 14) + mi * 4, // seconds per orbit
+      dir: (mx >>> 19) % 3 === 0 ? -1 : 1,
+      phase: ((mx >>> 21) % 628) / 100,
+      size: 18 + (mx % 3) * 4,
+    };
+    body.append(h('i', { class: 'moon-path', style: { width: `${orbit.r * 2}px`, height: `${orbit.r * 2 * orbit.k}px`, transform: `translate(-50%, -50%) rotate(${orbit.tilt}rad)` } }));
+    const moon = worldOrb(mOpen ? 'a' : 'span', {
+      class: `moon3d ${progress.lesson(m.id) ? 'done' : ''} ${mOpen ? '' : 'locked'}`,
+      href: mOpen ? `#/lesson/${m.id}` : null, tabindex: '-1', 'data-nav-skip': '1', 'aria-hidden': 'true',
+      style: { '--ms': `${orbit.size}px` },
+    }, m.id, mLook, 'moon');
+    body.append(moon);
+    ORBITS.push({ el: moon, ...orbit });
   });
   if (isNext) body.append(h('div', { class: 'ship', html: shipSVG() }));
   el.append(body);
@@ -213,6 +254,25 @@ function planetEl(p, gal, index, next) {
     })));
   }
   return el;
+}
+
+/** Move every moon along its orbit (called from the cosmos animation loop). */
+function updateOrbits(t) {
+  for (const o of ORBITS) {
+    const th = o.phase + (o.dir * Math.PI * 2 * t) / o.period;
+    const x = Math.cos(th) * o.r;
+    const y = Math.sin(th) * o.r * o.k;
+    const xr = x * Math.cos(o.tilt) - y * Math.sin(o.tilt);
+    const yr = x * Math.sin(o.tilt) + y * Math.cos(o.tilt);
+    const front = Math.sin(th) > 0;
+    const sc = 0.82 + 0.18 * (0.5 + 0.5 * Math.sin(th)); // a touch bigger when closer
+    o.el.style.transform = `translate(-50%, -50%) translate(${xr.toFixed(1)}px, ${yr.toFixed(1)}px) scale(${sc.toFixed(3)})`;
+    if (o.front !== front) {
+      o.front = front;
+      o.el.style.zIndex = front ? '4' : '0';
+      o.el.classList.toggle('behind', !front);
+    }
+  }
 }
 
 function svgEl(tag, attrs) {
@@ -343,6 +403,8 @@ class Cosmos {
       neb: this.cur.neb.map((c, i) => mix(c, target.neb[i], k)), star: mix(this.cur.star, target.star, k),
     };
     this.draw(this.reduced ? 0 : t, dt);
+    if (!this.reduced) updateOrbits(t);
+    else if (!this.placed) { updateOrbits(0); this.placed = true; }
     this.raf = requestAnimationFrame((tt) => this.frame(tt));
   }
 
