@@ -6,6 +6,8 @@
 // a deeper shade of the same tone, highlights a warm glow, and blush and lips are
 // drawn from the skin itself.
 
+import { HAIR } from './hair.js';
+
 const mixc = (a, b, t) => {
   const p = (h) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16));
   const [x, y] = [p(a), p(b)];
@@ -25,27 +27,41 @@ export function avatarSVG(a, { size = 100, uid = 'av' } = {}) {
   const lip = mixc(tone, '#5B1A0B', deep ? 0.35 : 0.3);
   const hairC = a.hairColor || '#1B1210';
   const hairHi = mixc(hairC, '#FFE7C7', 0.18);
+  const hair = L.hair[a.hair] || L.hair['hair-none'];
+  const hat = L.hat[a.hat] || L.hat['hat-none'];
   const cloth = a.clothesColor || '#6D28D9';
   const clothDark = mixc(cloth, '#000000', 0.25);
   const g = (id) => `${uid}-${id}`;
+  // Hair paint: base colour, plus an optional highlight from the tips up or the roots down.
+  const hl = a.hlMode === 'tips' || a.hlMode === 'roots' ? a.hlMode : null;
+  const len = Math.max(0.05, Math.min(1, (a.hlLen ?? 40) / 100));
+  const hlC = a.hlColor || '#C68642';
+  // Styles that grow upwards (high-tops, puffs, buns...) have their tips at the top.
+  const [y1, y2] = hair.up ? [...(hair.span || [10, 90])].reverse() : (hair.span || [10, 90]);
+  const stop = (o, col) => `<stop offset="${Math.max(0, Math.min(1, o)).toFixed(3)}" stop-color="${col}"/>`;
+  const stops = !hl ? stop(0, hairC) + stop(1, hairC)
+    : hl === 'tips' ? stop(0, hairC) + stop(1 - len - 0.08, hairC) + stop(1 - len + 0.08, hlC) + stop(1, hlC)
+      : stop(0, hlC) + stop(len - 0.08, hlC) + stop(len + 0.08, hairC) + stop(1, hairC);
   const defs = `<defs>
+    <linearGradient id="${g('hair')}" gradientUnits="userSpaceOnUse" x1="0" y1="${y1}" x2="0" y2="${y2}">${stops}</linearGradient>
     <radialGradient id="${g('sk')}" cx=".4" cy=".32" r=".8"><stop offset="0" stop-color="${glow}"/><stop offset=".55" stop-color="${tone}"/><stop offset="1" stop-color="${shade}"/></radialGradient>
     <clipPath id="${g('frame')}"><circle cx="50" cy="50" r="50"/></clipPath>
     ${skin.galaxy ? `<radialGradient id="${g('gx')}" cx=".4" cy=".3" r=".9"><stop offset="0" stop-color="#A78BFA"/><stop offset=".6" stop-color="#4338CA"/><stop offset="1" stop-color="#1E1B4B"/></radialGradient>` : ''}
   </defs>`;
   const SK = skin.galaxy ? `url(#${g('gx')})` : `url(#${g('sk')})`;
-  const ctx = { tone, shade, glow, blush, lip, hairC, hairHi, cloth, clothDark, SK, deep, g };
-  const hair = L.hair[a.hair] || L.hair['hair-none'];
+  const ctx = { tone, shade, glow, blush, lip, hairC, hairHi, cloth, clothDark, SK, deep, g,
+    F: `url(#${g('hair')})`, hi: hairHi, dark: mixc(hairC, '#000000', 0.35), skinLine: shade, accent: cloth };
   const out = [];
   out.push(`<circle cx="50" cy="50" r="50" fill="${a.bg || '#312E81'}"/>`);
   // Clothes (shoulders), neck
   out.push((L.clothes[a.clothes] || L.clothes['clothes-tee']).draw(ctx));
   out.push(`<path d="M41 66 L41 78 Q50 84 59 78 L59 66 Z" fill="${shade}"/>`);
   out.push((L.clothes[a.clothes] || L.clothes['clothes-tee']).collar ? (L.clothes[a.clothes] || L.clothes['clothes-tee']).collar(ctx) : '');
-  // Hair behind the head
-  if (hair.back) out.push(hair.back(ctx));
+  // Hair behind the head (some head coverings hide the hair and ears)
+  if (hat.back) out.push(hat.back(ctx));
+  if (hair.back && !hat.hidesHair) out.push(hair.back(ctx));
   // Ears (behind the head shape)
-  const ears = L.ears[a.ears] || L.ears['ears-human'];
+  const ears = hat.hidesEars ? {} : (L.ears[a.ears] || L.ears['ears-human']);
   if (ears.back) out.push(ears.back(ctx));
   // Head
   out.push(`<ellipse cx="50" cy="46" rx="20" ry="22" fill="${SK}"/>`);
@@ -58,9 +74,10 @@ export function avatarSVG(a, { size = 100, uid = 'av' } = {}) {
   out.push(`<path d="M48.5 51.5 Q50 53.5 51.5 51.5" stroke="${shade}" stroke-width="1.4" fill="none" stroke-linecap="round"/>`);
   out.push(`<path d="M44 58 Q50 62.5 56 58" stroke="${lip}" stroke-width="2.2" fill="none" stroke-linecap="round"/>`);
   out.push((L.facial[a.facial] || L.facial['facial-none']).draw(ctx));
+  out.push((L.glasses[a.glasses] || L.glasses['glasses-none']).draw(ctx));
   // Hair in front, then hats
-  if (hair.front) out.push(hair.front(ctx));
-  out.push((L.hat[a.hat] || L.hat['hat-none']).draw(ctx));
+  if (hair.front && !hat.hidesHair) out.push(hair.front(ctx));
+  out.push(hat.draw(ctx));
   return `<svg viewBox="0 0 100 100" width="${size}" height="${size}" class="avatar-svg" aria-hidden="true">${defs}<g clip-path="url(#${g('frame')})">${out.join('')}</g></svg>`;
 }
 
@@ -94,36 +111,7 @@ export const LOOKS = {
     'ears-fins': { back: (c) => `<path d="M30 42 Q14 40 16 56 Q24 50 31 54 Z M70 42 Q86 40 84 56 Q76 50 69 54 Z" fill="${c.glow}" opacity=".9"/><path d="M28 45 L19 50 M72 45 L81 50" stroke="${c.shade}" stroke-width="1"/>` },
     'ears-robot': { back: () => `<rect x="25" y="42" width="7" height="12" rx="2" fill="#94A3B8"/><rect x="68" y="42" width="7" height="12" rx="2" fill="#94A3B8"/><circle cx="28.5" cy="48" r="1.8" fill="#22D3EE"/><circle cx="71.5" cy="48" r="1.8" fill="#22D3EE"/>` },
   },
-  hair: {
-    'hair-none': {},
-    // Textured and natural styles
-    'hair-twa': { front: (c) => `<path d="M30 42 Q29 22 50 22 Q71 22 70 42 Q66 30 50 30 Q34 30 30 42 Z" fill="${c.hairC}"/>${coils(c, 32, 68, 25, 30, 2.2)}` },
-    'hair-afro': { back: (c) => `<circle cx="50" cy="34" r="27" fill="${c.hairC}"/>${coils(c, 26, 74, 12, 50, 3)}`, front: (c) => `<path d="M30 40 Q32 26 50 26 Q68 26 70 40 Q64 32 50 32 Q36 32 30 40 Z" fill="${c.hairC}"/>` },
-    'hair-bigafro': { back: (c) => `<circle cx="50" cy="32" r="34" fill="${c.hairC}"/>${coils(c, 20, 80, 4, 56, 3.4)}`, front: (c) => `<path d="M29 40 Q32 25 50 25 Q68 25 71 40 Q64 31 50 31 Q36 31 29 40 Z" fill="${c.hairC}"/>` },
-    'hair-puffs': { back: (c) => `<circle cx="26" cy="22" r="12" fill="${c.hairC}"/><circle cx="74" cy="22" r="12" fill="${c.hairC}"/>${coils(c, 16, 36, 12, 32, 2.6)}${coils(c, 64, 84, 12, 32, 2.6)}`, front: (c) => hairCap(c, `<path d="M36 30 Q50 26 64 30" stroke="${c.hairHi}" stroke-width="1" fill="none" opacity=".6"/>`) },
-    'hair-hightop': { front: (c) => `<path d="M31 44 Q30 30 33 26 L33 4 Q50 0 67 4 L67 26 Q70 30 69 44 Q66 32 50 31 Q34 32 31 44 Z" fill="${c.hairC}"/>${coils(c, 35, 65, 6, 24, 2.2)}<path d="M31 44 Q30 36 32 30" stroke="${c.shade}" stroke-width="2" opacity=".6" fill="none"/>` },
-    'hair-waves': { front: (c) => `${hairCap(c)}<path d="M33 37 Q41 33 50 35 Q59 33 67 37 M35 31 Q42 27 50 29 Q58 27 65 31 M39 26 Q45 23 50 24 Q55 23 61 26" stroke="${c.hairHi}" stroke-width="1.2" fill="none" opacity=".75"/>` },
-    'hair-cornrows': { front: (c) => `${hairCap(c)}${[36, 42, 48, 54, 60, 66].map((x) => `<path d="M${x} 22 Q${x + (x < 50 ? -2 : 2)} 32 ${x + (x < 50 ? -4 : 4)} 42" stroke="${c.hairHi}" stroke-width="1" stroke-dasharray="2.2 1.4" fill="none" opacity=".8"/>`).join('')}` },
-    'hair-boxbraids': { back: (c) => strands(c, [27, 31, 35, 65, 69, 73], 40, 92, 4) + [27, 31, 35, 65, 69, 73].map((x) => `<path d="M${x} 44 V90" stroke="${c.hairHi}" stroke-width="1" stroke-dasharray="1.5 2.5" opacity=".6"/>`).join(''), front: (c) => hairCap(c, `<path d="M50 21 V31" stroke="${c.shade}" stroke-width="1" opacity=".5"/>`) },
-    'hair-locs': { back: (c) => strands(c, [26, 30, 34, 38, 62, 66, 70, 74], 36, 88, 5) + [26, 34, 66, 74].map((x) => `<path d="M${x} 44 V84" stroke="${c.hairHi}" stroke-width="1.2" stroke-dasharray="3 3" opacity=".5"/>`).join(''), front: (c) => `${hairCap(c)}${strands(c, [34, 40, 46, 54, 60, 66], 24, 36, 4.4)}` },
-    'hair-twists': { back: (c) => [28, 33, 67, 72].map((x) => `<path d="M${x} 34 Q${x + 2} 42 ${x} 50 Q${x - 2} 58 ${x} 66" stroke="${c.hairC}" stroke-width="5" fill="none" stroke-linecap="round"/>`).join(''), front: (c) => `${hairCap(c)}${[36, 43, 50, 57, 64].map((x) => `<path d="M${x} 22 Q${x + 2} 27 ${x} 32" stroke="${c.hairHi}" stroke-width="1.2" fill="none" opacity=".6"/>`).join('')}` },
-    'hair-bantu': { front: (c) => `${hairCap(c)}${[[36, 22], [50, 16], [64, 22], [42, 28], [58, 28]].map(([x, y]) => `<circle cx="${x}" cy="${y}" r="5.4" fill="${c.hairC}"/><path d="M${x - 3} ${y} Q${x} ${y - 4} ${x + 3} ${y}" stroke="${c.hairHi}" stroke-width="1" fill="none" opacity=".7"/>`).join('')}` },
-    'hair-coils': { back: (c) => `<ellipse cx="50" cy="38" rx="26" ry="24" fill="${c.hairC}"/>`, front: (c) => `${coils(c, 28, 72, 18, 44, 3.2, true)}<path d="M30 40 Q34 28 50 28 Q66 28 70 40 Q64 33 50 33 Q36 33 30 40 Z" fill="${c.hairC}"/>` },
-    // Everyday styles
-    'hair-short': { front: (c) => `${hairCap(c)}<path d="M30 40 Q36 28 52 28 Q46 32 44 38" fill="${c.hairC}"/>` },
-    'hair-curly': { front: (c) => `${hairCap(c)}${coils(c, 30, 70, 20, 34, 3.4, true)}` },
-    'hair-buzz': { front: (c) => `<path d="M30 42 Q29 24 50 24 Q71 24 70 42 Q66 32 50 32 Q34 32 30 42 Z" fill="${c.hairC}" opacity=".85"/>` },
-    'hair-long': { back: (c) => `<path d="M28 40 Q26 70 30 92 L70 92 Q74 70 72 40 Q72 22 50 21 Q28 22 28 40 Z" fill="${c.hairC}"/>`, front: (c) => `<path d="M29 46 Q28 22 50 21 Q72 22 71 46 Q66 30 56 30 Q50 38 42 32 Q34 34 29 46 Z" fill="${c.hairC}"/>` },
-    'hair-bob': { back: (c) => `<path d="M27 40 Q26 64 32 68 L68 68 Q74 64 73 40 Q72 21 50 20 Q28 21 27 40 Z" fill="${c.hairC}"/>`, front: (c) => `<path d="M29 44 Q28 22 50 21 Q72 22 71 44 Q64 30 50 32 Q36 30 29 44 Z" fill="${c.hairC}"/>` },
-    'hair-bun': { front: (c) => `<circle cx="50" cy="14" r="9" fill="${c.hairC}"/>${hairCap(c, `<path d="M42 16 Q50 12 58 16" stroke="${c.hairHi}" stroke-width="1" fill="none" opacity=".6"/>`)}` },
-    'hair-mohawk': { front: (c) => `<path d="M44 38 Q42 14 46 4 Q50 10 54 4 Q58 14 56 38 Z" fill="${c.hairC}"/><path d="M30 42 Q30 30 44 27 M70 42 Q70 30 56 27" stroke="${c.shade}" stroke-width="3" opacity=".5" fill="none"/>` },
-    'hair-spiky': { front: (c) => `<path d="M29 44 L28 26 L35 30 L36 16 L43 25 L48 10 L53 24 L60 14 L62 28 L70 22 L71 44 Q66 32 50 31 Q34 32 29 44 Z" fill="${c.hairC}"/>` },
-    // Whimsical
-    'hair-flame': { front: () => `<path d="M30 42 Q24 26 34 18 Q34 26 40 26 Q38 12 50 4 Q50 16 58 18 Q58 8 66 14 Q74 24 70 42 Q64 30 50 30 Q36 30 30 42 Z" fill="#F97316"/><path d="M36 36 Q34 26 42 22 Q42 28 48 28 Q48 18 54 14 Q56 22 62 24 Q66 30 64 36 Q58 30 50 30 Q42 30 36 36 Z" fill="#FDE047"/>` },
-    'hair-nebula': { front: () => `<path d="M28 44 Q24 18 50 16 Q76 18 72 44 Q66 30 50 30 Q34 30 28 44 Z" fill="#7C3AED"/><path d="M32 34 Q40 20 54 22 Q66 24 68 36 Q60 28 50 28 Q40 28 32 34 Z" fill="#EC4899" opacity=".8"/>${[[38, 24], [56, 20], [64, 30], [46, 18]].map(([x, y]) => `<circle cx="${x}" cy="${y}" r="1" fill="#fff"/>`).join('')}` },
-    'hair-tentacles': { front: () => `${[34, 42, 50, 58, 66].map((x, i) => `<path d="M${x} 30 Q${x + (i - 2) * 4} 14 ${x + (i - 2) * 8} 10" stroke="#34D399" stroke-width="5" fill="none" stroke-linecap="round"/><circle cx="${x + (i - 2) * 8}" cy="10" r="2.4" fill="#A7F3D0"/>`).join('')}` },
-    'hair-crystal': { front: () => `<path d="M30 42 L32 22 L38 30 L42 12 L48 26 L54 8 L58 26 L64 14 L66 30 L70 24 L70 42 Q64 32 50 31 Q36 32 30 42 Z" fill="#67E8F9"/><path d="M42 12 L44 28 M54 8 L54 26 M64 14 L62 28" stroke="#ECFEFF" stroke-width="1" opacity=".8"/>` },
-  },
+  hair: HAIR,
   facial: {
     'facial-none': { draw: () => '' },
     'facial-stubble': { draw: (c) => `<path d="M34 56 Q36 66 50 68 Q64 66 66 56 Q62 62 50 63 Q38 62 34 56 Z" fill="${c.hairC}" opacity=".28"/>` },
@@ -135,6 +123,14 @@ export const LOOKS = {
     'facial-curlystache': { draw: (c) => `<path d="M50 56 Q44 53 40 56 Q37 58 38 54 M50 56 Q56 53 60 56 Q63 58 62 54" stroke="${c.hairC}" stroke-width="2.4" fill="none" stroke-linecap="round"/>` },
   },
   clothes: {},
+  glasses: {
+    'glasses-none': { draw: () => '' },
+    'glasses-round': { draw: () => `<circle cx="41" cy="45" r="6" fill="#fff" fill-opacity=".12" stroke="#1F2937" stroke-width="1.6"/><circle cx="59" cy="45" r="6" fill="#fff" fill-opacity=".12" stroke="#1F2937" stroke-width="1.6"/><path d="M47 45 H53 M35 44 L30 43 M65 44 L70 43" stroke="#1F2937" stroke-width="1.4"/>` },
+    'glasses-square': { draw: () => `<rect x="34" y="40" width="13" height="10" rx="2.5" fill="#fff" fill-opacity=".12" stroke="#111827" stroke-width="2"/><rect x="53" y="40" width="13" height="10" rx="2.5" fill="#fff" fill-opacity=".12" stroke="#111827" stroke-width="2"/><path d="M47 44 H53 M34 43 L30 42 M66 43 L70 42" stroke="#111827" stroke-width="1.6"/>` },
+    'glasses-cateye': { draw: () => `<path d="M33 42 Q40 38 47 42 Q46 50 40 50 Q34 50 33 42 Z M53 42 Q60 38 67 42 Q66 50 60 50 Q54 50 53 42 Z" fill="#fff" fill-opacity=".12" stroke="#7C2D12" stroke-width="1.8"/><path d="M33 42 L30 39 M67 42 L70 39 M47 44 H53" stroke="#7C2D12" stroke-width="1.6"/>` },
+    'glasses-shades': { draw: () => `<path d="M33 41 H47 Q47 50 40 50 Q33 50 33 41 Z M53 41 H67 Q67 50 60 50 Q53 50 53 41 Z" fill="#111827"/><path d="M47 42 H53 M33 41 L30 40 M67 41 L70 40" stroke="#111827" stroke-width="1.6"/><path d="M36 43 L39 46" stroke="#fff" stroke-width="1" opacity=".6"/>` },
+    'glasses-heart': { draw: () => `<path d="M40 50 C33 46 34 40 40 42 C46 40 47 46 40 50 Z M60 50 C53 46 54 40 60 42 C66 40 67 46 60 50 Z" fill="#F43F5E" stroke="#BE123C" stroke-width="1"/><path d="M45 44 H55" stroke="#BE123C" stroke-width="1.4"/>` },
+  },
   hat: {
     'hat-none': { draw: () => '' },
     'hat-beanie': { draw: (c) => `<path d="M28 34 Q28 12 50 12 Q72 12 72 34 Z" fill="${c.cloth}"/><rect x="26" y="30" width="48" height="8" rx="3" fill="${c.clothDark}"/><circle cx="50" cy="10" r="4" fill="${c.clothDark}"/>` },
@@ -152,6 +148,13 @@ export const LOOKS = {
   'hat-leafcrown': { draw: () => [28, 36, 44, 52, 60, 68].map((x, i) => `<ellipse cx="${x + 2}" cy="${26 - Math.sin((i / 5) * Math.PI) * 8}" rx="5" ry="3" fill="${['#D97706', '#DC2626', '#F59E0B', '#B45309', '#EA580C', '#CA8A04'][i]}" transform="rotate(${-30 + i * 12} ${x + 2} ${26 - Math.sin((i / 5) * Math.PI) * 8})"/>`).join('') },
   'hat-santa': { draw: () => `<path d="M28 34 Q34 8 60 10 Q76 14 80 34 Z" fill="#DC2626"/><circle cx="80" cy="34" r="5" fill="#F8FAFC"/><rect x="24" y="30" width="54" height="8" rx="4" fill="#F8FAFC"/>` },
   'hat-earmuffs': { draw: () => `<path d="M30 46 Q30 18 50 18 Q70 18 70 46" stroke="#E0F2FE" stroke-width="3.5" fill="none"/><circle cx="29" cy="48" r="8" fill="#F8FAFC"/><circle cx="71" cy="48" r="8" fill="#F8FAFC"/>` },
+  // Head coverings (free; drawn with care: they cover the hair, and the hijab the ears and neck)
+  'hat-hijab': { hidesHair: true, hidesEars: true, back: (c) => `<path d="M24 52 Q20 18 50 16 Q80 18 76 52 Q78 70 70 82 Q60 90 50 90 Q40 90 30 82 Q22 70 24 52 Z" fill="${c.cloth}"/>`, draw: (c) => `<path d="M30 50 Q28 24 50 22 Q72 24 70 50 Q70 40 62 32 Q50 26 38 32 Q30 40 30 50 Z" fill="${c.cloth}"/><path d="M30 52 Q30 70 42 76 Q50 80 58 76 Q70 70 70 52 Q72 74 60 82 Q50 86 40 82 Q28 74 30 52 Z" fill="${c.clothDark}" opacity=".55"/>` },
+  'hat-turban': { hidesHair: true, draw: (c) => `<path d="M27 40 Q24 14 50 10 Q76 14 73 40 Q66 34 50 33 Q34 34 27 40 Z" fill="${c.cloth}"/><path d="M28 36 Q40 16 64 18 M30 30 Q46 12 70 24 M32 40 Q48 24 72 34" stroke="${c.clothDark}" stroke-width="1.8" fill="none" opacity=".7"/><path d="M47 16 Q50 26 53 16" stroke="${c.clothDark}" stroke-width="2" fill="none"/>` },
+  'hat-kufi': { draw: (c) => `<path d="M31 32 Q32 16 50 15 Q68 16 69 32 Z" fill="${c.cloth}"/><path d="M31 32 H69" stroke="${c.clothDark}" stroke-width="2.2"/><path d="M38 22 H62 M35 27 H65" stroke="${c.clothDark}" stroke-width="1" stroke-dasharray="2 2" opacity=".7"/>` },
+  'hat-kippah': { draw: (c) => `<path d="M38 24 Q50 14 62 24 Q50 22 38 24 Z" fill="${c.cloth}"/><path d="M40 22 Q50 17 60 22" stroke="${c.clothDark}" stroke-width="1" fill="none"/>` },
+  'hat-keffiyeh': { hidesHair: true, back: (c) => `<path d="M22 40 Q20 14 50 12 Q80 14 78 40 L82 84 L68 72 L64 50 L36 50 L32 72 L18 84 Z" fill="#F8FAFC"/>${[30, 40, 50, 60, 70].map((x) => `<path d="M${x} 18 V60" stroke="${c.cloth}" stroke-width=".8" opacity=".4"/>`).join('')}`, draw: () => `<path d="M28 42 Q26 18 50 16 Q74 18 72 42 Q66 30 50 30 Q34 30 28 42 Z" fill="#F8FAFC"/><path d="M26 30 Q50 22 74 30" stroke="#111827" stroke-width="3.4" fill="none"/><path d="M27 35 Q50 27 73 35" stroke="#111827" stroke-width="2.4" fill="none"/>` },
+  'hat-headband': { draw: (c) => `<path d="M30 34 Q50 24 70 34" stroke="${c.cloth}" stroke-width="5" fill="none" stroke-linecap="round"/>` },
   'hat-party': { draw: () => `<path d="M40 24 L50 0 L60 24 Z" fill="#F472B6"/><path d="M43 18 L57 18 M46 10 L54 10" stroke="#FDE68A" stroke-width="2"/><circle cx="50" cy="0" r="3" fill="#FDE68A"/>` },
   },
 };

@@ -4,7 +4,7 @@
 
 import { h, icon, toast } from '../ui.js';
 import { avatarSVG } from '../render/avatar.js';
-import { PARTS, AVATAR_ITEMS, HAIR_COLORS, CLOTHES_COLORS, BG_COLORS } from '../data/avatar.js';
+import { PARTS, AVATAR_ITEMS, HAIR_COLORS, CLOTHES_COLORS, BG_COLORS, HIGHLIGHT_COLORS } from '../data/avatar.js';
 import { EVENT_ITEMS, eventItemAvailable, eventOf } from '../data/events.js';
 import { avatar, setAvatar, displayName } from '../profile.js';
 import { owns, buy, balance, walletPill, SYMBOL } from '../economy.js';
@@ -68,6 +68,20 @@ export function renderAvatar(root) {
     return h('div', { class: 'av-swatch-row' }, [h('b', {}, label), h('div', { class: 'swatches' }, list.map((c) => h('button', { class: `swatch ${cur === c ? 'on' : ''}`, style: { background: c }, 'aria-label': `${label} ${c}`, onclick: () => { setAvatar({ [key]: c }); drawAll(); } })))]);
   }
 
+  /** Highlights: none, from the tips up, or from the roots down, with how far they go. */
+  function highlights() {
+    const a = avatar();
+    const mode = a.hlMode || 'off';
+    const seg = h('div', { class: 'seg av-hl-mode' }, [['off', 'No highlights'], ['tips', 'From the tips'], ['roots', 'From the roots']].map(([v, l]) => h('button', { class: mode === v ? 'on' : '', onclick: () => { setAvatar({ hlMode: v }); drawAll(); } }, l)));
+    const lenOut = h('output', {}, `${a.hlLen ?? 40}%`);
+    const slider = h('input', { type: 'range', min: 5, max: 100, step: 5, value: a.hlLen ?? 40, disabled: mode === 'off', oninput: (e) => { lenOut.textContent = `${e.target.value}%`; setAvatar({ hlLen: +e.target.value }); drawPreview(); }, onchange: () => drawAll() });
+    return h('div', { class: 'av-hl' }, [
+      h('div', { class: 'av-swatch-row' }, [h('b', {}, 'Highlights'), seg]),
+      mode === 'off' ? null : swatches('Highlight colour', 'hlColor', HIGHLIGHT_COLORS),
+      mode === 'off' ? null : h('label', { class: 'av-swatch-row av-hl-len' }, [h('b', {}, mode === 'tips' ? 'How far up' : 'How far down'), slider, lenOut]),
+    ]);
+  }
+
   function drawAll() {
     drawPreview();
     drawTabs();
@@ -77,6 +91,7 @@ export function renderAvatar(root) {
     grid.replaceChildren(...items.map(option).filter(Boolean));
     colours.replaceChildren(
       ...(part === 'hair' || part === 'facial' ? [swatches('Hair colour', 'hairColor', HAIR_COLORS)] : []),
+      ...(part === 'hair' ? [highlights()] : []),
       ...(part === 'clothes' || part === 'hat' ? [swatches('Clothes colour', 'clothesColor', CLOTHES_COLORS)] : []),
       swatches('Background', 'bg', BG_COLORS),
     );
