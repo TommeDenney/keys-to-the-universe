@@ -80,6 +80,7 @@ export function renderShop(root, { inventory = false } = {}) {
         ]),
       ]),
       bp ? h('div', { class: 'shop-note pop' }, [h('b', {}, `+${bp} ${SYMBOL} credited!`), ` Stardust for the progress you made before the Shop opened.`]) : null,
+      shopTabs(),
       seasonSection(),
       h('div', { class: 'all-items-head' }, [h('h2', {}, 'All items'), h('p', { class: 'muted' }, 'Everything in the Shop, all year round.')]),
       (() => {
@@ -102,7 +103,7 @@ export function renderShop(root, { inventory = false } = {}) {
           earnRow('Rogue-planet side quests', 'big rewards'),
         ]),
       ]),
-      ...CATEGORIES.map((c) => (c.id === 'avatar' ? avatarSections(c) : h('section', { class: 'shop-cat' }, [
+      ...CATEGORIES.map((c) => (c.id === 'avatar' ? avatarSections(c) : h('section', { class: 'shop-cat', id: `shop-${c.id}` }, [
         h('h2', {}, c.name),
         h('p', { class: 'muted' }, c.blurb),
         h('div', { class: 'shop-grid' }, SHOP.filter((it) => it.cat === c.id && !it.req && !it.event && (!it.exclusive || owns(it.id) || offered(it.id))).map(card)),
@@ -119,7 +120,7 @@ export function renderShop(root, { inventory = false } = {}) {
     if (!released.length) return null;
     const sale = shopSale();
     const feat = featuredEvent();
-    return h('section', { class: 'season-shop', style: { '--ev': feat ? feat.tint : '#F59E0B' } }, [
+    return h('section', { class: 'season-shop', id: 'shop-featured', style: { '--ev': feat ? feat.tint : '#F59E0B' } }, [
       h('div', { class: 'season-head' }, [
         h('div', {}, [h('div', { class: 'eyebrow' }, '\u2B50 Limited-time rares'), h('h2', {}, [feat ? `${feat.emoji} ` : '\u2728 ', 'Featured'])]),
         h('p', { class: 'muted' }, 'Rare seasonal and holiday items, each sold for a limited time. When a holiday’s rares leave, they’re gone for good, but anything you buy is yours forever.'),
@@ -139,11 +140,34 @@ export function renderShop(root, { inventory = false } = {}) {
     ]);
   }
 
+  /** Quick-jump tabs (sticky): tap to scroll to a section; the current one is highlighted. */
+  function shopTabs() {
+    const tabs = [['featured', '\u2B50 Featured'], ...CATEGORIES.map((c) => [c.id, c.name])];
+    const bar = h('nav', { class: 'shop-tabs av-tabs' }, tabs.map(([id, name]) => h('button', { class: 'chip-btn', 'data-tab': id, onclick: () => {
+      const el = page.querySelector(`#shop-${id}`);
+      if (!el) return;
+      const scroller = root;
+      scroller.scrollTo({ top: el.getBoundingClientRect().top - scroller.getBoundingClientRect().top + scroller.scrollTop - 70, behavior: 'smooth' });
+    } }, name)));
+    // Highlight the section in view.
+    const spy = () => {
+      if (!page.isConnected) { root.removeEventListener('scroll', spy); return; }
+      let cur = tabs[0][0];
+      for (const [id] of tabs) { const el = page.querySelector(`#shop-${id}`); if (el && el.getBoundingClientRect().top < 160) cur = id; }
+      bar.querySelectorAll('.chip-btn').forEach((b) => b.classList.toggle('on', b.dataset.tab === cur));
+    };
+    root.removeEventListener('scroll', root._shopSpy || (() => {}));
+    root._shopSpy = spy;
+    root.addEventListener('scroll', spy, { passive: true });
+    requestAnimationFrame(spy);
+    return bar;
+  }
+
   /** Explorer looks, split into Skin, Hair, Outfits and Face sections. */
   function avatarSections(c) {
     const groups = [['Skin', ['skin']], ['Hair', ['hair']], ['Outfits', ['clothes', 'hat', 'glasses']], ['Face', ['expr', 'eyes', 'ears', 'facial']]];
     const items = SHOP.filter((it) => it.cat === 'avatar' && !it.event);
-    return h('section', { class: 'shop-cat' }, [
+    return h('section', { class: 'shop-cat', id: 'shop-avatar' }, [
       h('h2', {}, c.name), h('p', { class: 'muted' }, c.blurb),
       ...groups.map(([name, parts]) => {
         const list = items.filter((it) => parts.includes(it.part));

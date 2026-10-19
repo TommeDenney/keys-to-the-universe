@@ -1788,3 +1788,9 @@ header.top:has(> .avatar-badge) { align-items: center; }
 /* Moon phases (baked lighting) */
 .moon-shade { position: absolute; inset: 0; border-radius: 50%; pointer-events: none; z-index: 3; }
 .moon3d:has(.moon-shade) > .shade { display: none; } /* the baked phase replaces the generic shadow */
+/* Shop quick-jump tabs */
+.shop-tabs { position: sticky; top: calc(8px + var(--safe-t)); z-index: 12; display: flex; flex-wrap: nowrap; overflow-x: auto; gap: 6px; padding: 8px; margin: 0 -8px 8px; border-radius: 18px; background: color-mix(in srgb, var(--bg, #F3F1FA) 88%, transparent); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); scrollbar-width: none; }
+.shop-tabs::-webkit-scrollbar { display: none; }
+.shop-tabs .chip-btn { flex: none; white-space: nowrap; }
+body[data-tabpos="top"] .shop-tabs { top: calc(80px + var(--safe-t)); }
+.shop-tabs .chip-btn.on, .av-tabs .chip-btn.on { background: #7C3AED; color: #fff; box-shadow: 0 4px 12px rgba(124,58,237,.35); }
