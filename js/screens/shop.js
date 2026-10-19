@@ -14,7 +14,7 @@ import { petHTML } from '../render/pets.js';
 import { fxRing } from './universe.js';
 import { specialBosses } from './specialboss.js';
 import { personalItemName } from '../personal.js';
-import { EVENTS, SEASON, eventItemAvailable, featuredEvent, shopSale, eventOf, today, leavesText, releaseCountdown } from '../data/events.js';
+import { EVENTS, SEASON, eventItemAvailable, featuredEvent, shopSale, eventOf, today, leavesText } from '../data/events.js';
 
 // Exclusive items only show up when a special boss (from a personal pack) offers them.
 const offered = (id) => specialBosses().some((b) => b.reward === id);
@@ -114,9 +114,7 @@ export function renderShop(root, { inventory = false } = {}) {
   function seasonSection() {
     const now = today();
     const released = EVENTS.filter((e) => e.released && SHOP.some((it) => it.event === e.id && (eventItemAvailable(it) || owns(it.id))));
-    // Not released yet (and not past their leave date): shown as silhouettes with a countdown.
-    const upcoming = EVENTS.filter((e) => !e.released && now < e.leaves).sort((x, y) => x.buy - y.buy);
-    if (!released.length && !upcoming.length) return null;
+    if (!released.length) return null;
     const sale = shopSale();
     const feat = featuredEvent();
     return h('section', { class: 'season-shop', style: { '--ev': feat ? feat.tint : '#F59E0B' } }, [
@@ -136,31 +134,6 @@ export function renderShop(root, { inventory = false } = {}) {
           h('div', { class: 'shop-grid' }, items.map(card)),
         ]);
       }),
-      ...upcoming.map((e) => {
-        const items = SHOP.filter((it) => it.event === e.id);
-        return h('div', { class: 'season-event coming' }, [
-          h('h3', {}, [h('span', {}, e.emoji), ` ${e.name}`, h('small', { class: 'muted' }, `  ${items.length} rares · ${e.buy.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} – ${leavesText(e)}`),
-            h('span', { class: 'leaves-chip countdown', 'data-event': e.id }, `⏱ ${releaseCountdown(e)}`)]),
-          h('div', { class: 'shop-grid' }, items.map((it) => comingCard(it, e))),
-        ]);
-      }),
-    ]);
-  }
-
-  const KIND = { ship: 'spaceship', pet: 'pet', fx: 'completion effect', amb: 'ambience', kb: 'keyboard theme', press: 'key-press effect', starc: 'star colour', trail: 'route trail', sheet: 'sheet music theme' };
-
-  /** A rare that isn't out yet: a dark silhouette, no name, and when it arrives. */
-  function comingCard(it, e) {
-    const preview = h('div', { class: `shop-preview prev-${it.cat} silhouette` });
-    fillPreview(it, preview);
-    return h('div', { class: 'shop-item rare coming', style: { '--ev': e.tint } }, [
-      preview,
-      h('div', { class: 'shop-meta' }, [
-        h('span', { class: 'rare-tag' }, `${e.emoji} ${e.name} rare · coming soon`),
-        h('b', {}, '???'),
-        h('span', {}, `A mystery ${KIND[it.cat] || 'item'}. Revealed when ${e.name} arrives.`),
-      ]),
-      h('div', { class: 'shop-buy' }, [h('span', { class: 'badge countdown', 'data-event': e.id }, `⏱ ${releaseCountdown(e)}`)]),
     ]);
   }
 
@@ -269,10 +242,5 @@ export function renderShop(root, { inventory = false } = {}) {
   }
 
   draw();
-  // Keep the "Arrives in…" countdowns ticking.
-  const tick = setInterval(() => page.querySelectorAll('.countdown[data-event]').forEach((el) => {
-    const e = EVENTS.find((x) => x.id === el.dataset.event);
-    if (e) el.textContent = `\u23F1 ${releaseCountdown(e)}`;
-  }), 30000);
-  return () => { kbs.forEach((k) => k.destroy()); stopTabAmbient(); clearTimeout(previewT); clearInterval(tick); };
+  return () => { kbs.forEach((k) => k.destroy()); stopTabAmbient(); clearTimeout(previewT); };
 }
