@@ -2,6 +2,7 @@
 
 import { h, icon, modal, toast } from '../ui.js';
 import { hasPersonalPack, personalName, validPersonalPack, installPersonalPack, removePersonalPack } from '../personal.js';
+import { accountCard } from './account.js';
 import { settings, progress, makeBackup, restoreBackup, lastBackup, storageStatus, protectStorage } from '../store.js';
 import { mic } from '../input/mic.js';
 import { input } from '../input/hub.js';
@@ -92,6 +93,7 @@ export function renderSettings(root) {
   };
   loop();
 
+  const acctCard = accountCard();
   page.append(
     h('header', { class: 'top' }, [h('div', {}, [h('div', { class: 'eyebrow' }, 'Preferences'), h('h1', {}, 'Settings')])]),
     h('section', { class: 'card' }, [
@@ -168,7 +170,8 @@ export function renderSettings(root) {
       h('p', {}, 'Computer keyboard: A W S E D F T G Y H U J K play C to C (Z / X change octave).'),
     ]),
   );
-  return () => { cancelAnimationFrame(raf); unsub(); offMic(); };
+  if (acctCard) page.insertBefore(acctCard, page.children[1] || null); // right under the header
+  return () => { cancelAnimationFrame(raf); unsub(); offMic(); if (acctCard && acctCard._cleanup) acctCard._cleanup(); };
 }
 
 function constellationRow() {

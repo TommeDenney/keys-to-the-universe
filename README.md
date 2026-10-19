@@ -2,7 +2,7 @@
 
 Keys to the Universe is a free, open-source piano course that runs in your browser. It listens to your piano through the microphone (or a MIDI / Bluetooth piano), scrolls the sheet music as you play, and turns practice into a journey through a universe of galaxies, planets and boss battles.
 
-No account, no ads, no payments. Everything stays on your device. Made for all ages (parental discretion advised).
+No ads, no payments, and no account needed. Signing in with Google is optional and saves your progress to your own Google Drive. Made for all ages (parental discretion advised).
 
 **Open it:** https://tommedenney.github.io/ivory-piano/
 
@@ -20,7 +20,9 @@ No account, no ads, no payments. Everything stays on your device. Made for all a
 - Installable as a Home Screen app and works offline. Back up and restore your progress from Settings.
 
 ## Privacy
-Keys to the Universe has no server. Microphone audio is analysed on your device and never recorded or sent anywhere. Progress, imports and private packs are stored in your browser (IndexedDB / localStorage) and in backup files you choose to save.
+Keys to the Universe has no server and the developer never receives your data. Microphone audio is analysed on your device and never recorded or sent anywhere. As a guest, progress, imports and private packs are stored in your browser (IndexedDB / localStorage) and in backup files you choose to save. If you sign in with Google, the app reads your name, email and picture and uses the `drive.file` permission (only files it creates) to keep your progress and profile in a "Keys to the Universe" folder in your own Google Drive.
+
+To set up Google sign-in on your own copy, see [docs/GOOGLE_SETUP.md](docs/GOOGLE_SETUP.md).
 
 ## Private packs
 You can add personal content that never touches this repository: a `.ivorypack.json` file imported in **Settings › Progress › Private packs**.

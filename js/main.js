@@ -23,6 +23,9 @@ import { initAchievements, checkAchievements } from './achievements.js';
 import { SHOP } from './data/shop.js';
 import { renderBadges } from './screens/badges.js';
 import { renderAbout } from './screens/about.js';
+import { startAccount, startAutoSave, syncNow, account } from './cloud.js';
+import { maybeOfferSignIn, openProfile, chooseSave, celebrateBirthday } from './screens/account.js';
+import { profile, claimBirthday } from './profile.js';
 import { renderChallenges } from './screens/challenges.js';
 import { touch as touchChallenges } from './challenges.js';
 import { loadConstellations } from './constellations.js';
@@ -141,13 +144,36 @@ function setActiveTab(name) {
 
 window.addEventListener('hashchange', route);
 // The graded repertoire galaxies come from a manifest; load it before the first render.
-Promise.all([loadCatalog(), loadConstellations()]).finally(() => {
+// Accounts first: a sign-in that just came back from Google carries its result in the
+// URL, which has to be read (and cleaned up) before the router looks at it.
+const accountReady = startAccount().catch(() => ({ status: 'error' }));
+Promise.all([loadCatalog(), loadConstellations(), accountReady]).then(async ([, , acct]) => {
+  if (acct && acct.status === 'renewing') return; // off to Google for a moment; we'll be right back
   route();
   mountMusicBar();
   initAchievements({ toast, items: () => SHOP });
   onWallet(() => checkAchievements());
   checkAchievements();
+  await afterAccount(acct || {});
 });
+
+async function afterAccount(acct) {
+  if (acct.status === 'signed-in') {
+    startAutoSave();
+    // Load or save first, so a second device picks up the profile already in Drive.
+    const r = await syncNow({ choose: chooseSave });
+    if (r.status === 'download') { toast('Loaded your progress from Google Drive \u2601\uFE0F', 'ok'); route(); }
+    else if (r.status === 'error' && acct.fresh) toast(r.error, 'bad');
+    if (acct.fresh && !profile()) openProfile({ first: true, done: () => syncNow() });
+    if (claimBirthday()) celebrateBirthday();
+  } else if (acct.status === 'reconnect' && account()) {
+    toast('Tap Settings \u203a Account to reconnect Google Drive.', '');
+  } else if (acct.status === 'expired') {
+    toast('It\u2019s been 30 days: sign in with Google again to keep saving to Drive.', '');
+  } else if (settings.get('onboarded')) {
+    maybeOfferSignIn();
+  }
+}
 
 if (!settings.get('onboarded')) setTimeout(() => showOnboarding(), 350);
 

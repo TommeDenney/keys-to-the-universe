@@ -38,10 +38,18 @@ function load() {
 
 const state = Object.assign({ settings: {}, lessons: {}, songs: {}, streak: { day: null, count: 0 }, practiceDays: [] }, load());
 
+const saveSubs = new Set();
+/** Called after every save (used by Google Drive auto-save). */
+export function onSave(fn) {
+  saveSubs.add(fn);
+  return () => saveSubs.delete(fn);
+}
 function save() {
+  state.updatedAt = Date.now(); // lets Drive sync tell which copy is newer
   try {
     localStorage.setItem(LS_KEY, JSON.stringify(state));
   } catch { /* private mode / quota */ }
+  saveSubs.forEach((f) => f());
 }
 
 /** Raw state access for modules that keep their own slice (e.g. the Stardust wallet). */
@@ -192,11 +200,14 @@ export async function storageStatus() {
 }
 
 /** Everything worth keeping, as one JSON object (progress, settings, imported music). */
-export async function makeBackup() {
+/**
+ * A full copy of your progress. `forCloud` (Google Drive auto-save) leaves out the
+ * photo constellations, which are large and stay on each device.
+ */
+export async function makeBackup({ forCloud = false } = {}) {
   const scores = await library.all();
-  const constellations = await constellationsDB.all();
-  state.lastBackup = Date.now();
-  save();
+  const constellations = forCloud ? [] : await constellationsDB.all();
+  if (!forCloud) { state.lastBackup = Date.now(); save(); }
   return { app: 'ivory', version: 1, createdAt: new Date().toISOString(), state: JSON.parse(JSON.stringify(state)), scores, constellations };
 }
 
