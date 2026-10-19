@@ -47,13 +47,13 @@ export const EVENT_ITEMS = [
   R('sheet-ofrenda', 'muertos', 'sheet', 'Ofrenda', 1000, 'Marigold paper with deep plum ink.', { paper: '#FFF4E0', ink: '#4C1D3D', line: '#F2B66D', faint: '#F8D9A8' }),
   // Diwali
   R('fx-diya', 'diwali', 'fx', 'Diya Lights', 2500, 'Little oil lamps glow around your worlds.', { glyphs: '\u{1FA94}✨\u{1FA94}✨\u{1FA94}✨', color: '#FDE68A', aura: '#F59E0B', spin: 18 }),
-  R('trail-lanterns', 'diwali', 'trail', 'Lantern Road', 1400, 'A road lined with lamps.', { stroke: '#F59E0B', glow: '#FBBF24', width: 2, glyph: '\u{1FA94}   ', glyphColor: '#FDE68A' }),
+  R('trail-lanterns', 'diwali', 'trail', 'Lantern Road', 1400, 'A road lined with lamps.', { stroke: '#F59E0B', glow: '#FBBF24', width: 2, glyph: '❂   ', glyphColor: '#FDE68A' }),
   R('star-rangoli', 'diwali', 'starc', 'Rangoli', 1200, 'Stars in shifting rangoli magenta and gold.', { color: '#DB2777', shift: '#F59E0B', glow: ['#F472B6'] }),
   R('amb-festival', 'diwali', 'amb', 'Festival of Lights', 1200, 'A warm drone with bright, glowing chords.', { chords: [[48, 55, 60, 64, 67], [48, 55, 62, 65, 69], [48, 55, 60, 64, 71], [48, 55, 59, 62, 67]], types: ['sawtooth', 'sine'], len: 7, peak: 0.025, lp: 1800, attack: 1.8 }),
   // Thanksgiving
   R('pet-turkey', 'thanksgiving', 'pet', 'Turkey', 1500, 'Very grateful to be your pet instead of dinner.', { base: 'bird', fur: '#92400E', belly: '#D6A274', accent: '#78350F', tail: 'fan', beakColor: '#F59E0B', wattle: true }, 'land'),
   R('press-leaves', 'thanksgiving', 'press', 'Autumn Leaves', 1200, 'Maple leaves tumble from each key.', { glyphs: ['\u{1F341}', '\u{1F342}'], color: '#FB923C', glow: '#EA580C', n: 2, size: 15 }),
-  R('trail-autumn', 'thanksgiving', 'trail', 'Harvest Trail', 1100, 'A path of fallen leaves.', { stroke: '#B45309', glow: '#F59E0B', width: 2, glyph: '\u{1F342} ', glyphColor: '#FDBA74' }),
+  R('trail-autumn', 'thanksgiving', 'trail', 'Harvest Trail', 1100, 'A path of fallen leaves.', { stroke: '#B45309', glow: '#F59E0B', width: 2, glyph: '❧ ', glyphColor: '#FDBA74' }),
   R('sheet-harvest', 'thanksgiving', 'sheet', 'Harvest', 1000, 'Warm pumpkin paper with cocoa ink.', { paper: '#FFF1E0', ink: '#4A2511', line: '#E2A66B', faint: '#F2CFA6' }),
   // Black Friday
   R('ship-midnight', 'blackfriday', 'ship', 'Midnight Gold', 5000, 'Matte black with gold trim. Only on Black Friday.', { shape: 'arrow', hull: '#0A0A0A', hull2: '#27272A', wing: '#18181B', cockpit: '#FBBF24', flame: '#FDE68A', deco: 'seams' }),
@@ -88,7 +88,7 @@ export const EVENT_ITEMS = [
   R('sheet-midnight', 'newyear', 'sheet', 'Midnight Countdown', 1000, 'Deep midnight paper with gold ink.', { paper: '#0B1026', ink: '#FDE68A', line: '#3B3F6B', faint: '#22264A' }),
   // ---- More rares, so every holiday has a full set ----
   // Halloween
-  R('trail-cobweb', 'halloween', 'trail', 'Cobweb Trail', 1300, 'Spiderwebs strung between your worlds.', { stroke: '#A8A29E', glow: '#7C3AED', width: 1.5, glyph: '\u{1F578} ', glyphColor: '#E7E5E4', dash: '2 6' }),
+  R('trail-cobweb', 'halloween', 'trail', 'Cobweb Trail', 1300, 'Spiderwebs strung between your worlds.', { stroke: '#A8A29E', glow: '#7C3AED', width: 1.5, glyph: '✵ ', glyphColor: '#E7E5E4', dash: '2 6' }),
   R('star-pumpkin', 'halloween', 'starc', 'Jack-o’-Lantern', 1200, 'Stars that glow like carved pumpkins.', { color: '#F97316', glow: ['#FDE047', '#EA580C'], pulse: true }),
   R('sheet-haunted', 'halloween', 'sheet', 'Haunted Score', 1000, 'Midnight-purple paper with ghostly ink.', { paper: '#160F24', ink: '#E9D5FF', line: '#4C3A6B', faint: '#2C2240' }),
   // Día de los Muertos

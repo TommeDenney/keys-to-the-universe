@@ -1,3 +1,4 @@
+import { glyph, hasEmoji } from './glyphs.js';
 import { rewardLook } from '../data/rewards.js';
 // On-screen piano keyboard (DOM). Shows hints (next keys + fingers), echoes
 // what the player pressed, and can be played by touch.
@@ -166,7 +167,8 @@ export class Keyboard {
       const L = rewardLook(`press-${fx}`);
       if (!L || !L.glyphs || !L.glyphs.length) return; // glow-only key colours
       spawn('star glyph', L.n || 3, (p, i) => {
-        p.textContent = L.glyphs[Math.floor(Math.random() * L.glyphs.length)];
+        const gch = L.glyphs[Math.floor(Math.random() * L.glyphs.length)];
+        if (hasEmoji(gch)) { p.innerHTML = glyph(gch); p.classList.add('gl-particle'); } else p.textContent = gch;
         const c = L.color === 'rainbow' ? `hsl(${Math.floor(Math.random() * 360)} 90% 65%)` : L.color;
         p.style.color = c;
         p.style.textShadow = `0 0 8px ${L.glow}`;

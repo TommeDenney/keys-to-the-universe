@@ -36,12 +36,14 @@ import { mountMusicBar } from './screens/musicbar.js';
 import { registerPackPets } from './packpets.js';
 import { mountDock } from './screens/dock.js';
 import { watchFocus } from './focus.js';
+import { banishEmoji } from './render/glyphs.js';
 import { state as bgState, stopTabAmbient, autoStart as autoStartMusic } from './audio/bgmusic.js';
 
 applyTheme();
 document.body.dataset.tabpos = settings.get('tabBar') || 'bottom';
 registerPackPets();
 watchFocus();
+banishEmoji();
 applyCosmetics();
 touchChallenges();
 

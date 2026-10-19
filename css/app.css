@@ -2007,3 +2007,8 @@ body[data-tabpos="top"][data-dock="stack"] .page { padding-top: calc(204px + var
 body[data-tabpos="top"][data-dock="above"] .page > .shop-tabs-holder, body[data-tabpos="top"][data-dock="stack"] .page > .shop-tabs-holder { top: calc(140px + var(--safe-t)); }
 body:not([data-tabpos="top"])[data-dock="above"] .screen { padding-bottom: calc(160px + var(--safe-b)); }
 body:not([data-tabpos="top"])[data-dock="stack"] .screen { padding-bottom: calc(214px + var(--safe-b)); }
+
+/* Drawn icons that replace emoji */
+.gl { display: inline-block; width: 1.15em; height: 1.15em; vertical-align: -0.2em; flex: none; overflow: visible; }
+.kfx.gl-particle { line-height: 0; }
+.kfx.gl-particle .gl { width: 1.25em; height: 1.25em; filter: drop-shadow(0 0 4px rgba(255,255,255,.35)); }
