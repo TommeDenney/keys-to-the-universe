@@ -31,7 +31,7 @@ const STAT_TEXT = {
   listens: (g) => `Listen to ${g} song demos`,
   bosses: (g) => `Defeat ${g === 1 ? 'a Guardian' : `${g} Guardians`}`,
   days: (g) => `Practise on ${g} different days`,
-  mastered: (g) => `Master ${g === 1 ? 'a song' : `${g} songs`}: 3★ with the beat`,
+  mastered: (g) => `Master ${g === 1 ? 'a song' : `${g} songs`}: 5★ with the beat`,
   flawless: (g) => `Play ${g === 1 ? 'a flawless run' : `${g} flawless runs`} (no misses, with the beat)`,
   quests: (g) => `Conquer ${g === 1 ? 'a rogue planet' : `${g} rogue planets`}`,
 };
@@ -65,9 +65,9 @@ function buildPools() {
     } else {
       const big = p === 'monthly';
       for (const x of [...songs, ...pieces.filter((q) => q.grade <= 8)]) {
-        out[p].push({ id: `${p[0]}-master-${x.id}`, stat: `mastersong:${x.id}`, goal: 1, reward: Math.round(bonus * (big ? 0.8 : 1.6) + (x.grade || 0) * 15), text: `Master “${x.title}”: 3★ with the beat`, avail: () => songUnlocked(x.id) });
+        out[p].push({ id: `${p[0]}-master-${x.id}`, stat: `mastersong:${x.id}`, goal: 1, reward: Math.round(bonus * (big ? 0.8 : 1.6) + (x.grade || 0) * 15), text: `Master “${x.title}”: 5★ with the beat`, avail: () => songUnlocked(x.id) });
       }
-      for (let g = 1; g <= 10; g++) out[p].push({ id: `${p[0]}-grade-${g}`, stat: `grade:${g}`, goal: big ? 6 : 3, reward: Math.round(bonus * (1.2 + g * 0.15)), text: `Score 2★+ on Grade-${g} pieces ${big ? 6 : 3} times`, avail: () => pieces.some((q) => q.grade === g && songUnlocked(q.id)) });
+      for (let g = 1; g <= 10; g++) out[p].push({ id: `${p[0]}-grade-${g}`, stat: `grade:${g}`, goal: big ? 6 : 3, reward: Math.round(bonus * (1.2 + g * 0.15)), text: `Score 3★+ on Grade-${g} pieces ${big ? 6 : 3} times`, avail: () => pieces.some((q) => q.grade === g && songUnlocked(q.id)) });
       for (const u of COURSE) out[p].push({ id: `${p[0]}-gal-${u.id}`, stat: `galaxy:${u.id}`, goal: big ? 6 : 3, reward: Math.round(bonus * 1.5), text: `Complete ${big ? 6 : 3} worlds in the ${u.title} galaxy`, avail: () => u.lessons.some((l) => lessonUnlocked(l.id)) });
     }
   }

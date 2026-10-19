@@ -98,7 +98,7 @@ export function renderShop(root, { inventory = false } = {}) {
           earnRow('Complete a world', `${REWARD.lessonBase}–${REWARD.lessonBase + 5 * REWARD.lessonPerStar}`),
           earnRow('Defeat a Guardian', `${REWARD.bossBase}–${REWARD.bossBase + 5 * REWARD.bossPerStar}`),
           earnRow('Song practice steps', `${REWARD.songStepPerStar} per star`),
-          earnRow('Master a song (3★ with the beat)', `+${REWARD.songMastered}`),
+          earnRow('Master a song (5★ with the beat)', `+${REWARD.songMastered}`),
           earnRow('Daily streak', `${REWARD.dailyPerStreakDay}–70`),
           earnRow('Rogue-planet side quests', 'big rewards'),
         ]),

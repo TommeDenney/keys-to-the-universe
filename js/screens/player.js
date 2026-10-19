@@ -673,7 +673,7 @@ export class Player {
       result.knockedOut = !!this.knockedOut;
     }
     if (stars > 0) audio.chime('good');
-    // Challenges: correct notes, results with the beat, 3-star runs.
+    // Challenges: correct notes, results with the beat, 5-star runs.
     const notesHit = this.mode === 'wait' ? this.hits : this.grades.perfect + this.grades.good + this.grades.ok;
     if (notesHit) track('notes', notesHit);
     if (this.mode === 'timed' && stars >= 2) track('timed');
@@ -685,7 +685,7 @@ export class Player {
       track(`key:${this.slice.keyFifths || 0}`);
       if (this.mode === 'timed' && stars >= 2) track(`timedsong:${sid}`);
       if (this.mode === 'timed' && stars === MAX_STARS) track(`mastersong:${sid}`);
-      if (gradeOf(sid) && stars >= 2) track(`grade:${gradeOf(sid)}`);
+      if (gradeOf(sid) && stars >= 3) track(`grade:${gradeOf(sid)}`);
     }
     if (this.mode === 'timed' && stars >= 1 && total && this.grades.miss === 0) track('flawless');
     if (stars === MAX_STARS) track('threeStar');

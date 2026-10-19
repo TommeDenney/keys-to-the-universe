@@ -79,7 +79,7 @@ const LIFE_TEXT = {
   notes: (g) => `Play ${n(g)} correct notes`,
   perfect: (g) => `Hit ${n(g)} perfect-timed notes`,
   flawless: (g) => `Play ${g} flawless runs`,
-  mastered: (g) => `Master ${g} songs (3★ with the beat)`,
+  mastered: (g) => `Master ${g} songs (5★ with the beat)`,
   minutes: (g) => (g >= 60 ? `Practise for ${n(g / 60)} hours` : `Practise for ${g} minutes`),
   both: (g) => `Finish ${g} pieces with both hands`,
   listens: (g) => `Listen to ${g} song demos`,
