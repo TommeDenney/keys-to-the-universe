@@ -8,14 +8,15 @@ export function applyCosmetics() {
   document.body.dataset.pet = equipped('pet') || 'pet-none';
   document.body.dataset.kbtheme = (equipped('kb') || 'kb-classic').slice(3);
   document.body.dataset.press = (equipped('press') || 'press-glow').slice(6);
+  document.body.dataset.glow = (equipped('glow') || 'glow-classic').slice(5);
   const sheet = (equipped('sheet') || 'sheet-classic').slice(6);
   document.body.dataset.sheet = sheet;
   document.body.dataset.starc = (equipped('starc') || 'star-gold').slice(5);
   applySheetTheme(sheet);
   document.querySelectorAll('.kb').forEach((k) => {
     if (k.dataset.fixedLook) return;
-    k.className = k.className.replace(/\bkbt-\S+|\bpress-\S+/g, '').trim();
-    k.classList.add(`kbt-${document.body.dataset.kbtheme}`, `press-${document.body.dataset.press}`);
+    k.className = k.className.replace(/\bkbt-\S+|\bpress-\S+|\bglow-\S+/g, '').trim();
+    k.classList.add(`kbt-${document.body.dataset.kbtheme}`, `press-${document.body.dataset.press}`, `glow-${document.body.dataset.glow}`);
   });
 }
 
@@ -57,11 +58,11 @@ export function injectRewardStyles() {
     } else if (it.cat === 'fx') {
       css.push(`.planet.${it.id}.done .orb { box-shadow: 0 0 24px ${L.aura}, 0 0 64px ${L.aura}55; }`);
       if (L.eclipse) css.push(`.planet.${it.id}.done .orb { filter: brightness(.35) saturate(.6); box-shadow: 0 0 0 2px #fff, 0 0 26px 6px #fff, 0 0 80px 18px rgba(255,255,255,.4); }`);
-    } else if (it.cat === 'press' && L.keyColor) {
+    } else if (it.cat === 'glow' && L.keyColor) {
       // Played keys light up in this colour instead of the usual green.
       const k = L.keyColor;
-      css.push(`.press-${x} .kb-key.on-good.kb-white, .press-${x} .kb-key.on-play.kb-white { background: linear-gradient(180deg, color-mix(in srgb, ${k} 18%, #fff), color-mix(in srgb, ${k} 55%, #fff)); box-shadow: inset 0 -3px 0 ${k}, 0 0 24px ${k}99; }`);
-      css.push(`.press-${x} .kb-key.on-good.kb-black, .press-${x} .kb-key.on-play.kb-black { background: ${k}; box-shadow: 0 0 20px ${k}aa; }`);
+      css.push(`.glow-${x} .kb-key.on-good.kb-white, .glow-${x} .kb-key.on-play.kb-white { background: linear-gradient(180deg, color-mix(in srgb, ${k} 18%, #fff), color-mix(in srgb, ${k} 55%, #fff)); box-shadow: inset 0 -3px 0 ${k}, 0 0 24px ${k}99; }`);
+      css.push(`.glow-${x} .kb-key.on-good.kb-black, .glow-${x} .kb-key.on-play.kb-black { background: ${k}; box-shadow: 0 0 20px ${k}aa; }`);
     } else if (it.cat === 'sheet') {
       sheets[x] = L;
     }

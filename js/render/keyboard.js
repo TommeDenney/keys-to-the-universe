@@ -30,8 +30,8 @@ export class Keyboard {
     this.el.innerHTML = '';
     this.el.classList.add('kb');
     // Cosmetics: demo keyboards in the Shop bring their own look; others follow what's equipped.
-    if (/\bkbt-|\bpress-/.test(this.el.className)) this.el.dataset.fixedLook = '1';
-    else this.el.classList.add(`kbt-${document.body.dataset.kbtheme || 'classic'}`, `press-${document.body.dataset.press || 'glow'}`);
+    if (/\bkbt-|\bpress-|\bglow-/.test(this.el.className)) this.el.dataset.fixedLook = '1';
+    else this.el.classList.add(`kbt-${document.body.dataset.kbtheme || 'classic'}`, `press-${document.body.dataset.press || 'glow'}`, `glow-${document.body.dataset.glow || 'classic'}`);
     const whites = [];
     for (let m = lo; m <= hi; m++) if (!isBlack(m)) whites.push(m);
     const ww = 100 / whites.length;

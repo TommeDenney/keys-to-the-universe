@@ -338,6 +338,16 @@ export function renderShop(root, { inventory = false } = {}) {
       const k = h('div', { class: `kb-demo kbt-${it.id.slice(3)}` });
       el.append(k);
       requestAnimationFrame(() => kbs.push(new Keyboard(k, { lo: 60, hi: 71, labels: 'none', interactive: false })));
+    } else if (it.cat === 'glow') {
+      const k = h('div', { class: `kb-demo glow-${it.id.slice(5)} press-glow` });
+      el.append(k);
+      requestAnimationFrame(() => {
+        const kb = new Keyboard(k, { lo: 60, hi: 71, labels: 'none', interactive: false });
+        kbs.push(kb);
+        let n = 0;
+        const loop = () => { if (!document.contains(k)) return; kb.flash([60, 64, 67, 72, 62, 65][n++ % 6], 'good', 380); setTimeout(loop, 700); };
+        setTimeout(loop, 300 + Math.random() * 400);
+      });
     } else if (it.cat === 'press') {
       const k = h('div', { class: `kb-demo press-${it.id.slice(6)}` });
       el.append(k);

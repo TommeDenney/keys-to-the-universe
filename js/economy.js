@@ -71,6 +71,19 @@ function applyMigrations(w) {
     if (st.avatar && ['clothes-kente', 'clothes-dashiki'].includes(st.avatar.clothes)) st.avatar.clothes = 'clothes-hoodie';
     saveState();
   }
+  // 'glow-split': key glow colours became their own category, separate from press
+  // effects, so any glow can be worn with any press effect.
+  if (!w.migrations.includes('glow-split')) {
+    w.migrations.push('glow-split');
+    const rename = (id) => (id === 'press-rainbow' ? 'glow-rainbow' : /^press-glow[a-z]+$/.test(id) ? `glow-${id.slice(10)}` : id);
+    w.owned = w.owned.map(rename);
+    if (w.paid) for (const k of Object.keys(w.paid)) if (rename(k) !== k) { w.paid[rename(k)] = w.paid[k]; delete w.paid[k]; }
+    if (w.owned.includes('press-pink') && !w.owned.includes('glow-pink')) w.owned.push('glow-pink'); // Pink Hearts came with pink keys
+    const was = w.equipped.press;
+    if (was && rename(was) !== was) { w.equipped.glow = rename(was); w.equipped.press = 'press-glow'; }
+    if (was === 'press-pink') w.equipped.glow = 'glow-pink';
+    saveState();
+  }
 }
 const REFUNDS = { 'amb-choir': 1500, 'clothes-kente': 1200 };
 
@@ -85,7 +98,7 @@ function changed() {
 }
 
 export const balance = () => wallet().balance;
-const DEFAULTS = { ship: 'ship-classic', fx: 'fx-check', kb: 'kb-classic', press: 'press-glow', amb: 'amb-choir', trail: 'trail-dots', sheet: 'sheet-classic', starc: 'star-gold', pet: 'pet-none' };
+const DEFAULTS = { ship: 'ship-classic', fx: 'fx-check', kb: 'kb-classic', glow: 'glow-classic', press: 'press-glow', amb: 'amb-choir', trail: 'trail-dots', sheet: 'sheet-classic', starc: 'star-gold', pet: 'pet-none' };
 export const earnedTotal = () => wallet().earned || 0;
 export const ownedItems = () => wallet().owned.filter((id) => !FREE().includes(id));
 export const ownedSongs = () => wallet().songs || [];
