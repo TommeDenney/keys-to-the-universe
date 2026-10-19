@@ -3,8 +3,9 @@
 // from a few parameters (js/data/rewards.js).
 
 import { PETS } from '../data/rewards.js';
+import { EVENT_ITEMS } from '../data/events.js';
 
-export const petById = (id) => PETS.find((p) => p.id === id) || null;
+export const petById = (id) => PETS.find((p) => p.id === id) || EVENT_ITEMS.find((p) => p.id === id && p.cat === 'pet') || null;
 
 /** HTML for a pet (empty for none). */
 export function petHTML(id) {

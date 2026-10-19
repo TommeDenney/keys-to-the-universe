@@ -4,8 +4,9 @@
 import { getState, saveState, progress } from './store.js';
 import { COURSE, allLessons } from './data/course.js';
 import { QUESTS } from './data/quests.js';
-import { questDone, earnedTotal, ownedItems, ownedSongs } from './economy.js';
+import { questDone, earnedTotal, ownedItems, ownedSongs, owns } from './economy.js';
 import { galaxyName } from './screens/universe.js';
+import { EVENTS, EVENT_ITEMS } from './data/events.js';
 
 /** Lifetime counters (never reset), kept alongside the period challenges. */
 export function lifetime() {
@@ -53,6 +54,7 @@ const KINDS = {
   owned: () => ownedItems().length,
   songs: () => ownedSongs().length,
   badges: () => BADGES.filter((b) => b.kind !== 'badges' && reqProgress(b).met).length,
+  eventItems: (r) => EVENT_ITEMS.filter((i) => (!r.event || i.event === r.event) && owns(i.id)).length,
 };
 
 function goalOf(req) {
@@ -110,6 +112,7 @@ export function reqText(req) {
     case 'owned': return `Own ${g} Shop items`;
     case 'songs': return `Buy ${g} songs`;
     case 'badges': return `Earn ${g} badges`;
+    case 'eventItems': return r_event(req);
     default: return 'Keep playing';
   }
 }
@@ -153,6 +156,9 @@ function buildBadges() {
   }
   // One per Guardian.
   for (const l of allLessons().filter((x) => x.boss)) BADGES.push(B(`b-boss-${l.id}`, l.guardian || l.title, '\u{1F3C6}', 'gold', { kind: 'boss', id: l.id }, 'Guardians'));
+  // Holiday Season 2026: own a rare from each holiday, and collect them all.
+  for (const e of EVENTS) BADGES.push(B(`b-ev-${e.id}`, `${e.name} ${e.buy.getFullYear()}`, e.emoji, 'gold', { kind: 'eventItems', event: e.id, goal: 1 }, 'Seasons'));
+  BADGES.push(...ladder('Seasons', 'eventItems', [5, 15, 40, 80], '\u{1F381}', ['Festive', 'Season Collector', 'Rare Hunter', 'Legendary Collector']));
   BADGES.push(...ladder('Meta', 'badges', [10, 25, 50, 100], '\u{1F396}️', ['Badge Hunter', 'Badge Collector', 'Decorated', 'Living Legend']));
 }
 
@@ -166,7 +172,11 @@ export function badges() {
     return { ...b, text: reqText(b), ...p, met: p.met || kept.has(b.id) };
   });
 }
-export const BADGE_GROUPS = ['Journey', 'Galaxies', 'Guardians', 'Side quests', 'Practice', 'Skill', 'Challenges', 'Collector', 'Meta'];
+export const BADGE_GROUPS = ['Journey', 'Galaxies', 'Guardians', 'Side quests', 'Practice', 'Skill', 'Challenges', 'Collector', 'Seasons', 'Meta'];
+function r_event(req) {
+  const e = req.event && EVENTS.find((x) => x.id === req.event);
+  return e ? `Own a ${e.name} ${e.buy.getFullYear()} rare` : `Own ${req.goal} seasonal rares`;
+}
 
 // ---- Notifications: tell the player when a badge or Shop reward unlocks -------------
 let toastFn = null;

@@ -5,6 +5,8 @@
 // Visuals are described by small parameter sets, so one renderer per category
 // draws them all (ships.js, pets.js, cosmetics.js CSS, ambient.js, keyboard.js).
 
+import { EVENT_ITEMS } from './events.js';
+
 const R = (id, cat, name, price, req, desc, look) => ({ id, cat, name, price, req, desc, look });
 
 export const REWARD_ITEMS = [
@@ -187,4 +189,4 @@ SPACE.forEach(([unit, name, look, desc], i) => {
   PETS.push(P(`pet-sp${unit}`, name, 'space', 250 + i * 20, look, desc, { kind: 'galaxyWorlds', unit, goal: 3 }));
 });
 
-export const rewardLook = (id) => (REWARD_ITEMS.find((x) => x.id === id) || PETS.find((x) => x.id === id) || {}).look || null;
+export const rewardLook = (id) => (REWARD_ITEMS.find((x) => x.id === id) || PETS.find((x) => x.id === id) || EVENT_ITEMS.find((x) => x.id === id) || {}).look || null;

@@ -1,6 +1,7 @@
 // Shop items (all bought with Stardust ✦, earned by playing).
 
 import { REWARD_ITEMS, PETS } from './rewards.js';
+import { EVENT_ITEMS } from './events.js';
 
 export const SHOP = [
   // Spaceships (your marker on the Learn map)
@@ -78,7 +79,12 @@ export const SHOP = [
   { id: 'sheet-blueprint', cat: 'sheet', name: 'Blueprint', price: 200, desc: 'Engineer\u2019s blue with white ink.' },
 ];
 
-SHOP.push(...REWARD_ITEMS, ...PETS);
+SHOP.push(...REWARD_ITEMS, ...PETS, ...EVENT_ITEMS);
+
+// Prices are listed above in "base" units and scaled here, so the Shop is a real
+// grind: everyday items ×6 (about 600–5,400 ✦), seasonal rares ×5 (5,000–25,000 ✦).
+const nice = (x) => (x >= 1000 ? Math.round(x / 50) * 50 : Math.round(x / 10) * 10);
+for (const it of SHOP) if (it.price > 0) it.price = nice(it.price * (it.rare ? 5 : 6));
 
 export const CATEGORIES = [
   { id: 'pet', name: 'Pet shop', blurb: 'A companion who travels with your ship. Water friends live in a fish bowl; space creatures are found on the planets of each galaxy.' },
@@ -96,8 +102,8 @@ export const IMPORT_COST = 80;
 
 /** Song prices in the Songs tab (Learn-path songs unlock for free as you reach them). */
 export function songPrice(song) {
-  if (song.grade) return 60 + song.grade * 25;
-  return 40 + (song.level || 1) * 20;
+  if (song.grade) return 300 + song.grade * 200; // graded pieces: 500 – 2,300
+  return [80, 150, 250, 400, 600][Math.min(4, Math.max(0, (song.level || 1) - 1))]; // built-in songs by level
 }
 
 export const item = (id) => SHOP.find((x) => x.id === id);

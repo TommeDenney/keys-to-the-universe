@@ -14,6 +14,7 @@ import { petHTML } from '../render/pets.js';
 import { fxRing } from './universe.js';
 import { specialBosses } from './specialboss.js';
 import { personalItemName } from '../personal.js';
+import { EVENTS, SEASON, eventItemAvailable, featuredEvent, shopSale, eventOf, today, leavesText, releaseCountdown } from '../data/events.js';
 
 // Exclusive items only show up when a special boss (from a personal pack) offers them.
 const offered = (id) => specialBosses().some((b) => b.reward === id);
@@ -68,7 +69,7 @@ export function renderShop(root, { inventory = false } = {}) {
   const draw = () => {
     kbs.splice(0).forEach((k) => k.destroy());
     if (inventory) { page.replaceChildren(...inventoryPage()); return; }
-    page.replaceChildren(
+    page.replaceChildren(...[
       h('header', { class: 'top' }, [
         h('div', {}, [h('div', { class: 'eyebrow' }, 'Spend your Stardust'), h('h1', {}, 'Shop')]),
         h('div', { class: 'shop-top-actions' }, [
@@ -77,6 +78,8 @@ export function renderShop(root, { inventory = false } = {}) {
         ]),
       ]),
       bp ? h('div', { class: 'shop-note pop' }, [h('b', {}, `+${bp} ${SYMBOL} credited!`), ` Stardust for the progress you made before the Shop opened.`]) : null,
+      seasonSection(),
+      h('div', { class: 'all-items-head' }, [h('h2', {}, 'All items'), h('p', { class: 'muted' }, 'Everything in the Shop, all year round.')]),
       (() => {
         const all = badges();
         const got = all.filter((b) => b.met).length;
@@ -100,19 +103,76 @@ export function renderShop(root, { inventory = false } = {}) {
       ...CATEGORIES.map((c) => h('section', { class: 'shop-cat' }, [
         h('h2', {}, c.name),
         h('p', { class: 'muted' }, c.blurb),
-        h('div', { class: 'shop-grid' }, SHOP.filter((it) => it.cat === c.id && !it.req && (!it.exclusive || owns(it.id) || offered(it.id))).map(card)),
+        h('div', { class: 'shop-grid' }, SHOP.filter((it) => it.cat === c.id && !it.req && !it.event && (!it.exclusive || owns(it.id) || offered(it.id))).map(card)),
         SHOP.some((it) => it.cat === c.id && it.req) ? h('h3', { class: 'achv-head' }, [h('span', {}, '\u{1F3C6}'), ' Achievement rewards ', h('small', { class: 'muted' }, 'Earn the right, then buy with Stardust')]) : null,
         h('div', { class: 'shop-grid' }, SHOP.filter((it) => it.cat === c.id && it.req).map(card)),
       ])),
-    );
+    ].filter(Boolean));
   };
+
+  /** Holiday Season: each holiday's rares appear when it starts; all leave after Jan 15, 2027. */
+  function seasonSection() {
+    const now = today();
+    const released = EVENTS.filter((e) => e.released && SHOP.some((it) => it.event === e.id && (eventItemAvailable(it) || owns(it.id))));
+    // Not released yet (and not past their leave date): shown as silhouettes with a countdown.
+    const upcoming = EVENTS.filter((e) => !e.released && now < e.leaves).sort((x, y) => x.buy - y.buy);
+    if (!released.length && !upcoming.length) return null;
+    const sale = shopSale();
+    const feat = featuredEvent();
+    return h('section', { class: 'season-shop', style: { '--ev': feat ? feat.tint : '#F59E0B' } }, [
+      h('div', { class: 'season-head' }, [
+        h('div', {}, [h('div', { class: 'eyebrow' }, '\u2B50 Limited-time rares'), h('h2', {}, [feat ? `${feat.emoji} ` : '\u2728 ', 'Featured'])]),
+        h('p', { class: 'muted' }, 'Rare seasonal and holiday items, each sold for a limited time. When a holiday’s rares leave, they’re gone for good, but anything you buy is yours forever.'),
+      ]),
+      sale ? h('div', { class: 'sale-banner' }, [h('b', {}, `\u{1F3F7}️ Black Friday sale: ${Math.round(sale * 100)}% off everything`), ' through Cyber Monday (Nov 30).']) : null,
+      ...released.map((e) => {
+        const open = now < e.leaves;
+        const items = SHOP.filter((it) => it.event === e.id && (eventItemAvailable(it) || owns(it.id)));
+        if (!items.length) return null;
+        const left = Math.ceil((e.leaves - now) / 864e5);
+        return h('div', { class: `season-event ${open ? '' : 'gone'}` }, [
+          h('h3', {}, [h('span', {}, e.emoji), ` ${e.name}`, h('small', { class: 'muted' }, `  ${items.filter((it) => owns(it.id)).length}/${items.length} collected`),
+            h('span', { class: `leaves-chip ${open && left <= 7 ? 'soon' : ''}` }, open ? `⏳ Leaves after ${leavesText(e)}${left <= 7 ? ` (${left} day${left === 1 ? '' : 's'} left)` : ''}` : 'Gone · you kept these')]),
+          h('div', { class: 'shop-grid' }, items.map(card)),
+        ]);
+      }),
+      ...upcoming.map((e) => {
+        const items = SHOP.filter((it) => it.event === e.id);
+        return h('div', { class: 'season-event coming' }, [
+          h('h3', {}, [h('span', {}, e.emoji), ` ${e.name}`, h('small', { class: 'muted' }, `  ${items.length} rares · ${e.buy.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} – ${leavesText(e)}`),
+            h('span', { class: 'leaves-chip countdown', 'data-event': e.id }, `⏱ ${releaseCountdown(e)}`)]),
+          h('div', { class: 'shop-grid' }, items.map((it) => comingCard(it, e))),
+        ]);
+      }),
+    ]);
+  }
+
+  const KIND = { ship: 'spaceship', pet: 'pet', fx: 'completion effect', amb: 'ambience', kb: 'keyboard theme', press: 'key-press effect', starc: 'star colour', trail: 'route trail', sheet: 'sheet music theme' };
+
+  /** A rare that isn't out yet: a dark silhouette, no name, and when it arrives. */
+  function comingCard(it, e) {
+    const preview = h('div', { class: `shop-preview prev-${it.cat} silhouette` });
+    fillPreview(it, preview);
+    return h('div', { class: 'shop-item rare coming', style: { '--ev': e.tint } }, [
+      preview,
+      h('div', { class: 'shop-meta' }, [
+        h('span', { class: 'rare-tag' }, `${e.emoji} ${e.name} rare · coming soon`),
+        h('b', {}, '???'),
+        h('span', {}, `A mystery ${KIND[it.cat] || 'item'}. Revealed when ${e.name} arrives.`),
+      ]),
+      h('div', { class: 'shop-buy' }, [h('span', { class: 'badge countdown', 'data-event': e.id }, `⏱ ${releaseCountdown(e)}`)]),
+    ]);
+  }
 
   function earnRow(what, amt) {
     return h('div', { class: 'earn-row' }, [h('span', {}, what), h('b', {}, [amt, ' ', SYMBOL])]);
   }
 
-  function card(it) {
-    const have = owns(it.id);
+  function card(item) {
+    const have = owns(item.id);
+    // Black Friday: everything not yet owned is on sale.
+    const sale = !have && item.price > 0 ? shopSale() : 0;
+    const it = sale ? { ...item, price: Math.round(item.price * (1 - sale)), was: item.price } : item;
     const on = equipped(it.cat) === it.id;
     const afford = balance() >= it.price;
     const preview = h('div', { class: `shop-preview prev-${it.cat}` });
@@ -147,10 +207,14 @@ export function renderShop(root, { inventory = false } = {}) {
             toast(`${it.name} unlocked and equipped!`, 'ok');
             draw();
           },
-        }, [h('span', { class: 'sd' }, SYMBOL), String(it.price)]);
-    return h('div', { class: `shop-item ${on ? 'on' : ''} ${have ? 'owned' : ''} ${it.req ? 'achv met' : ''}`, 'data-item': it.id }, [
+        }, [it.was ? h('s', { class: 'was' }, String(it.was)) : null, h('span', { class: 'sd' }, SYMBOL), String(it.price)]);
+    const ev = it.event ? eventOf(it) : null;
+    return h('div', { class: `shop-item ${on ? 'on' : ''} ${have ? 'owned' : ''} ${it.req ? 'achv met' : ''} ${ev ? 'rare' : ''}`, 'data-item': it.id, style: ev ? { '--ev': ev.tint } : {} }, [
       preview,
-      h('div', { class: 'shop-meta' }, [h('b', {}, displayName(it)), h('span', {}, it.desc)]),
+      h('div', { class: 'shop-meta' }, [
+        ev ? h('span', { class: 'rare-tag' }, `${ev.emoji} ${ev.name} rare${have ? ' \u00b7 owned' : ` \u00b7 leaves after ${leavesText(ev)}`}`) : null,
+        h('b', {}, displayName(it)), h('span', {}, it.desc),
+      ]),
       h('div', { class: 'shop-buy' }, [
         it.price === 0 && !have ? h('span', { class: 'muted small' }, 'Free') : null,
         it.cat === 'pet' && have && it.id !== 'pet-none' ? h('button', { class: 'btn ghost sm', onclick: () => renamePet(it, draw) }, ['\u270E ', petName(it.id) ? 'Rename' : 'Name']) : null,
@@ -205,5 +269,10 @@ export function renderShop(root, { inventory = false } = {}) {
   }
 
   draw();
-  return () => { kbs.forEach((k) => k.destroy()); stopTabAmbient(); clearTimeout(previewT); };
+  // Keep the "Arrives in…" countdowns ticking.
+  const tick = setInterval(() => page.querySelectorAll('.countdown[data-event]').forEach((el) => {
+    const e = EVENTS.find((x) => x.id === el.dataset.event);
+    if (e) el.textContent = `\u23F1 ${releaseCountdown(e)}`;
+  }), 30000);
+  return () => { kbs.forEach((k) => k.destroy()); stopTabAmbient(); clearTimeout(previewT); clearInterval(tick); };
 }

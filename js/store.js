@@ -9,7 +9,8 @@ const DEFAULT_SETTINGS = {
   micPitchOffset: 0, // semitones, measured by calibration
   micGhosts: [], // phantom-note intervals learned by calibration
   theme: 'lavender', // page background colour (see theme.js)
-  tabBar: 'bottom', // bottom | top | left | right
+  tabBar: 'bottom',
+  seasonDecor: true, // holiday decorations on the Learn map // bottom | top | left | right
   learnLayout: 'universe', // universe | classic // ms subtracted from mic onset times (timed mode judging)
   midiLatency: 0,
   volume: 0.8, // effects + metronome

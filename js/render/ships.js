@@ -87,6 +87,7 @@ function buildShip(id, L) {
     spots: `<circle cx="26" cy="26" r="3" fill="${L.hull2}"/><circle cx="38" cy="34" r="4" fill="${L.hull2}"/><circle cx="30" cy="38" r="2" fill="${L.wing}"/>`,
     seams: `<path class="glow" d="M32 10 L30 22 L34 30 L31 42 M24 30 L30 32 M40 28 L34 30" stroke="${L.cockpit}" stroke-width="1.2" fill="none"/>`,
     petals: `<g class="glow" fill="#FBCFE8"><circle cx="14" cy="18" r="2"/><circle cx="52" cy="22" r="1.6"/><circle cx="10" cy="40" r="1.4"/></g>`,
+    pumpkin: `<path d="M24 22 Q22 30 24 40 M40 22 Q42 30 40 40 M32 12 V48" stroke="#C2410C" stroke-width="1.2" fill="none" opacity=".7"/><path class="glow" d="M24 26 L28 29 L24 31 Z M40 26 L36 29 L40 31 Z" fill="#FDE047"/><path class="glow" d="M24 36 Q32 42 40 36 L37 37 L35 35 L33 37 L31 35 L29 37 L27 35 Z" fill="#FDE047"/><path d="M31 11 Q33 6 37 6" stroke="#166534" stroke-width="2.5" fill="none"/>`,
     pipes: `<g fill="#FDE68A"><rect x="24" y="12" width="3" height="14" rx="1.5"/><rect x="28.5" y="8" width="3" height="18" rx="1.5"/><rect x="33" y="10" width="3" height="16" rx="1.5"/><rect x="37.5" y="14" width="3" height="12" rx="1.5"/></g><g fill="#fff"><rect x="23" y="34" width="3" height="7"/><rect x="27" y="34" width="3" height="7"/><rect x="31" y="34" width="3" height="7"/><rect x="35" y="34" width="3" height="7"/><rect x="39" y="34" width="3" height="7"/></g>`,
   }[L.deco] || '';
   const cockpit = (cy = 24, r = 5) => `<circle cx="32" cy="${cy}" r="${r}" fill="${L.cockpit}" stroke="#0F172A" stroke-opacity=".35" stroke-width="1.5"/><circle cx="${32 - r / 3}" cy="${cy - r / 3}" r="${r / 3}" fill="#fff" opacity=".7"/>`;
@@ -121,6 +122,14 @@ function buildShip(id, L) {
       <path d="M32 6 C36 12 37 24 36 44 L28 44 C27 24 28 12 32 6 Z" fill="url(#${g})"/>
       <path d="M30 22 C20 14 8 16 4 24 C14 24 22 28 30 34 Z M34 22 C44 14 56 16 60 24 C50 24 42 28 34 34 Z" fill="${L.wing}" opacity=".9"/>
       <path d="M30 36 C22 36 14 40 12 46 C20 44 26 44 30 42 Z M34 36 C42 36 50 40 52 46 C44 44 38 44 34 42 Z" fill="${L.hull2}"/>${deco}${cockpit(18, 3.5)}`;
+    case 'sleigh': return `${flame(20, 3, 10, 46)}${flame(44, 3, 10, 46)}
+      <path d="M12 46 Q10 52 16 52 L50 52 Q56 52 54 46" stroke="${L.hull2}" stroke-width="2.5" fill="none"/>
+      <path d="M14 44 L14 26 Q14 18 22 18 L24 18 L24 30 L46 30 Q52 30 52 36 L52 44 Z" fill="${L.hull}"/>
+      <path d="M14 26 Q14 18 22 18 L24 18" stroke="${L.hull2}" stroke-width="2.5" fill="none"/>
+      <path d="M24 30 L46 30 Q52 30 52 36" stroke="${L.hull2}" stroke-width="2" fill="none"/>
+      <rect x="28" y="20" width="14" height="10" rx="3" fill="#16A34A"/><path d="M35 20 V30 M28 25 H42" stroke="${L.hull2}" stroke-width="1.6"/>
+      <path class="glow" d="M35 20 Q31 15 33 14 Q35 15 35 20 Q39 15 37 14 Q35 15 35 20" stroke="${L.hull2}" stroke-width="1.2" fill="none"/>
+      <circle class="glow" cx="18" cy="38" r="1.6" fill="${L.cockpit}"/><circle class="glow" cx="48" cy="40" r="1.6" fill="${L.cockpit}"/>`;
     case 'train': return `${flame(26, 3, 12, 50)}${flame(38, 3, 12, 50)}
       <rect x="18" y="16" width="28" height="34" rx="6" fill="${L.hull}"/>
       <path d="M18 22 Q32 2 46 22 Z" fill="${L.hull}"/>

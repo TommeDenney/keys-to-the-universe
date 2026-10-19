@@ -21,6 +21,7 @@ export function applyCosmetics() {
 
 // ---- Achievement rewards: their styles are generated from js/data/rewards.js ----------
 import { REWARD_ITEMS } from './data/rewards.js';
+import { EVENT_ITEMS } from './data/events.js';
 import { registerSheetThemes } from './render/sheet.js';
 
 let injected = false;
@@ -29,7 +30,7 @@ export function injectRewardStyles() {
   injected = true;
   const css = [];
   const sheets = {};
-  for (const it of REWARD_ITEMS) {
+  for (const it of [...REWARD_ITEMS, ...EVENT_ITEMS]) {
     const L = it.look;
     const x = it.id.slice(it.id.indexOf('-') + 1);
     if (it.cat === 'kb') {
