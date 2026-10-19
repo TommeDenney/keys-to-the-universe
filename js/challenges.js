@@ -5,6 +5,7 @@
 import { getState, saveState } from './store.js';
 import { earn, SYMBOL } from './economy.js';
 import { toast } from './ui.js';
+import { bumpLifetime } from './achievements.js';
 
 // ---- Challenge pools (100+ per period), generated from templates ------------
 // General goals at several tiers + targeted goals (specific songs, galaxies,
@@ -157,6 +158,7 @@ export function track(stat, amount = 1) {
     c.stats[stat] = (c.stats[stat] || 0) + amount;
     if (!c.days.includes(today)) c.days.push(today);
   }
+  if (!stat.includes(':')) bumpLifetime(stat, amount);
   saveState();
   checkComplete();
 }
@@ -167,6 +169,7 @@ function checkComplete() {
     for (const ch of current(p)) {
       if (ch.done || ch.value < ch.goal) continue;
       all[p].claimed.push(ch.id);
+      bumpLifetime(`${p}Done`);
       saveState();
       earn(ch.reward, `${PERIODS.find((x) => x.id === p).name} challenge`);
       toast(`${PERIODS.find((x) => x.id === p).name} challenge complete: ${ch.text} (+${ch.reward} ${SYMBOL})`, 'ok');
