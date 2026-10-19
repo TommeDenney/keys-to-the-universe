@@ -18,10 +18,10 @@ const PROGRESSIONS = {
   'amb-ocean': [[0]],
 };
 
-export function startAmbient(id) {
+export function startAmbient(id, force = false) {
   stopAmbient();
   const cfg = rewardLook(id); // achievement ambiences are described by parameters
-  if (!id || id === 'amb-none' || (!PROGRESSIONS[id] && !cfg) || settings.get('ambientOn') === false) return;
+  if (!id || id === 'amb-none' || (!PROGRESSIONS[id] && !cfg) || (!force && settings.get('ambientOn') === false)) return;
   const ctx = audio.ensure();
   const out = ctx.createGain();
   out.gain.value = 0;

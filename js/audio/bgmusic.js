@@ -5,7 +5,10 @@ import { audio } from './engine.js';
 import { settings } from '../store.js';
 import { getSong } from '../data/catalog.js';
 import { mic } from '../input/mic.js';
-import { stopAmbient } from './ambient.js';
+import { startAmbient, stopAmbient } from './ambient.js';
+import { item } from '../data/shop.js';
+
+const AMB_LEN = 180; // an ambience plays for 3 minutes before the playlist moves on
 
 const listeners = new Set();
 export const onBg = (fn) => { listeners.add(fn); return () => listeners.delete(fn); };
@@ -20,7 +23,11 @@ export const playlist = () => settings.get('bgPlaylist') || [];
 export const setPlaylist = (ids) => { settings.set('bgPlaylist', [...new Set(ids)]); queue = []; emit(); };
 export const shuffleOn = () => settings.get('bgShuffle') !== false;
 export const setShuffle = (v) => { settings.set('bgShuffle', v); queue = []; emit(); };
-export const state = () => ({ playing: !paused && !held && !!cur, title: cur ? cur.title : null, hasList: playlist().length > 0, shuffle: shuffleOn() });
+export const state = () => ({ playing: !paused && !held && !!cur, amb: !!(cur && cur.amb), title: cur ? cur.title : null, hasList: playlist().length > 0, shuffle: shuffleOn() });
+/** Stop the Learn-tab ambience, unless an ambience is playing as background music. */
+export function stopTabAmbient() {
+  if (!(state().playing && state().amb)) stopAmbient();
+}
 
 function nextId() {
   const list = playlist();
@@ -35,12 +42,22 @@ function nextId() {
 
 async function startSong(id) {
   stopScheduling();
+  if (id.startsWith('amb-')) { // an ambience from the Shop, as a playlist track
+    const it = item(id);
+    if (!it) { setPlaylist(playlist().filter((x) => x !== id)); return skip(); }
+    audio.ensure();
+    cur = { id, title: it.name, amb: true, t0: audio.now, end: audio.now + AMB_LEN, pausedAt: null };
+    startAmbient(id, true);
+    cur.timer = setInterval(() => { if (audio.now > cur.end) skip(); }, 1000);
+    emit();
+    return;
+  }
   let song = null;
   try { song = await getSong(id); } catch { song = null; }
   if (!song) { setPlaylist(playlist().filter((x) => x !== id)); return skip(); }
   audio.ensure();
   const spq = 60 / (song.bpm || 90);
-  cur = { id, title: song.title, song, spq, t0: audio.now + 0.6, idx: 0, notes: [...song.notes].sort((a, b) => a.start - b.start) };
+  cur = { id, title: song.title, song, spq, t0: audio.now + 0.6, idx: 0, notes: [...song.notes].sort((a, b) => a.start - b.start), pausedAt: null };
   cur.end = cur.t0 + (song.length || 0) * spq + 2.5;
   stopAmbient();
   cur.timer = setInterval(tick, 200);
@@ -67,28 +84,49 @@ function tick() {
 }
 
 function stopScheduling() {
-  if (cur) clearInterval(cur.timer);
+  if (cur) { clearInterval(cur.timer); if (cur.amb) stopAmbient(); }
   audio.stopAll();
+}
+
+/** Stop where we are, remembering the position. */
+function suspend() {
+  if (!cur || !cur.timer) return;
+  cur.pausedAt = Math.max(0, audio.now - cur.t0);
+  clearInterval(cur.timer);
+  cur.timer = 0;
+  if (cur.amb) stopAmbient(); else audio.stopAll();
+}
+
+/** Carry on from the remembered position (not from the start, and not the next song). */
+function resume() {
+  const pos = cur.pausedAt || 0;
+  cur.pausedAt = null;
+  if (cur.amb) {
+    const left = Math.max(10, cur.end - cur.t0 - pos);
+    cur.t0 = audio.now - pos;
+    cur.end = audio.now + left;
+    startAmbient(cur.id, true);
+    cur.timer = setInterval(() => { if (audio.now > cur.end) skip(); }, 1000);
+    return;
+  }
+  cur.t0 = audio.now + 0.4 - pos;
+  cur.idx = cur.notes.findIndex((n) => n.start * cur.spq >= pos);
+  if (cur.idx < 0) cur.idx = cur.notes.length;
+  cur.end = cur.t0 + (cur.song.length || 0) * cur.spq + 2.5;
+  cur.timer = setInterval(tick, 200);
 }
 
 export function play() {
   paused = false;
   if (held) return emit();
-  if (!cur || !cur.timer || audio.now > cur.end) { const id = nextId(); if (id) startSong(id); }
-  else { // resume from where we were
-    const pos = cur.pausedAt != null ? cur.pausedAt : 0;
-    cur.t0 = audio.now + 0.4 - pos;
-    cur.idx = cur.notes.findIndex((n) => n.start * cur.spq >= pos);
-    if (cur.idx < 0) cur.idx = cur.notes.length;
-    cur.end = cur.t0 + (cur.song.length || 0) * cur.spq + 2.5;
-    cur.timer = setInterval(tick, 200);
-  }
+  if (cur && cur.pausedAt != null) resume();
+  else if (!cur || audio.now > cur.end) { const id = nextId(); if (id) startSong(id); }
   emit();
 }
 
 export function pause() {
   paused = true;
-  if (cur) { cur.pausedAt = Math.max(0, audio.now - cur.t0); clearInterval(cur.timer); cur.timer = 0; audio.stopAll(); }
+  suspend();
   emit();
 }
 
@@ -103,7 +141,7 @@ export const toggle = () => (state().playing ? pause() : play());
 export function hold() {
   if (held) return;
   held = true;
-  if (cur && cur.timer) { cur.pausedAt = Math.max(0, audio.now - cur.t0); clearInterval(cur.timer); cur.timer = 0; audio.stopAll(); }
+  suspend();
   emit();
 }
 export function release() {

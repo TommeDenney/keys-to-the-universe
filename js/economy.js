@@ -54,6 +54,15 @@ const DEFAULTS = { ship: 'ship-classic', fx: 'fx-check', kb: 'kb-classic', press
 export const earnedTotal = () => wallet().earned || 0;
 export const ownedItems = () => wallet().owned.filter((id) => !Object.values(DEFAULTS).includes(id));
 export const ownedSongs = () => wallet().songs || [];
+/** Pet nicknames (empty = use the species name). */
+export const petName = (id) => ((wallet().petNames || {})[id]) || '';
+export function setPetName(id, name) {
+  const w = wallet();
+  w.petNames ||= {};
+  const clean = String(name || '').trim().slice(0, 24);
+  if (clean) w.petNames[id] = clean; else delete w.petNames[id];
+  changed();
+}
 export const equipped = (cat) => wallet().equipped[cat] || DEFAULTS[cat];
 export const owns = (id) => wallet().owned.includes(id) || Object.values(DEFAULTS).includes(id);
 export const backpay = () => {

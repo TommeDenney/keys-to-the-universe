@@ -6,12 +6,16 @@ import { builtinSongs } from '../data/songs.js';
 import { catalogPieces } from '../data/catalog.js';
 import { songUnlocked } from '../unlocks.js';
 import { library, settings } from '../store.js';
+import { SHOP } from '../data/shop.js';
+import { owns } from '../economy.js';
 
 async function unlockedSongs() {
   const built = builtinSongs().filter((s) => !s.id.startsWith('boss-') && songUnlocked(s.id)).map((s) => ({ id: s.id, title: s.title, by: s.composer }));
   const pieces = catalogPieces().filter((p) => songUnlocked(p.id)).map((p) => ({ id: p.id, title: p.title, by: p.composer }));
   const imports = (await library.all()).map((r) => ({ id: r.id, title: r.title, by: 'My music' }));
-  return [...built, ...pieces, ...imports];
+  // Ambiences you own in the Shop can be playlist tracks too.
+  const ambs = SHOP.filter((it) => it.cat === 'amb' && it.id !== 'amb-none' && owns(it.id)).map((it) => ({ id: it.id, title: it.name, by: 'Ambience \u00b7 3 min', amb: true }));
+  return [...ambs, ...built, ...pieces, ...imports];
 }
 
 export async function openPlaylist() {
@@ -21,13 +25,13 @@ export async function openPlaylist() {
     const list = h('div', { class: 'pl-list' });
     const draw = () => list.replaceChildren(...songs.map((s) => h('label', { class: `pl-song ${sel.has(s.id) ? 'on' : ''}` }, [
       h('input', { type: 'checkbox', checked: sel.has(s.id), onchange: (e) => { if (e.target.checked) sel.add(s.id); else sel.delete(s.id); draw(); } }),
-      h('span', { class: 'grow' }, [h('b', {}, s.title), h('small', {}, s.by || '')]),
+      h('span', { class: 'grow' }, [h('b', {}, [s.amb ? '\u{1F30C} ' : '', s.title]), h('small', {}, s.by || '')]),
     ])));
     draw();
     const vol = h('input', { type: 'range', min: 0, max: 1, step: 0.05, value: settings.get('bgVolume') ?? 0.3, oninput: (e) => settings.set('bgVolume', +e.target.value) });
     return [h('div', { class: 'playlist-modal' }, [
       h('h2', {}, 'Background music'),
-      h('p', { class: 'muted' }, 'Pick unlocked songs to play softly while you browse. They pause automatically while you practise. Unlock more songs in the Learn path or Songs tab.'),
+      h('p', { class: 'muted' }, 'Pick unlocked songs and Shop ambiences to play softly while you browse. They pause automatically while you practise. Unlock more songs in the Learn path or Songs tab, and more ambiences in the Shop.'),
       h('div', { class: 'row', style: { justifyContent: 'flex-start', marginTop: '8px' } }, [
         h('button', { class: 'chip-btn', onclick: () => { songs.forEach((s) => sel.add(s.id)); draw(); } }, 'Add all unlocked'),
         h('button', { class: 'chip-btn', onclick: () => { sel = new Set(); draw(); } }, 'Clear'),

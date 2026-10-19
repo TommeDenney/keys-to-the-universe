@@ -16,7 +16,7 @@ import { applyTheme } from './theme.js';
 import { applySound } from './sound.js';
 import { loadCatalog } from './data/catalog.js';
 import { applyCosmetics } from './cosmetics.js';
-import { renderShop } from './screens/shop.js';
+import { renderShop, renderInventory } from './screens/shop.js';
 import { startAmbient, stopAmbient } from './audio/ambient.js';
 import { equipped, onWallet } from './economy.js';
 import { initAchievements, checkAchievements } from './achievements.js';
@@ -26,7 +26,7 @@ import { renderChallenges } from './screens/challenges.js';
 import { touch as touchChallenges } from './challenges.js';
 import { loadConstellations } from './constellations.js';
 import { mountMusicBar } from './screens/musicbar.js';
-import { state as bgState } from './audio/bgmusic.js';
+import { state as bgState, stopTabAmbient } from './audio/bgmusic.js';
 
 applyTheme();
 document.body.dataset.tabpos = settings.get('tabBar') || 'bottom';
@@ -60,7 +60,7 @@ let cleanup = null;
 async function route() {
   const hash = location.hash.replace(/^#\/?/, '') || 'learn';
   const [name, arg] = hash.split('/');
-  if (name !== 'learn' && name !== 'shop') stopAmbient();
+  if (name !== 'learn' && name !== 'shop') stopTabAmbient();
   if (cleanup) { cleanup(); cleanup = null; }
   // Full-screen flows sit on top of the current tab.
   if (name === 'lesson') {
@@ -74,6 +74,13 @@ async function route() {
     main.replaceChildren();
     main.scrollTop = 0;
     cleanup = renderChallenges(main);
+    return;
+  }
+  if (name === 'inventory') {
+    setActiveTab('shop');
+    main.replaceChildren();
+    main.scrollTop = 0;
+    cleanup = renderInventory(main);
     return;
   }
   if (name === 'badges') {
@@ -117,7 +124,7 @@ async function renderTab(name) {
   cleanup = (await r(main)) || null;
   // Learn-tab ambience (bought in the Shop).
   if (name === 'learn' && equipped('amb') !== 'amb-none' && !bgState().playing) startAmbient(equipped('amb'));
-  else if (name !== 'shop') stopAmbient();
+  else if (name !== 'shop') stopTabAmbient();
 }
 
 function setActiveTab(name) {

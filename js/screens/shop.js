@@ -1,10 +1,11 @@
 // Shop: spend Stardust ✦ on ships, ambience, effects, keyboard themes and key presses.
 
-import { h, icon, toast } from '../ui.js';
+import { h, icon, toast, modal } from '../ui.js';
 import { SHOP, CATEGORIES } from '../data/shop.js';
-import { balance, owns, buy, equip, equipped, walletPill, SYMBOL, backpay, REWARD } from '../economy.js';
+import { balance, owns, buy, equip, equipped, walletPill, SYMBOL, backpay, REWARD, petName, setPetName } from '../economy.js';
 import { shipSVG } from '../render/ships.js';
 import { startAmbient, stopAmbient } from '../audio/ambient.js';
+import { stopTabAmbient } from '../audio/bgmusic.js';
 import { Keyboard } from '../render/keyboard.js';
 import { applyCosmetics } from '../cosmetics.js';
 import { reqProgress, reqText, badges } from '../achievements.js';
@@ -16,21 +17,64 @@ import { personalItemName } from '../personal.js';
 
 // Exclusive items only show up when a special boss (from a personal pack) offers them.
 const offered = (id) => specialBosses().some((b) => b.reward === id);
-const displayName = (it) => personalItemName(it.id) || it.name;
+const displayName = (it) => (it.cat === 'pet' && petName(it.id) ? `${petName(it.id)} (${it.name})` : personalItemName(it.id) || it.name);
 
-export function renderShop(root) {
-  const page = h('div', { class: 'page shop' });
+/** Give a pet a nickname. */
+function renamePet(it, done) {
+  modal((close) => {
+    const input = h('input', { type: 'text', class: 'pet-name-input', maxlength: 24, value: petName(it.id), placeholder: `Name your ${it.name.toLowerCase()}` });
+    const save = () => { setPetName(it.id, input.value); close(); toast(input.value.trim() ? `Say hi to ${input.value.trim()}!` : `${it.name} has no nickname now`, 'ok'); done(); };
+    input.addEventListener('keydown', (e) => { if (e.key === 'Enter') save(); });
+    setTimeout(() => input.focus(), 50);
+    return [h('div', { class: 'pet-name-modal' }, [
+      h('div', { class: 'pet-demo', html: petHTML(it.id) }),
+      h('h2', {}, 'Give your pet a nickname'),
+      input,
+      h('div', { class: 'row' }, [
+        petName(it.id) ? h('button', { class: 'btn ghost', onclick: () => { input.value = ''; save(); } }, 'Clear name') : h('button', { class: 'btn ghost', onclick: close }, 'Cancel'),
+        h('button', { class: 'btn primary', onclick: save }, 'Save name'),
+      ]),
+    ])];
+  });
+}
+
+/** Inventory: everything you own, by category, ready to equip. */
+export function renderInventory(root) {
+  return renderShop(root, { inventory: true });
+}
+
+export function renderShop(root, { inventory = false } = {}) {
+  const page = h('div', { class: `page shop ${inventory ? 'inventory' : ''}` });
   root.append(page);
   const kbs = [];
   let previewT = 0;
-  const bp = backpay();
+  const bp = inventory ? 0 : backpay();
+  const ownedCount = () => SHOP.filter((it) => owns(it.id) && it.id !== 'pet-none').length;
+
+  const inventoryPage = () => [
+    h('header', { class: 'top' }, [
+      h('div', {}, [h('a', { class: 'back-link', href: '#/shop' }, [icon('back'), 'Shop']), h('div', { class: 'eyebrow' }, `${ownedCount()} items`), h('h1', {}, 'Inventory')]),
+      walletPill('big'),
+    ]),
+    ...CATEGORIES.map((c) => {
+      const mine = SHOP.filter((it) => it.cat === c.id && owns(it.id));
+      return h('section', { class: 'shop-cat' }, [
+        h('h2', {}, [c.name, h('small', { class: 'muted' }, `  ${mine.filter((it) => it.id !== 'pet-none').length} owned`)]),
+        h('div', { class: 'shop-grid' }, mine.map(card)),
+      ]);
+    }),
+  ];
 
   const draw = () => {
     kbs.splice(0).forEach((k) => k.destroy());
+    if (inventory) { page.replaceChildren(...inventoryPage()); return; }
     page.replaceChildren(
       h('header', { class: 'top' }, [
         h('div', {}, [h('div', { class: 'eyebrow' }, 'Spend your Stardust'), h('h1', {}, 'Shop')]),
-        walletPill('big'),
+        h('div', { class: 'shop-top-actions' }, [
+          h('a', { class: 'btn ghost inv-btn', href: '#/inventory' }, ['\u{1F392} Inventory ', h('span', { class: 'badge' }, String(ownedCount()))]),
+          walletPill('big'),
+        ]),
       ]),
       bp ? h('div', { class: 'shop-note pop' }, [h('b', {}, `+${bp} ${SYMBOL} credited!`), ` Stardust for the progress you made before the Shop opened.`]) : null,
       (() => {
@@ -107,7 +151,11 @@ export function renderShop(root) {
     return h('div', { class: `shop-item ${on ? 'on' : ''} ${have ? 'owned' : ''} ${it.req ? 'achv met' : ''}`, 'data-item': it.id }, [
       preview,
       h('div', { class: 'shop-meta' }, [h('b', {}, displayName(it)), h('span', {}, it.desc)]),
-      h('div', { class: 'shop-buy' }, [it.price === 0 && !have ? h('span', { class: 'muted small' }, 'Free') : null, btn]),
+      h('div', { class: 'shop-buy' }, [
+        it.price === 0 && !have ? h('span', { class: 'muted small' }, 'Free') : null,
+        it.cat === 'pet' && have && it.id !== 'pet-none' ? h('button', { class: 'btn ghost sm', onclick: () => renamePet(it, draw) }, ['\u270E ', petName(it.id) ? 'Rename' : 'Name']) : null,
+        btn,
+      ]),
     ]);
   }
 
@@ -157,5 +205,5 @@ export function renderShop(root) {
   }
 
   draw();
-  return () => { kbs.forEach((k) => k.destroy()); stopAmbient(); clearTimeout(previewT); };
+  return () => { kbs.forEach((k) => k.destroy()); stopTabAmbient(); clearTimeout(previewT); };
 }

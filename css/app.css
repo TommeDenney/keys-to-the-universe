@@ -1342,7 +1342,7 @@ body[data-starc="rainbow"] .star.on, .starc-rainbow .star.on { animation: rainbo
 .pet-water .bubble.b1 { left: 30%; } .pet-water .bubble.b2 { left: 62%; animation-delay: -1.3s; }
 @keyframes bubble-up { from { transform: translateY(0); opacity: 1; } to { transform: translateY(-22px); opacity: 0; } }
 .uni-next-ship { position: relative; }
-.uni-next-ship .pet { position: absolute; right: -26px; bottom: -6px; width: 34px; height: 34px; }
+.uni-next-ship .pet { position: absolute; left: -18px; bottom: -10px; width: 34px; height: 34px; }
 .uni-next-ship .pet-emoji { font-size: 24px; }
 .guardian-pet { right: -90px; }
 .pet-demo { width: 76px; height: 76px; animation: hover-ship 3s ease-in-out infinite; }
@@ -1440,3 +1440,57 @@ body[data-tabpos="right"] .nav-legend { right: 108px; }
 }
 
 .sboss-glyph { display: grid; place-items: center; width: 100%; height: 100%; font-size: 40px; color: #FDE68A; }
+
+/* Pet nicknames */
+.pet-tag { position: absolute; left: 50%; top: 100%; transform: translateX(-50%); margin-top: 2px; padding: 1px 7px; border-radius: 99px; background: rgba(30,27,58,.8); color: #fff; font-size: 10px; font-weight: 800; white-space: nowrap; }
+.pet-name-modal { display: grid; gap: 12px; justify-items: center; text-align: center; }
+.pet-name-input { width: min(320px, 100%); font: 800 18px Nunito, sans-serif; padding: 12px 16px; border-radius: 14px; border: 2px solid var(--line, #ddd); text-align: center; }
+.pet-name-input:focus { outline: none; border-color: #8B5CF6; }
+.shop-buy { flex-wrap: wrap; }
+
+/* Learn-page challenges summary: 3 open challenges per period */
+.ch-card.ch-card-full { display: grid; gap: 10px; align-items: stretch; }
+.ch-cols { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+.ch-col { display: grid; gap: 8px; align-content: start; }
+.ch-col-head { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+.ch-col-head span { font-size: 12px; opacity: .75; font-weight: 700; }
+.ch-line { display: grid; gap: 3px; }
+.ch-text { font-size: 13px; font-weight: 700; line-height: 1.25; }
+.ch-bar { height: 6px; border-radius: 99px; background: rgba(150,140,200,.25); overflow: hidden; }
+.ch-bar i { display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg, #8B5CF6, #B98CFF); }
+.ch-num { font-size: 11px; opacity: .7; font-weight: 700; }
+.ch-rest { font-size: 12px; font-weight: 800; opacity: .75; }
+.ch-line.all-done { font-size: 13px; font-weight: 800; color: #34D399; }
+.ch-card-full .ch-more { justify-self: end; }
+@media (max-width: 760px) { .ch-cols { grid-template-columns: 1fr; } }
+
+/* Floating stars + Stardust while scrolling the Learn map */
+.uni-hud { position: fixed; top: calc(12px + var(--safe-t)); left: 50%; margin-left: -90px; width: 180px; justify-content: center; z-index: 19; display: flex; gap: 8px; opacity: 0; transform: translateY(-10px); pointer-events: none; transition: opacity .25s, transform .25s var(--ease); }
+.uni-hud.show { opacity: 1; transform: none; pointer-events: auto; }
+.uni-hud .pill { background: rgba(30,27,58,.82); color: #fff; box-shadow: 0 4px 14px rgba(0,0,0,.3), inset 0 0 0 1px rgba(255,255,255,.15); }
+body[data-tabpos="top"] .uni-hud { top: calc(84px + var(--safe-t)); }
+body[data-tabpos="left"] .uni-hud { margin-left: -38px; } body[data-tabpos="right"] .uni-hud { margin-left: -142px; }
+
+/* ---- Uncharted galaxies: silhouettes until you reach them ------------------------- */
+.galaxy.unknown .planet-body,
+.galaxy.unknown .guardian-orb,
+.galaxy.unknown .rogue-body,
+.galaxy.unknown .sboss-orb,
+.galaxy.unknown .feature > :not(.feat-label) {
+  filter: brightness(.13) saturate(0) drop-shadow(0 0 1.5px rgba(210,200,255,.6)) drop-shadow(0 0 14px rgba(120,110,210,.35));
+}
+.galaxy.unknown .route { opacity: .18; }
+.galaxy.unknown .body-label, .galaxy.unknown .sun-label, .galaxy.unknown .feat-label { opacity: .55; }
+.galaxy.unknown .body-label b, .galaxy.unknown .sun-label b, .galaxy.unknown .feat-label b { letter-spacing: .2em; }
+.galaxy.unknown .galaxy-head p { letter-spacing: .2em; opacity: .6; }
+.galaxy.unknown .lock { display: none; }
+.galaxy.unknown .moon-chip { opacity: .55; }
+.galaxy.unknown .moon-chip .mc-dot { width: 14px; height: 14px; border-radius: 50%; background: #111; box-shadow: 0 0 0 1px rgba(210,200,255,.4); flex: none; }
+.galaxy.unknown .moon-chip span { display: grid; }
+
+/* Inventory */
+.shop-top-actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; justify-content: flex-end; }
+.inv-btn { display: inline-flex; align-items: center; gap: 6px; text-decoration: none; }
+.inv-pill { text-decoration: none; color: inherit; }
+.inv-ico { font-size: 16px; line-height: 1; }
+.inventory .shop-cat h2 small { font-size: 13px; font-weight: 700; }

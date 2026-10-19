@@ -12,14 +12,14 @@ import { lessonUnlocked, nextLesson, galaxyStars, starGate } from './learn.js';
 import { installCard, fullscreenButton } from './install.js';
 import { worldTextures, WORLD_KINDS } from '../render/worlds.js';
 import { songNow, pieceMeta } from '../data/catalog.js';
-import { equipped, walletPill } from '../economy.js';
+import { equipped, walletPill, petName } from '../economy.js';
 import { shipSVG as skinSVG } from '../render/ships.js';
 import { challengesCard, openQuest } from './challenges.js';
 import { QUESTS } from '../data/quests.js';
 import { questDone } from '../economy.js';
 import { specialBossEl, specialBosses } from './specialboss.js';
 import { personalGalaxyName } from '../personal.js';
-import { constellationsFor, constellationEl } from '../constellations.js';
+import { constellationsFor, constellationEl, galaxyReached } from '../constellations.js';
 import { navFocus } from '../nav.js';
 import { petHTML } from '../render/pets.js';
 import { rewardLook } from '../data/rewards.js';
@@ -170,6 +170,7 @@ export function renderUniverse(root) {
       h('div', { class: 'pill stars-pill', title: 'Stars' }, [icon('star'), h('b', {}, String(progress.totalStars))]),
       walletPill(),
       h('a', { class: 'pill hb-pill', href: '#/handbook', title: 'Handbook: every lesson explanation' }, [icon('book'), h('b', {}, 'Handbook')]),
+      h('a', { class: 'pill inv-pill', href: '#/inventory', title: 'Inventory: everything you own' }, [h('span', { class: 'inv-ico' }, '\u{1F392}'), h('b', {}, 'Inventory')]),
       fullscreenButton(),
     ]),
   ]));
@@ -259,6 +260,7 @@ export function renderUniverse(root) {
     const boss = unit.lessons.find((l) => l.boss);
     if (boss) sec.append(guardianEl(boss, gal, next));
     for (const f of specialBosses()) if (unit.id === f.galaxy) sec.append(specialBossEl(f));
+    if (!galaxyReached(unit.id)) mysterify(sec);
     page.append(sec);
     sections.push(sec);
   });
@@ -274,9 +276,19 @@ export function renderUniverse(root) {
   ro.observe(page);
 
   const cosmos = new Cosmos(canvas, root, sections);
+  // Stars and Stardust follow you down the map once the header scrolls away.
+  const hud = h('div', { class: 'uni-hud', 'aria-hidden': 'true' }, [
+    h('div', { class: 'pill stars-pill', title: 'Stars' }, [icon('star'), h('b', {}, String(progress.totalStars))]),
+    walletPill(),
+  ]);
+  wrap.append(hud);
+  const onScroll = () => hud.classList.toggle('show', root.scrollTop > 120);
+  root.addEventListener('scroll', onScroll, { passive: true });
+  onScroll();
   return () => {
     cosmos.destroy();
     ro.disconnect();
+    root.removeEventListener('scroll', onScroll);
     document.body.classList.remove('in-universe');
   };
 }
@@ -502,6 +514,23 @@ function drawRoute(track) {
   svg.innerHTML = `<path d="${d}" class="route-glow"/><path id="${pathId}" d="${d}" class="route-dash"/>${glyph ? `<text class="route-text"><textPath href="#${pathId}">${glyph.repeat(220)}</textPath></text>` : ''}`;
 }
 
+/**
+ * A galaxy you haven't reached yet: everything in it becomes a dark silhouette
+ * (still moving) with ??? for its details, and nothing in it can be opened.
+ * Its name, emblem and constellations stay visible.
+ */
+function mysterify(sec) {
+  sec.classList.add('unknown');
+  for (const child of sec.children) {
+    if (child.classList.contains('constellation') || child.classList.contains('galaxy-head')) continue;
+    child.inert = true;
+  }
+  sec.querySelectorAll('.body-label, .sun-label, .feat-label').forEach((l) => l.replaceChildren(h('small', {}, 'Uncharted'), h('b', {}, '???')));
+  sec.querySelectorAll('.moon-chip').forEach((c) => c.replaceChildren(h('i', { class: 'mc-dot' }), h('span', {}, [h('small', {}, 'Moon'), h('b', {}, '???')])));
+  const sub = sec.querySelector('.galaxy-head p');
+  if (sub) sub.textContent = '???';
+}
+
 /** Ask before wiping one galaxy's progress so it can be played again from scratch. */
 function confirmReset(unit, gal, done) {
   modal((close) => [h('div', { class: 'reset-modal' }, [
@@ -567,8 +596,12 @@ function featureEl(kind, seed, gal) {
 
 /** Your pet, flying alongside the ship. */
 function petEl(extra = '') {
-  const html = petHTML(equipped('pet'));
-  return html ? h('div', { class: `pet-buddy ${extra}`, html }) : document.createTextNode('');
+  const id = equipped('pet');
+  const html = petHTML(id);
+  if (!html) return document.createTextNode('');
+  const el = h('div', { class: `pet-buddy ${extra}`, html });
+  if (petName(id)) el.append(h('span', { class: 'pet-tag' }, petName(id)));
+  return el;
 }
 
 /** Reward completion effects: a ring of glyphs (and optional Saturn rings) around the world. */

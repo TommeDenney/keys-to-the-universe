@@ -27,13 +27,27 @@ function row(ch) {
 }
 
 /** Compact card for the top of the Learn tab. */
+/** Learn-page summary: the next 3 open challenges of each period (tap for all of them). */
 export function challengesCard() {
-  const daily = current('daily');
-  const done = daily.filter((c) => c.done).length;
-  return h('a', { class: 'ch-card', href: '#/challenges' }, [
-    h('div', { class: 'ch-card-head' }, [h('b', {}, 'Daily challenges'), h('span', {}, `${done}/${daily.length} · ${countdown('daily')}`)]),
-    h('div', { class: 'ch-mini' }, daily.map((c) => h('i', { class: c.done ? 'done' : '', style: { '--p': `${Math.round((c.value / c.goal) * 100)}%` }, title: c.text }))),
-    h('span', { class: 'ch-more' }, ['Weekly, monthly & side quests', icon('chevron')]),
+  const col = (p) => {
+    const list = current(p.id);
+    const done = list.filter((c) => c.done).length;
+    // Closest to finished first, so the card shows what you can wrap up next.
+    const open = list.filter((c) => !c.done).sort((a, b) => b.value / b.goal - a.value / a.goal);
+    return h('div', { class: 'ch-col' }, [
+      h('div', { class: 'ch-col-head' }, [h('b', {}, p.name), h('span', {}, `${done}/${list.length} \u00b7 ${countdown(p.id)}`)]),
+      ...open.slice(0, 3).map((c) => h('div', { class: 'ch-line' }, [
+        h('span', { class: 'ch-text' }, c.text),
+        h('span', { class: 'ch-bar' }, h('i', { style: { width: `${Math.round((c.value / c.goal) * 100)}%` } })),
+        h('small', { class: 'ch-num' }, `${c.value.toLocaleString('en-US')}/${c.goal.toLocaleString('en-US')} \u00b7 +${c.reward} ${SYMBOL}`),
+      ])),
+      open.length === 0 ? h('div', { class: 'ch-line all-done' }, '\u2713 All done. Nice work!') : null,
+      open.length > 3 ? h('small', { class: 'ch-rest' }, `+${open.length - 3} more`) : null,
+    ]);
+  };
+  return h('a', { class: 'ch-card ch-card-full', href: '#/challenges' }, [
+    h('div', { class: 'ch-cols' }, PERIODS.map(col)),
+    h('span', { class: 'ch-more' }, ['All challenges & side quests', icon('chevron')]),
   ]);
 }
 
