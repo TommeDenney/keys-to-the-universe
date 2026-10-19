@@ -48,10 +48,12 @@ export function layoutDock() {
   if (pos === 'left' || pos === 'right') { document.body.dataset.dock = 'vertical'; return; }
   const gap = 12;
   const dw = dock.offsetWidth;
-  const mw = music ? music.offsetWidth : 0;
-  const roomRight = innerWidth - b.right - gap - 12;
-  const roomLeft = b.left - gap - 12;
+  const roomRight = innerWidth - b.right - gap - 10;
+  const roomLeft = b.left - gap - 10;
+  // Beside the tab bar whenever it fits; the song name shortens to make room.
+  const MUSIC_MIN = 150;
   let mode = 'side';
-  if (dw > roomRight || mw > roomLeft) mode = dw + mw + gap + 24 <= innerWidth ? 'above' : 'stack';
+  if (dw > roomRight || roomLeft < MUSIC_MIN) mode = dw + MUSIC_MIN + gap + 24 <= innerWidth ? 'above' : 'stack';
   document.body.dataset.dock = mode;
+  if (music) music.style.maxWidth = mode === 'side' ? `${Math.floor(Math.min(360, roomLeft))}px` : mode === 'above' ? `${Math.floor(Math.min(360, innerWidth - dw - gap - 32))}px` : '';
 }

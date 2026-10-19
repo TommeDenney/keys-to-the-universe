@@ -74,7 +74,6 @@ export function renderShop(root, { inventory = false } = {}) {
       h('header', { class: 'top' }, [
         h('div', {}, [h('div', { class: 'eyebrow' }, 'Spend your Stardust'), h('h1', {}, 'Shop')]),
         h('div', { class: 'shop-top-actions' }, [
-          h('a', { class: 'btn ghost inv-btn', href: '#/inventory' }, ['\u{1F392} Inventory ', h('span', { class: 'badge' }, String(ownedCount()))]),
         ]),
       ]),
       bp ? h('div', { class: 'shop-note pop' }, [h('b', {}, `+${bp} ${SYMBOL} credited!`), ` Stardust for the progress you made before the Shop opened.`]) : null,

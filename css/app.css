@@ -1994,3 +1994,15 @@ body[data-dock="stack"]:not([data-tabpos="top"]) .nav-legend:not(.low) { bottom:
 .page > .shop-tabs-holder { position: sticky; top: calc(8px + var(--safe-t)); z-index: 12; }
 body[data-tabpos="top"] .page > .shop-tabs-holder { top: calc(80px + var(--safe-t)); }
 .shop-tabs.pinned { box-shadow: 0 6px 20px rgba(30,27,75,.18); }
+
+/* The song name shrinks first so the music bar fits beside the tab bar */
+.musicbar { overflow: hidden; }
+.musicbar .mb-name { flex: 1 1 auto; min-width: 0; }
+.musicbar .mb-title { min-width: 0; max-width: none; }
+.musicbar .mb-btn { flex: none; }
+/* When the dock and music bar need their own row, the page makes room for it */
+body[data-tabpos="top"][data-dock="above"] .page { padding-top: calc(150px + var(--safe-t)); }
+body[data-tabpos="top"][data-dock="stack"] .page { padding-top: calc(204px + var(--safe-t)); }
+body[data-tabpos="top"][data-dock="above"] .page > .shop-tabs-holder, body[data-tabpos="top"][data-dock="stack"] .page > .shop-tabs-holder { top: calc(140px + var(--safe-t)); }
+body:not([data-tabpos="top"])[data-dock="above"] .screen { padding-bottom: calc(160px + var(--safe-b)); }
+body:not([data-tabpos="top"])[data-dock="stack"] .screen { padding-bottom: calc(214px + var(--safe-b)); }
