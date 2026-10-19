@@ -22,7 +22,7 @@ export const REWARD = {
 function wallet() {
   const st = getState();
   if (!st.wallet) {
-    st.wallet = { balance: 0, earned: 0, owned: ['ship-classic', 'fx-check', 'kb-classic', 'press-glow', 'amb-none', 'trail-dots', 'sheet-classic'], equipped: { ship: 'ship-classic', fx: 'fx-check', kb: 'kb-classic', press: 'press-glow', amb: 'amb-none', trail: 'trail-dots', sheet: 'sheet-classic' }, songs: [], daily: null, quests: {} };
+    st.wallet = { balance: 0, earned: 0, owned: ['ship-classic', 'fx-check', 'kb-classic', 'press-glow', 'amb-none', 'trail-dots', 'sheet-classic'], equipped: { ship: 'ship-classic', fx: 'fx-check', kb: 'kb-classic', press: 'press-glow', amb: 'amb-choir', trail: 'trail-dots', sheet: 'sheet-classic' }, songs: [], daily: null, quests: {}, migrations: ['choir-free'] };
     // Credit progress made before Stardust existed.
     let back = 0;
     for (const rec of Object.values(st.lessons || {})) back += REWARD.lessonBase + REWARD.lessonPerStar * (rec.stars || 0);
@@ -36,8 +36,29 @@ function wallet() {
   const w = st.wallet;
   if (w.owned.includes('ship-divine')) w.owned = w.owned.map((x) => (x === 'ship-divine' ? 'ship-seed' : x));
   if (w.equipped.ship === 'ship-divine') w.equipped.ship = 'ship-seed';
+  applyMigrations(w);
   return w;
 }
+
+/**
+ * One-time changes to existing wallets. Each runs once, ever.
+ * 'choir-free': Cosmic Choir became free and the default ambience; anyone who
+ * bought it gets a refund (1,500 ✦, its price after the October 2026 price change).
+ */
+function applyMigrations(w) {
+  w.migrations ||= [];
+  if (!w.migrations.includes('choir-free')) {
+    w.migrations.push('choir-free');
+    if (w.owned.includes('amb-choir')) {
+      w.owned = w.owned.filter((x) => x !== 'amb-choir');
+      w.balance += REFUNDS['amb-choir'];
+      setTimeout(() => burst(REFUNDS['amb-choir'], 'Refund: Cosmic Choir is now free'), 1500);
+    }
+    if (!w.equipped.amb || w.equipped.amb === 'amb-none') w.equipped.amb = 'amb-choir';
+    saveState();
+  }
+}
+const REFUNDS = { 'amb-choir': 1500 };
 
 const subs = new Set();
 export function onWallet(fn) {
@@ -50,9 +71,9 @@ function changed() {
 }
 
 export const balance = () => wallet().balance;
-const DEFAULTS = { ship: 'ship-classic', fx: 'fx-check', kb: 'kb-classic', press: 'press-glow', amb: 'amb-none', trail: 'trail-dots', sheet: 'sheet-classic', starc: 'star-gold', pet: 'pet-none' };
+const DEFAULTS = { ship: 'ship-classic', fx: 'fx-check', kb: 'kb-classic', press: 'press-glow', amb: 'amb-choir', trail: 'trail-dots', sheet: 'sheet-classic', starc: 'star-gold', pet: 'pet-none' };
 export const earnedTotal = () => wallet().earned || 0;
-export const ownedItems = () => wallet().owned.filter((id) => !Object.values(DEFAULTS).includes(id));
+export const ownedItems = () => wallet().owned.filter((id) => !FREE().includes(id));
 export const ownedSongs = () => wallet().songs || [];
 /** Pet nicknames (empty = use the species name). */
 export const petName = (id) => ((wallet().petNames || {})[id]) || '';
@@ -64,7 +85,9 @@ export function setPetName(id, name) {
   changed();
 }
 export const equipped = (cat) => wallet().equipped[cat] || DEFAULTS[cat];
-export const owns = (id) => wallet().owned.includes(id) || Object.values(DEFAULTS).includes(id);
+// Always yours: each category's default, plus Silence.
+const FREE = () => [...Object.values(DEFAULTS), 'amb-none'];
+export const owns = (id) => wallet().owned.includes(id) || FREE().includes(id);
 export const backpay = () => {
   const w = wallet();
   const b = w.backpay || 0;
@@ -93,6 +116,7 @@ export function buy(item) {
   if (owns(item.id)) return true;
   if (!spend(item.price)) return false;
   wallet().owned.push(item.id);
+  (wallet().paid ||= {})[item.id] = item.price; // remembered so a refund can be exact
   changed();
   return true;
 }

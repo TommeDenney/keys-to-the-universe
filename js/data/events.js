@@ -135,7 +135,7 @@ export const EVENT_ITEMS = [
   R('kb-pink', 'pink', 'kb', 'Think Pink', 1600, 'Soft pink keys with rose sharps.', { w: ['#FFF1F5', '#FBCFE8'], border: '#F472B6', lip: '#EC4899', b: ['#BE185D', '#831843'], bglow: '#F9A8D4', label: '#9D174D' }),
   R('star-pink', 'pink', 'starc', 'Hope Pink', 1000, 'Bright pink stars.', { color: '#EC4899', glow: ['#F9A8D4'] }),
   R('trail-pink', 'pink', 'trail', 'Ribbon Road', 1200, 'A pink ribbon from world to world.', { stroke: '#F472B6', glow: '#EC4899', width: 4, glyph: '♡   ', glyphColor: '#FBCFE8' }),
-  R('press-pink', 'pink', 'press', 'Pink Hearts', 1100, 'Pink hearts float up from every key.', { glyphs: ['♥', '♡'], color: '#F472B6', glow: '#EC4899', n: 3, size: 15 }),
+  R('press-pink', 'pink', 'press', 'Pink Hearts', 1100, 'Keys glow pink and hearts float up from every note.', { glyphs: ['\u2665', '\u2661', '\u2665'], color: '#F472B6', glow: '#EC4899', n: 3, size: 16, keyColor: '#F472B6' }),
   R('sheet-pink', 'pink', 'sheet', 'Pink Paper', 1000, 'Blush-pink paper with deep rose ink.', { paper: '#FFF0F5', ink: '#831843', line: '#F5B5CC', faint: '#FAD3E1' }),
   // ---- Fall ----
   R('ship-acorn', 'fall', 'ship', 'Acorn Pod', 3000, 'A snug acorn with a leafy rudder.', { shape: 'orb', hull: '#92400E', hull2: '#D97706', wing: '#78350F', cockpit: '#FDE68A', flame: '#FDBA74', deco: 'spots' }),

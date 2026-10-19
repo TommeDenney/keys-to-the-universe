@@ -20,7 +20,7 @@ export const SHOP = [
   { id: 'amb-none', cat: 'amb', name: 'Silence', price: 0, desc: 'No background sound.' },
   { id: 'amb-nebula', cat: 'amb', name: 'Nebula Drone', price: 120, desc: 'Slow, warm, drifting space pads.' },
   { id: 'amb-lofi', cat: 'amb', name: 'Lo-fi Orbit', price: 200, desc: 'Mellow electric-piano chords with gentle vinyl crackle.' },
-  { id: 'amb-choir', cat: 'amb', name: 'Cosmic Choir', price: 250, desc: 'Airy voices from a faraway cathedral.' },
+  { id: 'amb-choir', cat: 'amb', name: 'Cosmic Choir', price: 0, desc: 'Airy voices from a faraway cathedral. The default sound of the Learn tab.' },
   { id: 'amb-ocean', cat: 'amb', name: 'Ocean Waves', price: 150, desc: 'Slow waves washing on an alien shore.' },
   { id: 'amb-dream', cat: 'amb', name: 'Dream Box', price: 220, desc: 'A sleepy music box floating in space.' },
   { id: 'amb-shimmer', cat: 'amb', name: 'Starfield Shimmer', price: 200, desc: 'High, glittering swells like starlight.' },
