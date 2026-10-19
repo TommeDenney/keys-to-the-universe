@@ -1,9 +1,11 @@
-// Personal constellations: private photos (imported on this device only, never
-// part of the public app) turned into star patterns. Each sits in a galaxy;
-// once you reach that galaxy you can unlock it with Stardust and reveal the photo.
+// Constellations on the Learn map. Everyone gets the app's own star pictures
+// (data/skyfigures.js); a private pack can bring personal ones instead: photos
+// imported on this device only (never part of the public app) turned into star
+// patterns. Each sits in a galaxy; reach it, unlock it with Stardust, see its story.
 
 import { h, icon, modal, toast } from './ui.js';
-import { constellationsDB } from './store.js';
+import { constellationsDB, getState, saveState } from './store.js';
+import { SKY_FIGURES } from './data/skyfigures.js';
 import { COURSE } from './data/course.js';
 import { lessonUnlocked } from './screens/learn.js';
 import { spend, balance, SYMBOL } from './economy.js';
@@ -13,7 +15,13 @@ export async function loadConstellations() {
   cache = await constellationsDB.all();
   return cache;
 }
-export const constellationsFor = (unitId) => (cache || []).filter((c) => c.galaxy === unitId);
+const skyUnlocked = () => (getState().skyUnlocked ||= []);
+/** The constellations in a galaxy: your private ones if you have any, otherwise the app's own. */
+export const constellationsFor = (unitId) => {
+  const mine = cache || [];
+  if (mine.length) return mine.filter((c) => c.galaxy === unitId);
+  return SKY_FIGURES.filter((c) => c.galaxy === unitId).map((c) => ({ ...c, unlocked: skyUnlocked().includes(c.id) }));
+};
 
 export function galaxyReached(unitId) {
   const unit = COURSE.find((u) => u.id === unitId);
@@ -115,15 +123,15 @@ export function openConstellation(c, onChange) {
       constellationSVG(c, 'big'),
       h('div', { class: 'eyebrow' }, reached ? 'Constellation discovered' : 'Unknown constellation'),
       h('h2', {}, reached ? c.name : 'A mystery in the stars'),
-      h('p', { class: 'muted' }, reached ? `Unlock ${c.name} to reveal the picture it was drawn from.` : 'Reach this galaxy on your journey to discover this constellation.'),
+      h('p', { class: 'muted' }, reached ? (c.builtin ? `Unlock ${c.name} to light it up and hear its story.` : `Unlock ${c.name} to reveal the picture it was drawn from.`) : 'Reach this galaxy on your journey to discover this constellation.'),
       h('div', { class: 'row' }, [
         h('button', { class: 'btn ghost', onclick: close }, 'Close'),
         reached ? h('button', {
           class: 'btn primary', onclick: async () => {
             if (!spend(c.price)) { toast(`You need ${c.price - balance()} more ${SYMBOL}.`, 'bad'); return; }
             c.unlocked = true;
-            await constellationsDB.put(c);
-            await loadConstellations();
+            if (c.builtin) { if (!skyUnlocked().includes(c.id)) skyUnlocked().push(c.id); saveState(); }
+            else { await constellationsDB.put(c); await loadConstellations(); }
             close();
             reveal(c);
             if (onChange) onChange();
@@ -137,6 +145,17 @@ export function openConstellation(c, onChange) {
 }
 
 function reveal(c) {
+  if (c.builtin) {
+    // The app's own constellations: lit up in full, with their legend.
+    modal((close) => [h('div', { class: 'const-reveal sky-reveal' }, [
+      h('div', { class: 'reveal-stage sky-stage' }, [constellationSVG(c, 'figure')]),
+      h('div', { class: 'eyebrow' }, 'Constellation'),
+      h('h2', {}, c.name),
+      h('p', { class: 'muted' }, c.legend),
+      h('div', { class: 'row' }, [h('button', { class: 'btn primary', onclick: close }, 'Close')]),
+    ])]);
+    return;
+  }
   modal((close) => [h('div', { class: 'const-reveal' }, [
     h('div', { class: 'reveal-stage', style: { aspectRatio: `1 / ${c.aspect}` } }, [
       h('img', { class: 'reveal-photo', src: c.image, alt: c.name }),

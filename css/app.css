@@ -1975,3 +1975,14 @@ body[data-tabpos="left"] .tab-ink, body[data-tabpos="right"] .tab-ink { border-r
 body[data-dock="side"]:not([data-tabpos="top"]) .nav-legend:not(.low) { bottom: calc(var(--tab-mid) + var(--tab-h) / 2 + 10px); }
 body[data-dock="above"]:not([data-tabpos="top"]) .nav-legend:not(.low) { bottom: calc(var(--tab-mid) + var(--tab-h) / 2 + 68px); }
 body[data-dock="stack"]:not([data-tabpos="top"]) .nav-legend:not(.low) { bottom: calc(var(--tab-mid) + var(--tab-h) / 2 + 122px); }
+
+/* The app's own constellations, revealed */
+.sky-stage { aspect-ratio: 1; max-width: 320px; margin: 0 auto 12px; border-radius: 22px; overflow: hidden; background: radial-gradient(circle at 50% 40%, #3B2F7A, #120F2E 70%); display: grid; place-items: center; padding: 18px; }
+.constellation-art.figure { width: 100%; }
+.constellation-art.figure .c-lines line { stroke: #FDE68A; stroke-width: 1.4; filter: drop-shadow(0 0 3px #FBBF24) drop-shadow(0 0 8px rgba(251,191,36,.6)); stroke-dasharray: 160; stroke-dashoffset: 160; animation: sky-draw 1.4s ease forwards; animation-delay: calc(var(--i) * .12s); }
+.constellation-art.figure .c-stars circle { fill: #FFF7D6; }
+@keyframes sky-draw { to { stroke-dashoffset: 0; } }
+/* A perfect (5★) world shows just its mega star on the map and in lists */
+.mini-stars:has(.star.mega.on) .star:not(.mega) { display: none; }
+.mini-stars:has(.star.mega.on) .star.mega { margin-left: 0; }
+.mini-stars .star.mega.on svg { width: calc(var(--sz) * 1.9); height: calc(var(--sz) * 1.9); }

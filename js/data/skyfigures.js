@@ -1,0 +1,45 @@
+// The app's own constellations: made-up star pictures with a music-and-space twist,
+// one in each of the early galaxies. (A private constellation pack replaces them.)
+// Points are on a 100 × 100 grid: [x, y, brightness]; lines join point indexes.
+
+const C = (id, galaxy, price, name, legend, pts, lines) => ({
+  id, galaxy, price, name, legend, builtin: true, aspect: 1,
+  stars: pts.map(([x, y, r = 1.4]) => [x / 100, y / 100, r]),
+  lines,
+});
+
+export const SKY_FIGURES = [
+  C('sky-piano', 'u1', 120, 'The Grand Piano', 'The first instrument the old star-sailors drew in the sky. On clear nights its lid opens a little wider, and the music gets louder.',
+    [[15, 40, 2], [15, 75], [85, 75, 1.8], [85, 62], [70, 52], [55, 38], [38, 34, 1.7], [28, 14, 2.2]],
+    [[0, 1], [1, 2], [2, 3], [3, 4], [4, 5], [5, 6], [6, 0], [6, 7]]),
+  C('sky-clef', 'u2', 150, 'The Treble Clef', 'Said to mark the spot where the very first melody was written down. Every note above it is a little brighter.',
+    [[52, 8, 2], [62, 20], [50, 34], [36, 50, 1.7], [40, 66], [56, 70, 1.8], [64, 58], [52, 48], [44, 58], [52, 92, 2], [42, 88]],
+    [[0, 1], [1, 2], [2, 3], [3, 4], [4, 5], [5, 6], [6, 7], [7, 8], [0, 9], [9, 10]]),
+  C('sky-metronome', 'u3', 180, 'The Metronome', 'Its pendulum star swings once every 60 years, exactly on the beat. Astronomers have checked.',
+    [[30, 90, 1.8], [70, 90, 1.8], [58, 12], [42, 12], [50, 80, 1.6], [66, 30, 2.2]],
+    [[0, 1], [1, 2], [2, 3], [3, 0], [4, 5]]),
+  C('sky-quaver', 'u4', 210, 'The Wandering Quaver', 'A single eighth note that escaped from a song and never found its way back. It is still looking for its other half.',
+    [[30, 78], [42, 70, 1.6], [46, 80], [34, 88], [46, 14, 2], [62, 30, 1.7], [60, 48]],
+    [[0, 1], [1, 2], [2, 3], [3, 0], [2, 4], [4, 5], [5, 6]]),
+  C('sky-lyre', 'u5', 240, 'The Lyre', 'Two hands made this harp of stars together: one plucked the strings, the other held the tune.',
+    [[25, 20, 1.8], [20, 60], [35, 85], [65, 85], [80, 60], [75, 20, 1.8], [28, 30], [72, 30], [43, 30], [43, 85], [57, 30], [57, 85]],
+    [[0, 1], [1, 2], [2, 3], [3, 4], [4, 5], [6, 7], [8, 9], [10, 11]]),
+  C('sky-fox', 'u6', 270, 'The Comet Fox', 'A clever fox who learned the black keys by hopping on them. Its tail is a real comet, so it is always in a hurry.',
+    [[28, 22, 1.8], [36, 40], [48, 36], [58, 40], [66, 22, 1.8], [68, 52], [47, 74, 2], [26, 52], [74, 62], [94, 86, 2.2]],
+    [[0, 1], [1, 2], [2, 3], [3, 4], [4, 5], [5, 6], [6, 7], [7, 0], [5, 8], [8, 9]]),
+  C('sky-crown', 'u7', 300, 'The Crown of Chords', 'Three stars on top for the three notes of a chord. Whoever plays one perfectly wears it for a night.',
+    [[15, 75], [85, 75], [88, 30, 2], [70, 50], [50, 18, 2.2], [30, 50], [12, 30, 2]],
+    [[0, 1], [1, 2], [2, 3], [3, 4], [4, 5], [5, 6], [6, 0]]),
+  C('sky-bell', 'u9', 330, 'The Choir Bell', 'It rings on Sunday mornings across the galaxy. Organ players say you can hear it in the low notes.',
+    [[50, 10, 1.8], [40, 22], [34, 55], [20, 75, 1.7], [50, 75], [80, 75, 1.7], [66, 55], [60, 22], [50, 88, 2.2]],
+    [[0, 1], [1, 2], [2, 3], [3, 4], [4, 5], [5, 6], [6, 7], [7, 0], [4, 8]]),
+  C('sky-baton', 'u8', 360, 'The Conductor’s Baton', 'Left in the sky by a maestro who conducted the stars themselves. Its tip still sparkles on the downbeat.',
+    [[15, 85, 1.6], [70, 30, 2.4], [80, 16], [86, 34], [62, 14], [24, 76]],
+    [[0, 5], [5, 1], [1, 2], [1, 3], [1, 4]]),
+  C('sky-whale', 'g1', 390, 'The Space Whale', 'The biggest listener in the universe. It sings back the first song it ever heard, very slowly, in the key of C.',
+    [[10, 50, 1.8], [30, 32], [60, 30], [80, 42], [88, 55], [70, 66], [35, 66], [96, 34, 1.8], [96, 72, 1.8], [32, 12, 2]],
+    [[0, 1], [1, 2], [2, 3], [3, 4], [4, 5], [5, 6], [6, 0], [4, 7], [4, 8], [1, 9]]),
+  C('sky-rocket', 'g2', 420, 'The Rocket', 'Every explorer’s first ship, pointing the way to the next galaxy. Its flame flickers when someone practises.',
+    [[50, 8, 2.2], [62, 30], [62, 70], [38, 70], [38, 30], [74, 84, 1.6], [26, 84, 1.6], [50, 70], [50, 94, 2]],
+    [[0, 1], [1, 2], [2, 3], [3, 4], [4, 0], [2, 5], [3, 6], [7, 8]]),
+];
