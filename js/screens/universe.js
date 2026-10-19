@@ -25,6 +25,7 @@ import { navFocus } from '../nav.js';
 import { petHTML } from '../render/pets.js';
 import { rewardLook } from '../data/rewards.js';
 import { diveInto, surfaceInto, takeReturn, flyShip } from '../transitions.js';
+import { guardianArt } from '../render/guardians.js';
 
 // Moons currently on screen, animated by the cosmos loop (3D-ish orbits that pass behind their planet).
 let ORBITS = [];
@@ -487,7 +488,8 @@ function guardianEl(l, gal, next) {
   const el = h('div', { 'data-lesson': l.id, class: `guardian ${rec ? 'done' : ''} ${open ? '' : 'locked'} ${isNext ? 'current' : ''}`, style: { '--g1': gal.neb[0], '--g2': gal.neb[1] } });
   el.append(h(open ? 'a' : 'div', { class: 'guardian-orb', href: open ? `#/lesson/${l.id}` : null, 'aria-label': `Boss battle: ${l.guardian}` }, [
     h('i', { class: 'disk' }), h('i', { class: 'disk d2' }), h('i', { class: 'core' }),
-    h('span', { class: 'g-icon' }, rec ? '\u{1F3C6}' : open ? '\u2694' : ''),
+    guardianArt(l.id) ? h('span', { class: 'g-mascot', html: guardianArt(l.id) }) : h('span', { class: 'g-icon' }, rec ? '\u{1F3C6}' : open ? '\u2694' : ''),
+    rec && guardianArt(l.id) ? h('span', { class: 'g-trophy' }, '\u{1F3C6}') : null,
     open ? null : h('span', { class: 'lock' }, icon('lock')),
   ]));
   if (isNext) el.append(h('div', { class: 'ship guardian-ship', html: shipSVG() }), petEl('guardian-pet'));

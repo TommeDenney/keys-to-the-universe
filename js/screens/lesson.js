@@ -2,6 +2,7 @@
 
 import { h, icon, starsHTML, toast } from '../ui.js';
 import { markReturn } from '../transitions.js';
+import { guardianArt } from '../render/guardians.js';
 import { allLessons } from '../data/course.js';
 import { buildSong } from '../data/songs.js';
 import { songNow, getSongs } from '../data/catalog.js';
@@ -252,7 +253,7 @@ export async function openLesson(id, onClose) {
     const list = allLessons();
     const nxt = list[list.findIndex((l) => l.id === lesson.id) + 1];
     body.append(h('div', { class: 'ls-center' }, h('div', { class: 'card result-card boss-card pop' }, [
-      h('div', { class: 'boss-emblem' }, [h('i'), h('i'), h('span', {}, '\u{1F3C6}')]),
+      h('div', { class: 'boss-emblem' }, [h('i'), h('i'), guardianArt(lesson.id) ? h('span', { class: 'g-mascot defeated', html: guardianArt(lesson.id) }) : h('span', {}, '\u{1F3C6}')]),
       h('div', { class: 'eyebrow' }, 'Galaxy conquered'),
       h('h2', {}, `${lesson.guardian || 'The Guardian'} is defeated!`),
       h('div', { class: 'stars-big', html: starsHTML(r.stars, 3, true) }),
